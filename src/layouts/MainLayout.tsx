@@ -1,6 +1,6 @@
 
 import { Outlet } from "react-router-dom";
-import { MainNav } from "@/components/MainNav";
+import { MainNav } from "@/app/components/MainNav"; // Updated import path
 
 export const MainLayout = () => {
   return (

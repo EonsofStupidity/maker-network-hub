@@ -1,56 +1,67 @@
+import { useEffect } from 'react';
+import { useThemeStore } from '@/shared/store/theme/store';
+import { Theme } from '@/shared/types/shared.types';
+import { useToast } from '@/shared/hooks/use-toast';
+import { LogLevel, LogCategory } from '@/shared/types/shared.types';
+import { logger } from '@/logging/logger.service';
 
-import { HomeLayout, HomeLayoutSchema, FallbackLayout } from '../schema/homeLayoutSchema';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/shared/ui';
-
-export async function loadHomeLayout(): Promise<HomeLayout> {
-  try {
-    const { data, error } = await supabase
-      .from('home_layout')
-      .select('*')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (error) throw error;
-
-    const validatedLayout = HomeLayoutSchema.parse(data);
-    return validatedLayout;
-    
-  } catch (error) {
-    console.error('Error loading homepage layout:', error);
-    return FallbackLayout;
-  }
+interface HomeLayoutLoaderProps {
+  themeId: string;
 }
 
-export async function saveHomeLayout(layout: HomeLayout): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('home_layout')
-      .upsert({
-        ...layout,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
-        updated_at: new Date().toISOString()
-      });
+export const useHomeLayoutLoader = ({ themeId }: HomeLayoutLoaderProps) => {
+  const themeStore = useThemeStore();
+  const { toast } = useToast();
 
-    if (error) throw error;
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        logger.log(LogLevel.INFO, LogCategory.THEME, `Attempting to load theme ${themeId}`);
+        
+        // Load the theme
+        await themeStore.loadTheme(themeId);
+        
+        // After loading, get the theme from the store
+        const theme: Theme | undefined = themeStore.theme;
 
-    toast({
-      title: 'Layout saved',
-      description: 'Homepage layout updated successfully',
-      variant: 'success'
-    });
-    
-    return true;
-  } catch (error) {
-    console.error('Error saving homepage layout:', error);
-    
-    toast({
-      title: 'Failed to save layout',
-      description: error instanceof Error ? error.message : 'Unknown error',
-      variant: 'destructive'
-    });
-    
-    return false;
-  }
-}
+        if (theme) {
+          logger.log(LogLevel.INFO, LogCategory.THEME, `Theme ${theme.name} loaded successfully`);
+          
+          toast({
+            title: "Theme loaded successfully",
+            description: `The ${theme.name} theme has been loaded.`,
+            variant: "default", // Changed from "success" to "default"
+            duration: 3000
+          });
+        } else {
+          logger.log(LogLevel.WARN, LogCategory.THEME, `Theme ${themeId} not found`);
+          
+          toast({
+            title: "Theme not found",
+            description: `Theme with ID ${themeId} could not be found.`,
+            variant: "warning",
+            duration: 5000
+          });
+        }
+      } catch (error) {
+        logger.log(LogLevel.ERROR, LogCategory.THEME, `Error loading theme ${themeId}`, {
+          details: { error }
+        });
+        
+        toast({
+          title: "Error loading theme",
+          description: `Failed to load theme: ${error}`,
+          variant: "destructive",
+          duration: 5000
+        });
+      }
+    };
+
+    loadTheme();
+
+    // Cleanup function (optional)
+    return () => {
+      logger.log(LogLevel.DEBUG, LogCategory.THEME, `Unmounting HomeLayoutLoader for theme ${themeId}`);
+    };
+  }, [themeId, themeStore, toast]); // Dependencies array
+};

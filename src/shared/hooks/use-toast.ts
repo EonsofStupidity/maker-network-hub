@@ -1,8 +1,24 @@
-import { Toast, ToastActionElement, ToastProps } from "@/shared/ui/toast";
+
 import * as React from "react";
 
 const TOAST_LIMIT = 10;
 const TOAST_REMOVE_DELAY = 1000000;
+
+export type ToastVariant = 'default' | 'destructive' | 'success' | 'warning' | 'info';
+
+export interface ToastProps {
+  id: string;
+  title?: string;
+  description?: React.ReactNode;
+  action?: React.ReactNode;
+  variant?: ToastVariant;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export interface ToastActionElement {
+  altText: string;
+}
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -86,7 +102,6 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action;
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action
       if (toastId) {
         addToRemoveQueue(toastId);
       } else {
@@ -132,9 +147,7 @@ function dispatch(action: Action) {
   });
 }
 
-type Toast = Omit<ToasterToast, "id">;
-
-function toast({ ...props }: Toast) {
+function toast({ ...props }: Omit<ToastProps, "id">) {
   const id = genId();
 
   const update = (props: ToasterToast) =>
@@ -183,19 +196,4 @@ function useToast() {
   };
 }
 
-export type ToastVariant = 'default' | 'destructive' | 'success' | 'warning' | 'info';
-
-export interface ToastProps {
-  id: string;
-  title?: string;
-  description?: React.ReactNode;
-  action?: React.ReactNode;
-  variant?: ToastVariant;
-}
-
-export interface ToastActionElement {
-  altText: string;
-}
-
 export { useToast, toast };
-export type { ToastProps, ToastActionElement };

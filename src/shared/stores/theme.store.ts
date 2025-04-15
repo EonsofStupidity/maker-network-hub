@@ -20,6 +20,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
   variables: {},
   componentStyles: {},
   animations: {},
+  effects: [], // Adding the missing effects array
 
   setThemes: (themes: Theme[]) => {
     set({ themes });
@@ -47,5 +48,13 @@ export const useThemeStore = create<ThemeState>((set) => ({
 
   setComponentTokens: (tokens: ComponentTokens) => {
     set({ componentTokens: tokens });
+  },
+  
+  setEffects: (effects) => {
+    set({ effects });
+  },
+  
+  setVariables: (vars) => {
+    set({ variables: vars });
   }
 }));

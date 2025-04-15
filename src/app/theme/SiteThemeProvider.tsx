@@ -1,8 +1,6 @@
 
 import React, { createContext, useContext, useMemo, useEffect, useState } from "react";
-import { Theme, LogLevel, LogDetails } from "@/shared/types/shared.types";
-import { ThemeComponent } from "@/shared/types/theme.types";
-import { useLogger } from "@/hooks/use-logger";
+import { Theme } from "@/shared/types/shared.types";
 import { logger } from "@/logging/logger.service";
 import { LogCategory } from "@/shared/types/shared.types";
 
@@ -24,7 +22,6 @@ interface SiteThemeProviderProps {
 }
 
 export function SiteThemeProvider({ children, defaultTheme = "impulsivity" }: SiteThemeProviderProps) {
-  const log = useLogger("SiteThemeProvider", LogCategory.SYSTEM);
   const [theme, setTheme] = useState<Theme | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [themeError, setThemeError] = useState<Error | null>(null);

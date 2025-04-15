@@ -1,3 +1,4 @@
+
 import { BaseEntity } from './common.types';
 
 export const AUTH_STATUS = {
@@ -30,8 +31,8 @@ export interface UserProfile extends BaseEntity {
   avatar_url?: string;
   roles?: UserRole[];
   bio?: string;
-  created_at: string;
-  updated_at: string;
+  created_at: string | undefined;
+  updated_at: string | undefined;
   last_sign_in_at?: string;
   user_metadata?: {
     full_name?: string;
@@ -46,4 +47,3 @@ export interface UserProfile extends BaseEntity {
     [key: string]: any;
   };
 }
-

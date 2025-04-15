@@ -38,5 +38,19 @@ export enum ThemeEffectType {
   CYBER = 'cyber',
   NEON = 'neon',
   GLITCH = 'glitch',
-  BLUR = 'blur'
+  BLUR = 'blur',
+  GRADIENT = 'gradient',
+  PULSE = 'pulse',
+  PARTICLE = 'particle',
+  MORPH = 'morph'
+}
+
+// Re-export needed type
+export type { Theme };
+export interface ThemeComponent {
+  id?: string;
+  name?: string;
+  component_name?: string;
+  styles?: Record<string, string>;
+  tokens?: Record<string, string>;
 }
