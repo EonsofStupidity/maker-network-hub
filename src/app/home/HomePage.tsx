@@ -1,7 +1,7 @@
-
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useHomeStore } from './store/home.store';
 import { loadHomeLayout } from './utils/homeLayoutLoader';
+import type { SectionType } from './types/layout.types';
 import { RBACBridge } from '@/rbac/bridge';
 import { HeroBanner } from './components/HeroBanner';
 import { FeaturedSection } from './components/FeaturedSection';
@@ -21,20 +21,19 @@ export default function HomePage() {
   const [isAdminOverlayVisible, setIsAdminOverlayVisible] = useState(false);
   const [featuredPosts, setFeaturedPosts] = useState<FeaturedPostOption[]>([]);
   
-  // Check if user has admin rights
   const hasAdminAccess = RBACBridge.hasAdminAccess();
   
-  // Load layout from backend on mount
   useEffect(() => {
     const initLayout = async () => {
       const homeLayout = await loadHomeLayout();
-      setLayout(homeLayout);
+      if (homeLayout) {
+        setLayout(homeLayout);
+      }
     };
     
     initLayout();
   }, [setLayout]);
   
-  // Load featured posts for admin overlay
   useEffect(() => {
     if (hasAdminAccess) {
       const fetchFeaturedPosts = async () => {
@@ -58,8 +57,7 @@ export default function HomePage() {
     }
   }, [hasAdminAccess]);
 
-  // Render sections based on the layout configuration
-  const renderSection = (sectionType: string, index: number) => {
+  const renderSection = (sectionType: SectionType, index: number) => {
     switch (sectionType) {
       case 'hero':
         return <HeroBanner key={`section-${index}`} />;
@@ -78,7 +76,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Dynamic sections based on layout configuration */}
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -87,7 +84,6 @@ export default function HomePage() {
         layout.section_order.map((section, index) => renderSection(section, index))
       )}
       
-      {/* Admin overlay button (only visible to admins) */}
       {hasAdminAccess && (
         <>
           <AdminOverlayButton onClick={() => setIsAdminOverlayVisible(true)} />

@@ -1,18 +1,17 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/shared/hooks/use-toast';
-import { useThemeStore } from '@/stores/theme.store';
-import { Theme } from '@/shared/types/core/theme.types';
+import { useToast } from '@/hooks/use-toast';
+import type { HomeLayout } from '../types/layout.types';
 
-export async function loadHomeLayout() {
-  const { data, error } = await supabase
-    .from('home_layouts')
+export async function loadHomeLayout(): Promise<HomeLayout | null> {
+  const { data: layout, error } = await supabase
+    .from('home_layout')
     .select('*')
-    .eq('is_active', true)
     .single();
 
   if (error) {
-    useToast().toast({
+    const { toast } = useToast();
+    toast({
       title: "Error loading layout",
       description: error.message,
       variant: "destructive"
@@ -20,16 +19,17 @@ export async function loadHomeLayout() {
     return null;
   }
 
-  return data;
+  return layout as HomeLayout;
 }
 
-export async function saveHomeLayout(layout: any) {
+export async function saveHomeLayout(layout: Partial<HomeLayout>) {
   const { error } = await supabase
-    .from('home_layouts')
+    .from('home_layout')
     .upsert(layout);
 
   if (error) {
-    useToast().toast({
+    const { toast } = useToast();
+    toast({
       title: "Error saving layout",
       description: error.message,
       variant: "destructive"
@@ -37,10 +37,10 @@ export async function saveHomeLayout(layout: any) {
     return false;
   }
 
-  useToast().toast({
+  const { toast } = useToast();
+  toast({
     title: "Layout saved",
-    description: "The layout has been updated successfully",
-    variant: "default"
+    description: "The layout has been updated successfully"
   });
 
   return true;
