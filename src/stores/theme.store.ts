@@ -1,6 +1,5 @@
-
 import { create } from 'zustand';
-import { Theme, ThemeState, ComponentTokens, DesignTokens, ThemeContext, ThemeStatus, ThemeEffect } from '@/shared/types/features/theme.types';
+import { ThemeState, Theme, ComponentTokens, DesignTokens, ThemeEffect } from '@/shared/types/theme.types';
 
 const defaultTheme: Theme = {
   id: 'default',
@@ -8,8 +7,8 @@ const defaultTheme: Theme = {
   label: 'Default',
   description: 'Default theme',
   isDark: false,
-  status: ThemeStatus.ACTIVE,
-  context: ThemeContext.SITE,
+  status: 'active',
+  context: 'site',
   variables: {
     background: '#ffffff',
     foreground: '#000000',
@@ -77,7 +76,7 @@ const defaultTheme: Theme = {
 export const useThemeStore = create<ThemeState>((set) => ({
   themes: [defaultTheme],
   activeThemeId: defaultTheme.id,
-  isDark: defaultTheme.isDark,
+  isDark: defaultTheme.isDark || false,
   primaryColor: defaultTheme.variables?.primary || '',
   backgroundColor: defaultTheme.variables?.background || '',
   textColor: defaultTheme.variables?.foreground || '',
@@ -87,38 +86,24 @@ export const useThemeStore = create<ThemeState>((set) => ({
   error: null,
   theme: defaultTheme,
   isLoaded: true,
-  variables: Object.entries(defaultTheme.variables || {}).reduce((acc, [key, value]) => ({
-    ...acc,
-    [key]: String(value)
-  }), {}),
+  variables: defaultTheme.variables || {},
   componentStyles: {},
   animations: {},
   effects: [],
-  
+
   setThemes: (themes) => set({ themes }),
-  
   setActiveTheme: (themeId) => set((state) => {
-    const theme = state.themes?.find(t => t.id === themeId);
+    const theme = state.themes.find(t => t.id === themeId);
     if (!theme) return state;
-
-    const variables = Object.entries(theme.variables || {}).reduce((acc, [key, value]) => ({
-      ...acc,
-      [key]: String(value)
-    }), {});
-
     return {
       activeThemeId: themeId,
       isDark: theme.isDark || false,
       theme,
       designTokens: theme.designTokens || {},
       componentTokens: theme.componentTokens || {},
-      primaryColor: theme.variables?.primary || '',
-      backgroundColor: theme.variables?.background || '',
-      textColor: theme.variables?.foreground || '',
-      variables
+      variables: theme.variables || {}
     };
   }),
-  
   setDesignTokens: (tokens) => set({ designTokens: tokens }),
   setComponentTokens: (tokens) => set({ componentTokens: tokens }),
   setEffects: (effects) => set({ effects }),

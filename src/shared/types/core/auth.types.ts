@@ -1,4 +1,3 @@
-
 import { BaseEntity } from './common.types';
 
 export const AUTH_STATUS = {
@@ -47,3 +46,4 @@ export interface UserProfile extends BaseEntity {
     [key: string]: any;
   };
 }
+

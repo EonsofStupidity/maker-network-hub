@@ -1,56 +1,44 @@
 
 import { useCallback } from 'react';
 import { useThemeStore } from '@/stores/theme.store';
-import { Theme, ComponentTokens } from '@/shared/types/theme.types';
 
 export const useThemeVariables = () => {
-  const variables = useThemeStore((state) => state.variables);
-  const componentTokens = useThemeStore((state) => state.componentTokens);
-  const theme = useThemeStore((state) => state.theme);
-  const setVariables = useThemeStore((state) => state.setVariables);
-  const setComponentTokens = useThemeStore((state) => state.setComponentTokens);
+  const store = useThemeStore();
 
   const getToken = useCallback((token: string): string => {
-    return variables[token] || '';
-  }, [variables]);
+    return store.variables[token] || '';
+  }, [store.variables]);
   
   const getComponentToken = useCallback((component: string, token: string): string => {
-    return componentTokens[component]?.[token] || variables[token] || '';
-  }, [componentTokens, variables]);
+    return store.componentTokens[component]?.[token] || store.variables[token] || '';
+  }, [store.componentTokens, store.variables]);
   
   const setToken = useCallback((token: string, value: string) => {
-    setVariables({ ...variables, [token]: value });
-  }, [variables, setVariables]);
+    store.setVariables({ ...store.variables, [token]: value });
+  }, [store]);
   
   const setComponentToken = useCallback((component: string, token: string, value: string) => {
-    const componentToken = componentTokens[component] || {};
-    const updatedTokens = {
-      ...componentTokens,
+    const componentToken = store.componentTokens[component] || {};
+    store.setComponentTokens({
+      ...store.componentTokens,
       [component]: {
         ...componentToken,
         [token]: value
       }
-    };
-    setComponentTokens(updatedTokens);
-  }, [componentTokens, setComponentTokens]);
-  
+    });
+  }, [store]);
+
   const getAllTokens = useCallback((): Record<string, string> => {
-    return variables;
-  }, [variables]);
-  
-  const getAllComponentTokens = useCallback((): ComponentTokens => {
-    return componentTokens;
-  }, [componentTokens]);
+    return store.variables;
+  }, [store.variables]);
 
   return {
-    theme,
-    variables,
-    componentTokens,
+    variables: store.variables || {},
+    componentTokens: store.componentTokens,
     getToken,
     getComponentToken,
     setToken,
     setComponentToken,
     getAllTokens,
-    getAllComponentTokens
   };
 };

@@ -1,4 +1,3 @@
-
 import { Toast, ToastActionElement, ToastProps } from "@/shared/ui/toast";
 import * as React from "react";
 
@@ -184,4 +183,19 @@ function useToast() {
   };
 }
 
+export type ToastVariant = 'default' | 'destructive' | 'success' | 'warning' | 'info';
+
+export interface ToastProps {
+  id: string;
+  title?: string;
+  description?: React.ReactNode;
+  action?: React.ReactNode;
+  variant?: ToastVariant;
+}
+
+export interface ToastActionElement {
+  altText: string;
+}
+
 export { useToast, toast };
+export type { ToastProps, ToastActionElement };
