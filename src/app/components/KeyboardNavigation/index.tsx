@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ScrollConfig {
@@ -18,13 +18,15 @@ interface KeyboardNavigationProps {
   };
 }
 
-export const KeyboardNavigation: React.FC<KeyboardNavigationProps> = ({ options = {} }) => {
+export const KeyboardNavigation = ({ options = {} }: KeyboardNavigationProps) => {
   const { toast } = useToast();
-  const mergedOptions = {
+  const [scrollAmount, setScrollAmount] = useState(options.scrollConfig?.scrollAmount ?? 100);
+  
+  const config = {
     enabled: options.enabled ?? true,
     showToasts: options.showToasts ?? false,
     scrollConfig: {
-      scrollAmount: options.scrollConfig?.scrollAmount ?? 100,
+      scrollAmount: scrollAmount,
       smooth: options.scrollConfig?.smooth ?? true,
       acceleration: options.scrollConfig?.acceleration ?? true,
       maxAcceleration: options.scrollConfig?.maxAcceleration ?? 500,
@@ -33,47 +35,40 @@ export const KeyboardNavigation: React.FC<KeyboardNavigationProps> = ({ options 
   };
 
   useEffect(() => {
-    if (!mergedOptions.enabled) return;
+    if (!config.enabled) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if in input fields
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName)) {
         return;
       }
 
       let direction: string | null = null;
       
-      // Determine the direction based on the key
       if (['ArrowUp', 'w', 'W'].includes(e.key)) {
         direction = 'up';
         window.scrollBy({
-          top: -mergedOptions.scrollConfig.scrollAmount,
-          behavior: mergedOptions.scrollConfig.smooth ? 'smooth' : 'auto'
+          top: -config.scrollConfig.scrollAmount,
+          behavior: config.scrollConfig.smooth ? 'smooth' : 'auto'
         });
       } else if (['ArrowDown', 's', 'S'].includes(e.key)) {
         direction = 'down';
         window.scrollBy({
-          top: mergedOptions.scrollConfig.scrollAmount,
-          behavior: mergedOptions.scrollConfig.smooth ? 'smooth' : 'auto'
+          top: config.scrollConfig.scrollAmount,
+          behavior: config.scrollConfig.smooth ? 'smooth' : 'auto'
         });
       }
       
-      // If it's a navigation key and toasts are enabled, show a toast
-      if (direction && mergedOptions.showToasts) {
+      if (direction && config.showToasts) {
         toast({
           title: `Scrolling ${direction}`,
-          description: "Use W/S or arrow keys to scroll",
-          duration: 2000,
+          description: "Use W/S or arrow keys to scroll"
         });
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [mergedOptions, toast]);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [config, toast]);
   
   return null;
 };

@@ -1,8 +1,26 @@
 
-import { Theme, ComponentTokens, DesignTokens } from './shared.types';
+export interface DesignTokens {
+  colors?: Record<string, string>;
+  typography?: any;
+  spacing?: Record<string, string>;
+  borders?: Record<string, string>;
+  shadows?: Record<string, string>;
+  radii?: Record<string, string>;
+  zIndices?: Record<string, string>;
+  breakpoints?: Record<string, string>;
+  transitions?: Record<string, string>;
+  animations?: Record<string, any>;
+  [key: string]: any;
+}
+
+export interface ComponentTokens {
+  [componentName: string]: Record<string, string>;
+}
+
+export { Theme } from './core/theme.types';
+export type { ThemeEffect, ThemeEffectType } from './core/theme.types';
 
 export interface ThemeState {
-  themes: Theme[];
   activeThemeId: string | null;
   isDark: boolean;
   primaryColor: string;
@@ -23,34 +41,5 @@ export interface ThemeState {
   setDesignTokens: (tokens: DesignTokens) => void;
   setComponentTokens: (tokens: ComponentTokens) => void;
   setEffects: (effects: ThemeEffect[]) => void;
-  setVariables: (vars: Record<string, string>) => void;
-}
-
-export interface ThemeEffect {
-  type: ThemeEffectType;
-  intensity: number;
-  enabled: boolean;
-  color?: string;
-}
-
-export enum ThemeEffectType {
-  NONE = 'none',
-  CYBER = 'cyber',
-  NEON = 'neon',
-  GLITCH = 'glitch',
-  BLUR = 'blur',
-  GRADIENT = 'gradient',
-  PULSE = 'pulse',
-  PARTICLE = 'particle',
-  MORPH = 'morph'
-}
-
-// Re-export needed type
-export type { Theme };
-export interface ThemeComponent {
-  id?: string;
-  name?: string;
-  component_name?: string;
-  styles?: Record<string, string>;
-  tokens?: Record<string, string>;
+  setVariables: (variables: Record<string, string>) => void;
 }
