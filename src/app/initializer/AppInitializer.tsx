@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { useRBACStore } from '@/rbac/rbac.store';
-import { AUTH_STATUS, AuthStatus } from '@/shared/types/core/auth.types';
+import { AUTH_STATUS } from '@/shared/types/core/auth.types';
 import { ROLES, UserRole } from '@/shared/types/core/rbac.types';
 import { useLogger } from '@/logging/hooks/use-logger';
 import { LogCategory } from '@/shared/types/core/logging.types';

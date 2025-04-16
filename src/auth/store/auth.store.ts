@@ -1,8 +1,7 @@
 import { create } from 'zustand';
-import { UserProfile, AuthStatusEnum, AuthStatus } from '@/shared/types/core/auth.types';
+import { UserProfile, AUTH_STATUS, AuthStatus } from '@/shared/types/core/auth.types';
 import { mapUserToProfile } from '@/auth/utils/userMapper';
 import { supabase } from '@/integrations/supabase/client';
-import { AUTH_STATUS } from '@/shared/types/core/auth.types';
 
 export interface AuthState {
   user: UserProfile | null;
@@ -28,7 +27,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
   isAuthenticated: false,
-  status: AuthStatusEnum.LOADING,
+  status: AUTH_STATUS.LOADING,
   error: null,
   initialized: false,
   
@@ -36,7 +35,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     user, 
     profile: user,
     isAuthenticated: !!user,
-    status: user ? AuthStatusEnum.AUTHENTICATED : AuthStatusEnum.GUEST
+    status: user ? AUTH_STATUS.AUTHENTICATED : AUTH_STATUS.GUEST
   }),
   
   setAuthStatus: (status) => set({ status }),
@@ -45,7 +44,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   
   login: async (email, password) => {
     try {
-      set({ status: AuthStatusEnum.LOADING });
+      set({ status: AUTH_STATUS.LOADING });
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -60,13 +59,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user: userProfile,
           profile: userProfile,
           isAuthenticated: true,
-          status: AuthStatusEnum.AUTHENTICATED
+          status: AUTH_STATUS.AUTHENTICATED
         });
       }
     } catch (error) {
       set({ 
         error: error instanceof Error ? error : new Error('Unknown error during login'),
-        status: AuthStatusEnum.ERROR
+        status: AUTH_STATUS.ERROR
       });
       throw error;
     }
@@ -74,7 +73,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   
   signup: async (email, password) => {
     try {
-      set({ status: AuthStatusEnum.LOADING });
+      set({ status: AUTH_STATUS.LOADING });
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -89,13 +88,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user: userProfile,
           profile: userProfile,
           isAuthenticated: true,
-          status: AuthStatusEnum.AUTHENTICATED
+          status: AUTH_STATUS.AUTHENTICATED
         });
       }
     } catch (error) {
       set({ 
         error: error instanceof Error ? error : new Error('Unknown error during signup'),
-        status: AuthStatusEnum.ERROR
+        status: AUTH_STATUS.ERROR
       });
       throw error;
     }
@@ -103,17 +102,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   
   resetPassword: async (email) => {
     try {
-      set({ status: AuthStatusEnum.LOADING });
+      set({ status: AUTH_STATUS.LOADING });
       
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       
       if (error) throw error;
       
-      set({ status: AuthStatusEnum.IDLE });
+      set({ status: AUTH_STATUS.IDLE });
     } catch (error) {
       set({ 
         error: error instanceof Error ? error : new Error('Unknown error during password reset'),
-        status: AuthStatusEnum.ERROR
+        status: AUTH_STATUS.ERROR
       });
       throw error;
     }
@@ -121,7 +120,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   
   logout: async () => {
     try {
-      set({ status: AuthStatusEnum.LOADING });
+      set({ status: AUTH_STATUS.LOADING });
       
       const { error } = await supabase.auth.signOut();
       
@@ -131,12 +130,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: null, 
         profile: null,
         isAuthenticated: false,
-        status: AuthStatusEnum.GUEST
+        status: AUTH_STATUS.GUEST
       });
     } catch (error) {
       set({ 
         error: error instanceof Error ? error : new Error('Unknown error during logout'),
-        status: AuthStatusEnum.ERROR
+        status: AUTH_STATUS.ERROR
       });
       throw error;
     }
@@ -144,7 +143,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   
   initialize: async () => {
     try {
-      set({ status: AuthStatusEnum.LOADING });
+      set({ status: AUTH_STATUS.LOADING });
       
       const { data, error } = await supabase.auth.getSession();
       
@@ -156,7 +155,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user: userProfile,
           profile: userProfile,
           isAuthenticated: true,
-          status: AuthStatusEnum.AUTHENTICATED,
+          status: AUTH_STATUS.AUTHENTICATED,
           initialized: true
         });
       } else {
@@ -164,14 +163,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user: null,
           profile: null,
           isAuthenticated: false,
-          status: AuthStatusEnum.GUEST,
+          status: AUTH_STATUS.GUEST,
           initialized: true
         });
       }
     } catch (error) {
       set({ 
         error: error instanceof Error ? error : new Error('Unknown error during initialization'),
-        status: AuthStatusEnum.ERROR,
+        status: AUTH_STATUS.ERROR,
         initialized: true
       });
     }

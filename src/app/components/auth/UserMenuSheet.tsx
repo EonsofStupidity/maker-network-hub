@@ -1,6 +1,6 @@
 
 import React from "react";
-import { UserRole } from "@/shared/types/shared.types";
+import { UserRole } from "@/shared/types/core/rbac.types";
 import {
   Sheet,
   SheetContent,

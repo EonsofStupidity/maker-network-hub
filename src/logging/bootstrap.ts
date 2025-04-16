@@ -1,58 +1,41 @@
-
 import { LogLevel, LogCategory } from '@/shared/types/core/logging.types';
 import { logger } from './logger.service';
-import { logBridge } from './bridge';
 
 /**
  * Initialize the logging system
- * This ensures all log transports are properly configured
- * and the logger is ready to receive log events
  */
-export function initializeLogging(): void {
-  console.log('Initializing logging system');
+export function initializeLogging() {
+  // Here we assume the logger service has a log method instead of info
+  logger.log(LogLevel.INFO, LogCategory.SYSTEM, 'Logging system initialized');
   
-  // Set default log level based on environment
-  const isDevelopment = import.meta.env.DEV;
-  const defaultLogLevel = isDevelopment ? LogLevel.DEBUG : LogLevel.INFO;
-  
-  // Configure logger service
-  logger.setLevel(defaultLogLevel);
-  logger.enableCategories(Object.values(LogCategory));
-  
-  // Configure log bridge
-  logBridge.setMinLevel(defaultLogLevel);
-  logBridge.addTransport({
-    log: (entry) => {
-      // Route log entries to the appropriate console method
-      switch (entry.level) {
-        case LogLevel.DEBUG:
-          console.debug(`[${entry.category}]`, entry.message, entry.details);
-          break;
-        case LogLevel.INFO:
-          console.info(`[${entry.category}]`, entry.message, entry.details);
-          break;
-        case LogLevel.WARN:
-          console.warn(`[${entry.category}]`, entry.message, entry.details);
-          break;
-        case LogLevel.ERROR:
-        case LogLevel.CRITICAL:
-        case LogLevel.FATAL:
-          console.error(`[${entry.category}]`, entry.message, entry.details);
-          break;
-        default:
-          console.log(`[${entry.category}]`, entry.message, entry.details);
+  // Set up any global error handlers
+  setupGlobalErrorHandlers();
+}
+
+/**
+ * Set up global error handlers
+ */
+function setupGlobalErrorHandlers() {
+  // Handle unhandled promise rejections
+  window.addEventListener('unhandledrejection', (event) => {
+    logger.log(LogLevel.ERROR, LogCategory.ERROR, 'Unhandled promise rejection', {
+      details: {
+        reason: event.reason?.message || String(event.reason),
+        stack: event.reason?.stack
       }
-    },
-    setMinLevel: (level) => {
-      // No-op for console transport
-    }
+    });
   });
   
-  // Log initialization success
-  logger.info(LogCategory.SYSTEM, 'Logging system initialized', {
-    level: LogLevel[defaultLogLevel],
-    isDevelopment
+  // Handle uncaught exceptions
+  window.addEventListener('error', (event) => {
+    logger.log(LogLevel.ERROR, LogCategory.ERROR, 'Uncaught error', {
+      details: {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        stack: event.error?.stack
+      }
+    });
   });
-  
-  console.log('Logging system initialized');
 }

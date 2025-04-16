@@ -1,28 +1,43 @@
 
 import { UserProfile } from '@/shared/types/core/auth.types';
+import { User } from '@supabase/supabase-js';
+import { ROLES, UserRole } from '@/shared/types/core/rbac.types';
 
-export function mapUserToProfile(userData: any): UserProfile {
-  if (!userData) {
-    throw new Error('No user data provided');
+/**
+ * Maps Supabase user to our internal UserProfile format
+ */
+export function mapUserToProfile(user: User): UserProfile {
+  // Extract roles from app_metadata if available
+  const appRoles = user.app_metadata?.roles || [];
+  
+  // Validate roles against our system roles
+  const validRoles = appRoles
+    .filter(role => 
+      role === ROLES.GUEST ||
+      role === ROLES.FOLLOWER ||
+      role === ROLES.MAKER ||
+      role === ROLES.MOD ||
+      role === ROLES.ADMIN ||
+      role === ROLES.SUPER_ADMIN
+    ) as UserRole[];
+  
+  // Always include GUEST role as a fallback
+  if (validRoles.length === 0) {
+    validRoles.push(ROLES.GUEST);
   }
-
-  // Handle Supabase user data structure
-  if (userData.user) {
-    userData = userData.user;
-  }
-
+  
   return {
-    id: userData.id || '',
-    email: userData.email || '',
-    displayName: userData.user_metadata?.full_name || userData.email?.split('@')[0] || '',
-    avatarUrl: userData.user_metadata?.avatar_url || '',
-    name: userData.user_metadata?.full_name || '',
-    createdAt: userData.created_at || new Date().toISOString(),
-    updatedAt: userData.updated_at || new Date().toISOString(),
-    lastSignInAt: userData.last_sign_in_at || new Date().toISOString(),
-    bio: userData.user_metadata?.bio || '',
-    userMetadata: userData.user_metadata || {},
-    appMetadata: userData.app_metadata || {},
-    roles: userData.app_metadata?.roles || []
+    id: user.id,
+    email: user.email || '',
+    displayName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+    avatarUrl: user.user_metadata?.avatar_url,
+    createdAt: user.created_at,
+    updatedAt: user.updated_at,
+    lastSignInAt: user.last_sign_in_at,
+    bio: user.user_metadata?.bio,
+    name: user.user_metadata?.full_name,
+    userMetadata: user.user_metadata,
+    appMetadata: user.app_metadata,
+    roles: validRoles
   };
 }

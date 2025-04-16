@@ -1,5 +1,7 @@
+
 import { create } from 'zustand';
-import { UserRole, Permission, ROLES, LogCategory } from '@/shared/types';
+import { UserRole, ROLES, Permission } from '@/shared/types/core/rbac.types';
+import { LogCategory } from '@/shared/types/core/logging.types';
 import { useLogger } from '@/hooks/use-logger';
 
 /**
@@ -7,15 +9,15 @@ import { useLogger } from '@/hooks/use-logger';
  */
 interface RBACState {
   roles: UserRole[];
-  permissions: Record<Permission, boolean>;
+  permissions: Record<string, boolean>;
   
   // Role methods
   hasRole: (check: UserRole | UserRole[]) => boolean;
   setRoles: (roles: UserRole[]) => void;
   
   // Permission methods
-  can: (permission: Permission) => boolean;
-  setPermissions: (permissions: Record<Permission, boolean>) => void;
+  can: (permission: string) => boolean;
+  setPermissions: (permissions: Record<string, boolean>) => void;
   
   // Utility methods
   clear: () => void;
@@ -38,19 +40,6 @@ export const useRbacStore = create<RBACState>((set, get) => {
       'access_admin': false,
       'manage_api_keys': false,
       'manage_users': false,
-      'manage_roles': false,
-      'manage_permissions': false,
-      'view_analytics': false,
-      'admin:view': false,
-      'admin:edit': false,
-      'admin:delete': false,
-      'user:view': false,
-      'user:edit': false,
-      'user:delete': false,
-      'content:view': false,
-      'content:edit': false,
-      'content:delete': false,
-      'settings:view': false,
       'settings:edit': false
     },
     
@@ -74,7 +63,7 @@ export const useRbacStore = create<RBACState>((set, get) => {
     /**
      * Check if user has the specified permission
      */
-    can: (permission: Permission) => {
+    can: (permission: string) => {
       const { permissions } = get();
       return permissions[permission] === true;
     },
@@ -82,7 +71,7 @@ export const useRbacStore = create<RBACState>((set, get) => {
     /**
      * Set user permissions
      */
-    setPermissions: (permissions: Record<Permission, boolean>) => {
+    setPermissions: (permissions: Record<string, boolean>) => {
       set({ permissions });
       logger.info('Permissions updated', { details: { permissions } });
     },
@@ -91,7 +80,7 @@ export const useRbacStore = create<RBACState>((set, get) => {
      * Clear RBAC state
      */
     clear: () => {
-      const defaultPermissions: Record<Permission, boolean> = {
+      const defaultPermissions: Record<string, boolean> = {
         'create_project': false,
         'edit_project': false,
         'delete_project': false,
@@ -99,19 +88,6 @@ export const useRbacStore = create<RBACState>((set, get) => {
         'access_admin': false,
         'manage_api_keys': false,
         'manage_users': false,
-        'manage_roles': false,
-        'manage_permissions': false,
-        'view_analytics': false,
-        'admin:view': false,
-        'admin:edit': false,
-        'admin:delete': false,
-        'user:view': false,
-        'user:edit': false,
-        'user:delete': false,
-        'content:view': false,
-        'content:edit': false,
-        'content:delete': false,
-        'settings:view': false,
         'settings:edit': false
       };
       
@@ -119,4 +95,4 @@ export const useRbacStore = create<RBACState>((set, get) => {
       logger.info('RBAC state cleared');
     }
   };
-}); 
+});

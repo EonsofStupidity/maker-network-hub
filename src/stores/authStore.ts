@@ -1,8 +1,9 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { UserProfile, AuthStatus, AUTH_STATUS } from '@/shared/types';
+import { UserProfile, AUTH_STATUS } from '@/shared/types/core/auth.types';
 import { useLogger } from '@/hooks/use-logger';
-import { LogCategory } from '@/shared/types/shared.types';
+import { LogCategory } from '@/shared/types/core/logging.types';
 
 /**
  * Auth error types for better error handling
@@ -32,8 +33,7 @@ function isUserProfile(obj: unknown): obj is UserProfile {
   return (
     typeof profile.id === 'string' &&
     typeof profile.email === 'string' &&
-    typeof profile.created_at === 'string' &&
-    typeof profile.updated_at === 'string'
+    !!profile.createdAt
   );
 }
 
@@ -42,7 +42,7 @@ function isUserProfile(obj: unknown): obj is UserProfile {
  */
 interface AuthState {
   user: UserProfile | null;
-  status: AuthStatus;
+  status: typeof AUTH_STATUS[keyof typeof AUTH_STATUS];
   error: AuthError | null;
   initialized: boolean;
   lastActivity: number;
@@ -90,7 +90,7 @@ export const useAuthStore = create<AuthState>()(
           
           if (!isValid && status === AUTH_STATUS.AUTHENTICATED) {
             set({ 
-              status: AUTH_STATUS.UNAUTHENTICATED,
+              status: AUTH_STATUS.GUEST,
               error: new AuthError('Session expired', AUTH_ERROR_CODES.SESSION_EXPIRED)
             });
             logger.warn('Session expired');
@@ -116,8 +116,8 @@ export const useAuthStore = create<AuthState>()(
               id: '1',
               email,
               name: 'Test User',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
             };
             
             // Validate response
@@ -159,7 +159,7 @@ export const useAuthStore = create<AuthState>()(
             // TODO: Implement actual sign out logic
             set({ 
               user: null, 
-              status: AUTH_STATUS.UNAUTHENTICATED,
+              status: AUTH_STATUS.GUEST,
               lastActivity: 0
             });
             logger.info('User signed out successfully');
@@ -358,4 +358,4 @@ export const useAuthStore = create<AuthState>()(
       })
     }
   )
-); 
+);
