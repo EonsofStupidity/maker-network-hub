@@ -8,7 +8,6 @@ import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { AdminLayout } from "@/admin/panels/layout/AdminLayout";
 import { AdminDashboard } from "@/admin/panels/AdminDashboard";
 import { WithRoleProtection } from "@/auth/components/WithRoleProtection";
-import { ROLES } from "@/shared/types/core/rbac.types";
 
 export const PublicRoutes = () => {
   const { isAuthenticated } = useAuth();
@@ -32,7 +31,7 @@ export const PublicRoutes = () => {
 
       {/* Protected admin routes */}
       <Route path="/admin" element={
-        <WithRoleProtection allowedRoles={[ROLES.ADMIN, ROLES.SUPER_ADMIN]}>
+        <WithRoleProtection allowedRoles={['admin', 'super_admin']}>
           <AdminLayout><AdminDashboard /></AdminLayout>
         </WithRoleProtection>
       } />
