@@ -35,17 +35,18 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
         try {
           const { data } = await supabase.auth.getSession();
           
-          if (data?.session?.user) {
+          if (data?.session) {
+            const sessionUser = data.session.user;
             logBridge.info(LogCategory.AUTH, 'User session found', { 
-              userId: data.session.user.id,
-              email: data.session.user.email
+              userId: sessionUser?.id || 'unknown',
+              email: sessionUser?.email || 'unknown'
             });
             
             // Map Supabase roles to our app roles
             let roles = [ROLES.GUEST];
             
-            if (data.session.user.app_metadata?.roles) {
-              const appRoles = data.session.user.app_metadata.roles;
+            if (sessionUser?.app_metadata?.roles) {
+              const appRoles = sessionUser.app_metadata.roles;
               if (Array.isArray(appRoles) && appRoles.length > 0) {
                 // Map and validate roles
                 roles = appRoles.filter(role => 

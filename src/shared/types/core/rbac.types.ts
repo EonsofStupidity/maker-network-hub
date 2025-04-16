@@ -22,7 +22,7 @@ export type Permission =
 
 export type AdminSection = 'dashboard' | 'users' | 'content' | 'settings' | 'system';
 
-// Section permissions mapping with proper typing
+// Section permissions mapping with proper Record typing
 export const SECTION_PERMISSIONS: Record<AdminSection, UserRole[]> = {
   dashboard: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
   users: [ROLES.ADMIN, ROLES.SUPER_ADMIN],

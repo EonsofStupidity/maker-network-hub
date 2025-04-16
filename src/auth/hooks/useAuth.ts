@@ -8,7 +8,7 @@ export function useAuth() {
     user, 
     isAuthenticated, 
     login, 
-    logout, 
+    logout: storeLogout, 
     signup, 
     resetPassword,
     status,
@@ -25,7 +25,7 @@ export function useAuth() {
   
   // Rename to conform to the interface expected in the components
   const signIn = login;
-  const signOut = logout;
+  const signOut = storeLogout;
   const signUp = signup;
   
   return {
@@ -38,6 +38,7 @@ export function useAuth() {
     signOut,
     signUp,
     resetPassword,
-    error
+    error,
+    logout: storeLogout // Add alias for components that expect logout method
   };
 }

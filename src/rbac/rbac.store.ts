@@ -8,6 +8,7 @@ interface RBACState {
   userRoles: UserRole[];
   permissions: string[];
   setRoles: (roles: UserRole[]) => void;
+  setUserRoles: (roles: UserRole[]) => void; // Added alias for compatibility
   addRole: (role: UserRole) => void;
   removeRole: (role: UserRole) => void;
   clearRoles: () => void;
@@ -20,6 +21,15 @@ export const useRBACStore = create<RBACState>((set, get) => ({
   permissions: [],
   
   setRoles: (roles) => {
+    logBridge.info(LogCategory.RBAC, 'User roles set', { 
+      details: { roles }
+    });
+    
+    set({ userRoles: roles });
+  },
+
+  // Alias for setRoles for components that expect this name
+  setUserRoles: (roles) => {
     logBridge.info(LogCategory.RBAC, 'User roles set', { 
       details: { roles }
     });

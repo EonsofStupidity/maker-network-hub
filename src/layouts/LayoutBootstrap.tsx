@@ -8,7 +8,7 @@ import { Layout } from '@/shared/types/core/layout.types';
 import { useRbac } from '@/hooks/use-rbac';
 import { LayoutRenderer } from '@/admin/panels/layout/LayoutRenderer';
 
-interface LayoutBootstrapProps {
+export interface LayoutBootstrapProps {
   children: React.ReactNode;
   type?: string;
   scope?: string;
@@ -41,7 +41,7 @@ export function LayoutBootstrap({
           .maybeSingle();
         
         if (error) {
-          throw new Error(`Failed to load layout: ${error.message}`);
+          throw new Error(`Failed to load layout: ${error.message || 'Unknown error'}`);
         }
         
         if (data) {
@@ -93,7 +93,7 @@ export function LayoutBootstrap({
       {children}
       
       {/* Admin overlay button for layout editing if user has admin access */}
-      {hasAdminAccess && (
+      {hasAdminAccess && hasAdminAccess() && (
         <div className="fixed bottom-4 right-4 z-50">
           <button 
             className="bg-primary text-white p-2 rounded-full shadow-lg"

@@ -1,49 +1,62 @@
 
-import { useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { LogCategory } from '@/shared/types/core/logging.types';
+import { logBridge } from '@/logging/bridge';
 
-interface ServiceResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
+interface LayoutSkeleton {
+  id: string;
+  name: string;
+  type: string;
+  scope: string;
+  layout_json: any;
+  is_active: boolean;
+  is_locked: boolean;
 }
 
-interface LayoutSkeletonService {
-  getById: (id: string) => Promise<ServiceResponse<any>>;
-}
-
-// Layout skeleton service with basic implementation
-const layoutSkeletonService: LayoutSkeletonService = {
-  getById: async (id: string): Promise<ServiceResponse<any>> => {
-    try {
-      const { data, error } = await supabase
-        .from('layout_skeletons')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
+export function useLayoutSkeleton(layoutId?: string) {
+  const [skeleton, setSkeleton] = useState<LayoutSkeleton | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  
+  useEffect(() => {
+    async function loadLayoutSkeleton() {
+      if (!layoutId) {
+        setIsLoading(false);
+        return;
+      }
       
-      if (error) return { success: false, error: error.message };
-      return { success: true, data };
-    } catch (err) {
-      return { 
-        success: false, 
-        error: err instanceof Error ? err.message : 'Unknown error fetching layout'
-      };
+      try {
+        setIsLoading(true);
+        
+        const { data, error } = await supabase
+          .from('layout_skeletons')
+          .select('*')
+          .eq('id', layoutId)
+          .maybeSingle();
+        
+        if (error) {
+          throw new Error(error.message || 'Failed to load layout');
+        }
+        
+        if (data) {
+          setSkeleton(data as LayoutSkeleton);
+        } else {
+          setSkeleton(null);
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        setError(new Error(errorMessage));
+        logBridge.error(LogCategory.ADMIN, 'Failed to load layout skeleton', {
+          details: { layoutId, error: errorMessage }
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }
-};
-
-/**
- * Hook for fetching and managing layout skeletons
- */
-export function useLayoutSkeleton() {
-  const getById = useCallback(async (id: string) => {
-    const response = await layoutSkeletonService.getById(id);
-    if (!response.success || !response.data) return null;
-    return response.data;
-  }, []);
-
-  return {
-    getById
-  };
+    
+    loadLayoutSkeleton();
+  }, [layoutId]);
+  
+  return { skeleton, isLoading, error };
 }

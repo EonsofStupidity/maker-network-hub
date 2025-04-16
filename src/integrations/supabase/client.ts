@@ -13,11 +13,27 @@ export const supabase = {
         limit: (limit: number) => ({
           maybeSingle: () => Promise.resolve({ data: null, error: null }),
           single: () => Promise.resolve({ data: null, error: null }),
+          order: (column: string, { ascending }: { ascending: boolean }) => ({
+            data: [],
+            error: null,
+          }),
+        }),
+        order: (column: string, { ascending }: { ascending: boolean }) => ({
+          data: [],
+          error: null,
         }),
         data: null,
         error: null,
       }),
       order: (column: string, { ascending }: { ascending: boolean }) => ({
+        limit: (limit: number) => ({
+          data: [],
+          error: null,
+        }),
+        data: [],
+        error: null,
+      }),
+      limit: (limit: number) => ({
         data: [],
         error: null,
       }),
@@ -37,9 +53,14 @@ export const supabase = {
     delete: () => ({
       eq: (column: string, value: any) => Promise.resolve({ data: null, error: null }),
     }),
+    upsert: (data: any) => ({
+      select: (columns: string) => ({
+        single: () => Promise.resolve({ data: {}, error: null }),
+      }),
+    }),
   }),
   auth: {
-    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    getSession: () => Promise.resolve({ data: { session: { user: null } }, error: null }),
     getUser: () => Promise.resolve({ data: { user: null }, error: null }),
     signOut: () => Promise.resolve({ error: null }),
     onAuthStateChange: (callback: any) => ({
@@ -50,9 +71,12 @@ export const supabase = {
       },
     }),
     signInWithPassword: ({ email, password }: { email: string, password: string }) => 
-      Promise.resolve({ data: { user: null, session: null }, error: null }),
+      Promise.resolve({ data: { user: { id: 'mock-user-id' }, session: { user: { id: 'mock-user-id' } } }, error: null }),
     signUp: ({ email, password, options }: { email: string, password: string, options?: any }) => 
-      Promise.resolve({ data: { user: null, session: null }, error: null }),
+      Promise.resolve({ data: { user: { id: 'mock-user-id' }, session: { user: { id: 'mock-user-id' } } }, error: null }),
+    resetPasswordForEmail: (email: string) => Promise.resolve({ data: {}, error: null }),
+    updateUser: (updates: any) => Promise.resolve({ data: { user: { id: 'mock-user-id' } }, error: null }),
+    signInWithOAuth: ({ provider }: { provider: string }) => Promise.resolve({ data: {}, error: null }),
   },
   storage: {
     from: (bucket: string) => ({

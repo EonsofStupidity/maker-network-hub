@@ -6,13 +6,14 @@ import { LogCategory } from '@/shared/types/core/logging.types';
 import { useAuth } from '@/auth/hooks/useAuth';
 import { useRbac } from '@/hooks/use-rbac';
 import { LoadingState } from '@/shared/ui/loading-state';
+import { UserRole } from '@/shared/types/core/rbac.types';
 
 export interface PageProps {
   children: React.ReactNode;
   title?: string;
   description?: string;
   requiresAuth?: boolean;
-  requiresRole?: string | string[];
+  requiresRole?: UserRole | UserRole[];
   layoutType?: string;
   layoutScope?: string;
   isLoading?: boolean;
@@ -66,8 +67,8 @@ export function Page({
     );
   }
   
-  // Check role requirement
-  if (requiresRole && !hasRole(requiresRole)) {
+  // Check role requirement - cast to proper type to fix TS error
+  if (requiresRole && !hasRole(requiresRole as UserRole | UserRole[])) {
     logBridge.warn(LogCategory.RBAC, 'Insufficient permissions for page access', {
       details: { 
         path: window.location.pathname,
