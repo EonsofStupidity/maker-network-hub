@@ -1,83 +1,78 @@
 
 import { create } from 'zustand';
-import { UserRole, ROLES, DEFAULT_PERMISSIONS } from '@/shared/types/core/rbac.types';
-import { LogCategory, LogLevel } from '@/shared/types/core/logging.types';
-import { logger } from '@/logging/logger.service';
+import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
+import { logBridge } from '@/logging/bridge';
+import { LogCategory } from '@/shared/types/core/logging.types';
 
-// Define RBAC store state
 interface RBACState {
   userRoles: UserRole[];
   permissions: string[];
-  isLoading: boolean;
-  error: string | null;
-  isInitialized: boolean;
-  
-  // Actions
-  setUserRoles: (roles: UserRole[]) => void;
-  clearUserRoles: () => void;
-  hasRole: (role: UserRole | UserRole[]) => boolean;
-  hasPermission: (permission: string) => boolean;
+  setRoles: (roles: UserRole[]) => void;
+  addRole: (role: UserRole) => void;
+  removeRole: (role: UserRole) => void;
+  clearRoles: () => void;
   setPermissions: (permissions: string[]) => void;
-  clearPermissions: () => void;
+  hasPermission: (permission: string) => boolean;
 }
 
-// Create the RBAC store
 export const useRBACStore = create<RBACState>((set, get) => ({
-  userRoles: [],
+  userRoles: [ROLES.GUEST],
   permissions: [],
-  isLoading: false,
-  error: null,
-  isInitialized: false,
   
-  // Set user roles
-  setUserRoles: (roles: UserRole[]) => {
-    const permissions = roles.flatMap(role => DEFAULT_PERMISSIONS[role] || []);
-    set({ userRoles: roles, permissions, isInitialized: true });
-    
-    logger.log(LogLevel.INFO, LogCategory.RBAC, "User roles updated", {
-      details: { roles, permissionsCount: permissions.length }
+  setRoles: (roles) => {
+    logBridge.info(LogCategory.RBAC, 'User roles set', { 
+      details: { roles }
     });
+    
+    set({ userRoles: roles });
   },
   
-  // Clear user roles
-  clearUserRoles: () => {
-    set({ userRoles: [], permissions: [], isInitialized: true });
-    logger.log(LogLevel.INFO, LogCategory.RBAC, "User roles cleared");
-  },
-  
-  // Check if user has a role
-  hasRole: (roleOrRoles) => {
+  addRole: (role) => {
     const { userRoles } = get();
     
-    // Super admin has all roles
-    if (userRoles.includes(ROLES.SUPER_ADMIN)) return true;
-    
-    if (Array.isArray(roleOrRoles)) {
-      return roleOrRoles.some(role => userRoles.includes(role));
+    if (!userRoles.includes(role)) {
+      logBridge.info(LogCategory.RBAC, 'Role added to user', { 
+        details: { role }
+      });
+      
+      set({ userRoles: [...userRoles, role] });
     }
+  },
+  
+  removeRole: (role) => {
+    const { userRoles } = get();
     
-    return userRoles.includes(roleOrRoles);
+    if (userRoles.includes(role)) {
+      logBridge.info(LogCategory.RBAC, 'Role removed from user', { 
+        details: { role }
+      });
+      
+      set({ userRoles: userRoles.filter(r => r !== role) });
+    }
   },
   
-  // Check if user has a permission
-  hasPermission: (permission: string) => {
-    const { permissions } = get();
-    return permissions.includes('*') || permissions.includes(permission);
+  clearRoles: () => {
+    logBridge.info(LogCategory.RBAC, 'User roles cleared');
+    set({ userRoles: [ROLES.GUEST] });
   },
   
-  // Set permissions directly
-  setPermissions: (permissions: string[]) => {
-    set({ permissions });
-    logger.log(LogLevel.INFO, LogCategory.RBAC, "Permissions updated", {
+  setPermissions: (permissions) => {
+    logBridge.info(LogCategory.RBAC, 'User permissions set', { 
       details: { permissionsCount: permissions.length }
     });
+    
+    set({ permissions });
   },
   
-  // Clear permissions
-  clearPermissions: () => {
-    set({ permissions: [] });
-    logger.log(LogLevel.INFO, LogCategory.RBAC, "Permissions cleared");
+  hasPermission: (permission) => {
+    const { permissions, userRoles } = get();
+    
+    // Super admin has all permissions
+    if (userRoles.includes(ROLES.SUPER_ADMIN)) {
+      return true;
+    }
+    
+    // Check if the user has this specific permission
+    return permissions.includes(permission);
   }
 }));
-
-export default useRBACStore;

@@ -145,3 +145,6 @@ export function TableLoader({
     </div>
   );
 }
+
+// This will replace both LoadingStates and LoadingState components
+export { LoadingState as LoadingStates };

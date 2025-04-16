@@ -8,16 +8,8 @@ import {
   LogFilter, 
   LogEvent, 
   LogDetails 
-} from '@/shared/types/shared.types';
-import { logger } from './logger.service';
-
-/**
- * Interface for log transports
- */
-export interface LogTransport {
-  log: (entry: LogEntry) => void;
-  setMinLevel: (level: LogLevel) => void;
-}
+} from '@/shared/types/core/logging.types';
+import { logger } from './logger';
 
 /**
  * LogBridge provides a unified interface for application logging
@@ -25,8 +17,6 @@ export interface LogTransport {
  */
 export class LogBridge {
   private static instance: LogBridge;
-  private minLevel: LogLevel = LogLevel.INFO;
-  private transports: LogTransport[] = [];
   private subscribers: ((event: LogEvent) => void)[] = [];
 
   private constructor() {
@@ -44,36 +34,10 @@ export class LogBridge {
   }
 
   /**
-   * Add a log transport
-   */
-  public addTransport(transport: LogTransport): void {
-    this.transports.push(transport);
-  }
-
-  /**
-   * Remove a log transport
-   */
-  public removeTransport(transportToRemove: LogTransport): void {
-    this.transports = this.transports.filter(transport => transport !== transportToRemove);
-  }
-
-  /**
    * Set minimum log level
    */
   public setMinLevel(level: LogLevel): void {
-    this.minLevel = level;
-    
-    // Also update all transports
-    this.transports.forEach(transport => {
-      transport.setMinLevel(level);
-    });
-  }
-
-  /**
-   * Get current minimum log level
-   */
-  public getMinLevel(): LogLevel {
-    return this.minLevel;
+    logger.setLevel(level);
   }
 
   /**
@@ -106,11 +70,6 @@ export class LogBridge {
    * Log a message
    */
   public log(level: LogLevel, category: LogCategoryType, message: string, details?: LogDetails): void {
-    // Don't log if level is below minimum
-    if (level === LogLevel.SILENT || this.shouldSkipLog(level)) {
-      return;
-    }
-    
     const entry: LogEntry = {
       id: uuidv4(),
       level,
@@ -121,24 +80,11 @@ export class LogBridge {
       source: details?.source
     };
     
-    // Send to all transports
-    this.transports.forEach(transport => {
-      try {
-        transport.log(entry);
-      } catch (error) {
-        console.error('Error in log transport', error);
-      }
-    });
+    // Use our Logger implementation
+    logger.log(level, category, message, details);
     
     // Notify subscribers
     this.notify(entry);
-  }
-  
-  /**
-   * Determine if a log should be skipped based on level
-   */
-  private shouldSkipLog(level: LogLevel): boolean {
-    return level < this.minLevel;
   }
   
   /**
@@ -173,14 +119,20 @@ export class LogBridge {
    * Query logs with filter
    */
   public query(filter: LogFilter = {}): LogEntry[] {
-    return logger.getEntries(filter);
+    return logger.getEntries({
+      level: filter.level,
+      category: filter.category,
+      search: filter.search,
+      from: filter.from ? (filter.from instanceof Date ? filter.from.getTime() : filter.from) : undefined,
+      to: filter.to ? (filter.to instanceof Date ? filter.to.getTime() : filter.to) : undefined
+    });
   }
   
   /**
    * Clear all logs
    */
   public clearLogs(): void {
-    logger.clearLogs();
+    logger.clearEntries();
   }
 }
 

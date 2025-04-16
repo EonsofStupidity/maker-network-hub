@@ -1,140 +1,97 @@
 
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { cn } from '@/shared/utils/cn';
-import { useAuthStore } from '@/auth/store/auth.store';
-import { RBACBridge } from '@/rbac/bridge';
-import { Shield, LogOut, User } from 'lucide-react';
-import { Button } from '@/shared/ui/button';
-import { useToast } from '@/shared/hooks/use-toast';
-import { LogCategory, LogLevel } from '@/shared/types/shared.types';
-import { logger } from '@/logging/logger.service';
+import React from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/auth/hooks/useAuth";
+import { Button } from "@/shared/ui/button";
+import { useRbac } from "@/hooks/use-rbac";
+import { ROLES } from "@/shared/types/core/rbac.types";
 
-export default function MainNav() {
-  const { isAuthenticated, user, logout, status } = useAuthStore();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const hasAdminAccess = RBACBridge.hasAdminAccess();
-  
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast({
-        title: "Logged out successfully",
-        description: "You have been logged out of your account.",
-      });
-      navigate('/');
-    } catch (error) {
-      logger.log(LogLevel.ERROR, LogCategory.AUTH, 'Logout failed', { 
-        error: error instanceof Error ? error.message : String(error)
-      });
-      toast({
-        variant: "destructive",
-        title: "Logout failed",
-        description: "There was a problem logging you out.",
-      });
-    }
-  };
+export const MainNav: React.FC = () => {
+  const { isAuthenticated, user, logout } = useAuth();
+  const { hasRole } = useRbac();
+  const isAdmin = hasRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-black/60 border-b border-primary/30 backdrop-blur-md">
-      <div className="container mx-auto px-4 flex items-center justify-between h-16">
-        <div className="flex items-center gap-6">
-          <Link to="/" className="font-bold text-xl cyber-text">
-            IMPULSE
-          </Link>
-          
-          <nav className="hidden md:flex items-center gap-4">
-            {/* Cyberpunk styled links with hover effects */}
-            <Link 
-              to="/" 
-              className="text-[#00F0FF] hover:text-[#FF2D6E] relative group transition-colors overflow-hidden"
-            >
-              <span className="relative z-10">Home</span>
-              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#00F0FF] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-              <span className="absolute inset-0 bg-gradient-to-r from-[#00F0FF]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
+    <header className="border-b border-border">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center">
+            <Link to="/" className="text-xl font-bold mr-6">
+              MakersIMPULSE
             </Link>
-            
-            <Link 
-              to="/features" 
-              className="text-[#00F0FF] hover:text-[#FF2D6E] relative group transition-colors overflow-hidden"
-            >
-              <span className="relative z-10">Features</span>
-              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#00F0FF] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-              <span className="absolute inset-0 bg-gradient-to-r from-[#00F0FF]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
-            </Link>
-            
-            <Link 
-              to="/about" 
-              className="text-[#00F0FF] hover:text-[#FF2D6E] relative group transition-colors overflow-hidden"
-            >
-              <span className="relative z-10">About</span>
-              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#00F0FF] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-              <span className="absolute inset-0 bg-gradient-to-r from-[#00F0FF]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
-            </Link>
-            
-            {isAuthenticated && (
-              <Link 
-                to="/dashboard" 
-                className="text-[#00F0FF] hover:text-[#FF2D6E] relative group transition-colors overflow-hidden"
-              >
-                <span className="relative z-10">Dashboard</span>
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#00F0FF] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-                <span className="absolute inset-0 bg-gradient-to-r from-[#00F0FF]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
-              </Link>
-            )}
-            
-            {isAuthenticated && hasAdminAccess && (
-              <Link 
-                to="/admin" 
-                className="text-[#00F0FF] hover:text-[#FF2D6E] relative group transition-colors overflow-hidden flex items-center gap-1"
-              >
-                <Shield className="h-3.5 w-3.5" />
-                <span className="relative z-10">Admin</span>
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#00F0FF] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-                <span className="absolute inset-0 bg-gradient-to-r from-[#00F0FF]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
-              </Link>
-            )}
-          </nav>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          {isAuthenticated ? (
-            <div className="flex items-center gap-3">
-              <div className="hidden md:block text-sm text-[#00F0FF]">
-                {user?.email}
-              </div>
-              
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-[#00F0FF]/10 text-[#00F0FF] hover:text-[#FF2D6E]"
-                  onClick={() => navigate('/profile')}
-                >
-                  <User size={18} />
+            <nav className="hidden md:flex space-x-4">
+              <NavLink to="/parts">Parts DB</NavLink>
+              <NavLink to="/builds/explore">Builds</NavLink>
+              <NavLink to="/guides">Guides</NavLink>
+              <NavLink to="/forum">Forum</NavLink>
+              {isAdmin && <NavLink to="/admin">Admin</NavLink>}
+            </nav>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            {isAuthenticated ? (
+              <>
+                <ProfileButton user={user} />
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  Logout
                 </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-[#00F0FF]/10 text-[#00F0FF] hover:text-[#FF2D6E]"
-                  onClick={handleLogout}
-                >
-                  <LogOut size={18} />
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button 
-              onClick={() => navigate('/auth')}
-              className="bg-[#00F0FF]/80 text-black hover:bg-[#00F0FF] hover:shadow-[0_0_10px_rgba(0,240,255,0.5)]"
-            >
-              Login
-            </Button>
-          )}
+              </>
+            ) : (
+              <Button asChild>
+                <Link to="/auth">Login</Link>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </header>
   );
+};
+
+interface NavLinkProps {
+  to: string;
+  children: React.ReactNode;
 }
+
+const NavLink: React.FC<NavLinkProps> = ({ to, children }) => {
+  return (
+    <Link
+      to={to}
+      className="text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
+    >
+      {children}
+    </Link>
+  );
+};
+
+interface ProfileButtonProps {
+  user: any;
+}
+
+const ProfileButton: React.FC<ProfileButtonProps> = ({ user }) => {
+  return (
+    <Link
+      to="/profile"
+      className="flex items-center space-x-2 hover:bg-accent/50 px-3 py-2 rounded-md transition-colors"
+    >
+      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+        {user?.avatar_url ? (
+          <img
+            src={user.avatar_url}
+            alt="Profile"
+            className="w-full h-full rounded-full object-cover"
+          />
+        ) : (
+          <span className="text-sm font-medium">
+            {user?.display_name?.[0] || user?.email?.[0] || "U"}
+          </span>
+        )}
+      </div>
+      <span className="hidden md:inline text-sm font-medium truncate max-w-[100px]">
+        {user?.display_name || user?.email || "User"}
+      </span>
+    </Link>
+  );
+};
+
+export default MainNav;

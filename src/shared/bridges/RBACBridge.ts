@@ -1,5 +1,8 @@
 
-import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
+import { UserRole, ROLES, AdminSection, SECTION_PERMISSIONS, ROLE_LABELS } from '@/shared/types/core/rbac.types';
+import { useRBACStore } from '@/rbac/rbac.store';
+import { logBridge } from '@/logging/bridge';
+import { LogCategory } from '@/shared/types/core/logging.types';
 
 export interface IRBACBridge {
   hasRole: (role: UserRole | UserRole[]) => boolean;
@@ -11,113 +14,122 @@ export interface IRBACBridge {
   setRoles: (roles: UserRole[]) => void;
   clearRoles: () => void;
   hasPermission: (permission: string) => boolean;
-  canAccessAdminSection: (section?: string) => boolean;
+  canAccessAdminSection: (section: AdminSection) => boolean;
+  getRoleLabels: () => Record<UserRole, string>;
 }
 
-class RBACBridgeClass implements IRBACBridge {
-  private _roles: UserRole[] = [ROLES.GUEST];
+/**
+ * Bridge for RBAC functionality between components and the RBAC store
+ * This allows for consistent RBAC checks across the application
+ */
+class RBACBridgeImpl implements IRBACBridge {
+  /**
+   * Check if the current user has a specific role or one of multiple roles
+   * @param role The role(s) to check
+   * @returns True if the user has the role, false otherwise
+   */
+  public hasRole(role: UserRole | UserRole[]): boolean {
+    const userRoles = this.getRoles();
+    
+    if (Array.isArray(role)) {
+      return role.some(r => userRoles.includes(r));
+    }
+    
+    return userRoles.includes(role);
+  }
   
-  setRoles(roles: UserRole[]): void {
-    const validRoles = roles.filter(role => 
-      role === ROLES.GUEST || 
-      role === ROLES.FOLLOWER || 
-      role === ROLES.MAKER || 
-      role === ROLES.MOD || 
-      role === ROLES.ADMIN || 
-      role === ROLES.SUPER_ADMIN
-    );
-    this._roles = validRoles.length > 0 ? validRoles : [ROLES.GUEST];
-    console.log('RBAC roles set:', this._roles);
+  /**
+   * Get all roles assigned to the current user
+   * @returns Array of user roles
+   */
+  public getRoles(): UserRole[] {
+    return useRBACStore.getState().userRoles;
   }
-
-  clearRoles(): void {
-    this._roles = [ROLES.GUEST];
-    console.log('RBAC roles cleared, set to GUEST');
-  }
-
-  getRoles(): UserRole[] {
-    return this._roles;
-  }
-
-  hasRole(roleOrRoles: UserRole | UserRole[]): boolean {
-    // Super admin has all roles
-    if (this._roles.includes(ROLES.SUPER_ADMIN)) {
-      return true;
-    }
+  
+  /**
+   * Set roles for the current user
+   * @param roles Array of roles to assign
+   */
+  public setRoles(roles: UserRole[]): void {
+    // Ensure we always have at least GUEST role
+    const safeRoles = roles.length > 0 ? roles : [ROLES.GUEST];
     
-    // Check for specific roles
-    if (Array.isArray(roleOrRoles)) {
-      return roleOrRoles.some(role => this._roles.includes(role));
-    }
+    useRBACStore.getState().setRoles(safeRoles);
     
-    return this._roles.includes(roleOrRoles);
+    logBridge.info(LogCategory.RBAC, 'User roles set via bridge', {
+      details: { roles: safeRoles }
+    });
   }
-
-  hasAdminAccess(): boolean {
+  
+  /**
+   * Clear all user roles and set back to default GUEST
+   */
+  public clearRoles(): void {
+    useRBACStore.getState().clearRoles();
+    
+    logBridge.info(LogCategory.RBAC, 'User roles cleared via bridge');
+  }
+  
+  /**
+   * Check if the user has admin access
+   * @returns True if the user has ADMIN or SUPER_ADMIN role
+   */
+  public hasAdminAccess(): boolean {
     return this.hasRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]);
   }
-
-  isSuperAdmin(): boolean {
+  
+  /**
+   * Check if the user is a super admin
+   * @returns True if the user has SUPER_ADMIN role
+   */
+  public isSuperAdmin(): boolean {
     return this.hasRole(ROLES.SUPER_ADMIN);
   }
-
-  isModerator(): boolean {
+  
+  /**
+   * Check if the user is a moderator
+   * @returns True if the user has MOD, ADMIN or SUPER_ADMIN role
+   */
+  public isModerator(): boolean {
     return this.hasRole([ROLES.MOD, ROLES.ADMIN, ROLES.SUPER_ADMIN]);
   }
-
-  isBuilder(): boolean {
-    return this.hasRole([ROLES.MAKER, ROLES.ADMIN, ROLES.SUPER_ADMIN]);
+  
+  /**
+   * Check if the user is a builder/maker
+   * @returns True if the user has MAKER role
+   */
+  public isBuilder(): boolean {
+    return this.hasRole(ROLES.MAKER);
   }
-
-  hasPermission(permission: string): boolean {
-    // Simple implementation - in real app this would check against permissions list
-    if (this.isSuperAdmin()) {
-      return true; // Super admin has all permissions
-    }
-    
-    // For now, we'll just check some basic permissions based on roles
-    if (permission.startsWith('admin:') && this.hasAdminAccess()) {
-      return true;
-    }
-    
-    if (permission.startsWith('moderate:') && this.isModerator()) {
-      return true;
-    }
-    
-    if (permission.startsWith('build:') && this.isBuilder()) {
-      return true;
-    }
-    
-    // Guest permissions
-    if (permission === 'view:public') {
-      return true;
-    }
-    
-    return false;
+  
+  /**
+   * Check if the user has a specific permission
+   * @param permission The permission to check
+   * @returns True if the user has the permission, false otherwise
+   */
+  public hasPermission(permission: string): boolean {
+    return useRBACStore.getState().hasPermission(permission);
   }
-
-  canAccessAdminSection(section?: string): boolean {
-    if (!section) return this.hasAdminAccess();
+  
+  /**
+   * Check if the user can access a specific admin section
+   * @param section The admin section to check
+   * @returns True if the user can access the section, false otherwise
+   */
+  public canAccessAdminSection(section: AdminSection): boolean {
+    const userRoles = this.getRoles();
+    const allowedRoles = SECTION_PERMISSIONS[section] || [];
     
-    // Super admin can access everything
-    if (this.isSuperAdmin()) return true;
-    
-    // Check if user has the role required for this section
-    switch (section) {
-      case 'dashboard':
-        return this.hasRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]);
-      case 'users':
-        return this.hasRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]);
-      case 'content':
-        return this.hasRole([ROLES.MOD, ROLES.ADMIN, ROLES.SUPER_ADMIN]);
-      case 'settings':
-        return this.hasRole(ROLES.SUPER_ADMIN);
-      case 'system':
-        return this.hasRole(ROLES.SUPER_ADMIN);
-      default:
-        return this.hasAdminAccess();
-    }
+    return userRoles.some(role => allowedRoles.includes(role));
+  }
+  
+  /**
+   * Get role display labels for UI
+   * @returns Record with role keys and display labels
+   */
+  public getRoleLabels(): Record<UserRole, string> {
+    return ROLE_LABELS;
   }
 }
 
-export const RBACBridge = new RBACBridgeClass();
+export const RBACBridge = new RBACBridgeImpl();

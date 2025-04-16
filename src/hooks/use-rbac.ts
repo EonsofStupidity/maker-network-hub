@@ -1,8 +1,10 @@
 
 import { useCallback } from 'react';
 import { RBACBridge } from '@/shared/bridges/RBACBridge';
-import { UserRole, ROLES, Permission } from '@/shared/types/core/rbac.types';
+import { UserRole, ROLES, Permission, AdminSection } from '@/shared/types/core/rbac.types';
 import { useRBACStore } from '@/rbac/rbac.store';
+import { logBridge } from '@/logging/bridge';
+import { LogCategory } from '@/shared/types/core/logging.types';
 
 export interface IRBACHook {
   roles: UserRole[];
@@ -12,6 +14,9 @@ export interface IRBACHook {
   isSuperAdmin: () => boolean;
   isModerator: () => boolean;
   isBuilder: () => boolean;
+  canAccessAdminSection: (section: AdminSection) => boolean;
+  getHighestRole: () => UserRole;
+  getRoleLabels: () => Record<UserRole, string>;
 }
 
 /**
@@ -23,8 +28,20 @@ export const useRbac = (): IRBACHook => {
   
   // Check if user has a specific role
   const hasRole = useCallback((role: UserRole | UserRole[]): boolean => {
-    return RBACBridge.hasRole(role);
-  }, []);
+    const result = RBACBridge.hasRole(role);
+    
+    // Log failed permission checks for auditing
+    if (!result && process.env.NODE_ENV !== 'production') {
+      logBridge.debug(LogCategory.RBAC, 'Role check failed', {
+        details: {
+          requiredRoles: Array.isArray(role) ? role : [role],
+          userRoles: roles,
+        }
+      });
+    }
+    
+    return result;
+  }, [roles]);
   
   // Check if user has a specific permission
   const can = useCallback((permission: Permission): boolean => {
@@ -38,17 +55,48 @@ export const useRbac = (): IRBACHook => {
   
   // Check if user is a super admin
   const isSuperAdmin = useCallback((): boolean => {
-    return RBACBridge.isSuperAdmin();
+    return RBACBridge.hasRole(ROLES.SUPER_ADMIN);
   }, []);
   
   // Check if user is a moderator
   const isModerator = useCallback((): boolean => {
-    return RBACBridge.isModerator();
+    return RBACBridge.hasRole(ROLES.MOD);
   }, []);
   
-  // Check if user is a builder
+  // Check if user is a builder/maker
   const isBuilder = useCallback((): boolean => {
-    return RBACBridge.isBuilder();
+    return RBACBridge.hasRole(ROLES.MAKER);
+  }, []);
+  
+  // Check if user can access a specific admin section
+  const canAccessAdminSection = useCallback((section: AdminSection): boolean => {
+    return RBACBridge.canAccessAdminSection(section);
+  }, []);
+  
+  // Get the highest role a user has
+  const getHighestRole = useCallback((): UserRole => {
+    const roleOrder: UserRole[] = [
+      ROLES.GUEST,
+      ROLES.FOLLOWER,
+      ROLES.MAKER,
+      ROLES.MOD,
+      ROLES.ADMIN,
+      ROLES.SUPER_ADMIN
+    ];
+    
+    // Find the highest role the user has
+    for (let i = roleOrder.length - 1; i >= 0; i--) {
+      if (roles.includes(roleOrder[i])) {
+        return roleOrder[i];
+      }
+    }
+    
+    return ROLES.GUEST;
+  }, [roles]);
+  
+  // Get role labels for UI display
+  const getRoleLabels = useCallback((): Record<UserRole, string> => {
+    return RBACBridge.getRoleLabels();
   }, []);
   
   return {
@@ -58,6 +106,9 @@ export const useRbac = (): IRBACHook => {
     hasAdminAccess,
     isSuperAdmin,
     isModerator,
-    isBuilder
+    isBuilder,
+    canAccessAdminSection,
+    getHighestRole,
+    getRoleLabels
   };
 };

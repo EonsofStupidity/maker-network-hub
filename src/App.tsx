@@ -1,15 +1,22 @@
 
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import AppBootstrap from "./AppBootstrap";
 import { Toaster } from "./shared/ui/toaster";
 import { TooltipProvider } from "./shared/ui/tooltip";
 import { Toaster as Sonner } from "./shared/ui/sonner";
-import { PublicHome } from "./pages/public/Home";
 import { AuthProvider } from "./auth/context/AuthContext";
+import Routes from "./router/Routes";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30000,
+    },
+  },
+});
 
 function App() {
   return (
@@ -20,12 +27,7 @@ function App() {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<PublicHome />} />
-                <Route path="/auth" element={<div>Login Page</div>} />
-                <Route path="/builds/explore" element={<div>Builds Explorer</div>} />
-                <Route path="*" element={<div>Page Not Found</div>} />
-              </Routes>
+              <Routes />
             </BrowserRouter>
           </AppBootstrap>
         </AuthProvider>
