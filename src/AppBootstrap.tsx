@@ -9,6 +9,7 @@ import { logBridge } from './logging/bridge';
 import { LogCategory, LogLevel } from './shared/types/core/logging.types';
 import { useThemeStore } from './stores/theme.store';
 import { supabase } from './integrations/supabase/client';
+import { ThemeEffect, ThemeEffectType } from './shared/types/core/theme.types';
 
 interface AppBootstrapProps {
   children: React.ReactNode;
@@ -95,15 +96,15 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
             }
           };
           
-          const defaultEffects = [
+          const defaultEffects: ThemeEffect[] = [
             { 
-              type: 'cyber', 
+              type: ThemeEffectType.CYBER, 
               intensity: 0.7, 
               enabled: true,
               color: '#00f0ff'
             },
             {
-              type: 'grain',
+              type: ThemeEffectType.GRAIN,
               intensity: 0.3,
               enabled: true
             }

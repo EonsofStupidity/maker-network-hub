@@ -9,7 +9,7 @@ export { ROLES };
 export const ROLE_LABELS: Record<UserRole, string> = {
   [ROLES.GUEST]: 'Guest',
   [ROLES.FOLLOWER]: 'Follower',
-  [ROLES.MAKER]: 'Maker',
+  [ROLES.MAKER]: 'Maker', 
   [ROLES.MOD]: 'Moderator',
   [ROLES.ADMIN]: 'Admin',
   [ROLES.SUPER_ADMIN]: 'Super Admin'
