@@ -31,7 +31,7 @@ export const SECTION_PERMISSIONS: Record<AdminSection, UserRole[]> = {
   system: [ROLES.SUPER_ADMIN]
 };
 
-// Role labels with proper Record typing
+// Role labels with explicit Record typing
 export const ROLE_LABELS: Record<UserRole, string> = {
   [ROLES.GUEST]: 'Guest',
   [ROLES.FOLLOWER]: 'Follower',
@@ -41,7 +41,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   [ROLES.SUPER_ADMIN]: 'Super Admin'
 };
 
-// Default permissions with proper Record typing
+// Default permissions with explicit Record typing
 export const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
   [ROLES.GUEST]: [
     'view:public:content',

@@ -4,6 +4,7 @@ import { useThemeStore } from '@/stores/theme.store';
 import { ThemeEffect, ThemeEffectType } from '@/shared/types/core/theme.types';
 
 export function useThemeEffects() {
+  // Access effects from the store with proper fallback
   const themeEffects = useThemeStore(state => state.effects || []);
   
   const setThemeEffects = useCallback((effects: ThemeEffect[]) => {

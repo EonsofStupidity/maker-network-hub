@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useThemeVariables } from '@/hooks/useThemeVariables';
 
@@ -36,3 +37,5 @@ export function ThemeColorSystem({ children }: ThemeColorSystemProps) {
     </div>
   );
 }
+
+export default ThemeColorSystem;
