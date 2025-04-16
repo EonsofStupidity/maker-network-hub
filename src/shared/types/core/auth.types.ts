@@ -1,9 +1,9 @@
 
-import { UserRole, ROLES } from './rbac.types';
+import { UserRole } from './rbac.types';
 
 export const AUTH_STATUS = {
   LOADING: 'LOADING',
-  AUTHENTICATED: 'AUTHENTICATED', 
+  AUTHENTICATED: 'AUTHENTICATED',
   GUEST: 'GUEST',
   ERROR: 'ERROR',
   IDLE: 'IDLE'
@@ -26,5 +26,6 @@ export interface UserProfile {
   roles?: UserRole[];
 }
 
-// Re-export RBAC types
-export { UserRole, ROLES };
+// Re-export types from rbac.types to maintain imports
+export { UserRole };
+export { ROLES };
