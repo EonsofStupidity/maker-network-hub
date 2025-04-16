@@ -50,7 +50,26 @@ export function LayoutBootstrap({
         }
         
         if (data) {
-          setLayout(data as Layout);
+          // Convert from database format to our app format
+          const appLayout: Layout = {
+            id: data.id,
+            name: data.name,
+            description: data.description,
+            type: data.type as Layout['type'],
+            components: data.layout_json?.components || {},
+            layout: data.layout_json?.layout || [],
+            scope: data.scope as Layout['scope'],
+            meta: {
+              version: data.version,
+              isLocked: data.is_locked,
+              isActive: data.is_active,
+              createdAt: data.created_at,
+              updatedAt: data.updated_at,
+              createdBy: data.created_by
+            }
+          };
+          
+          setLayout(appLayout);
           logBridge.info(LogCategory.SYSTEM, 'Layout loaded successfully', {
             details: { layoutId: data.id, type, scope }
           });

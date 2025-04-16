@@ -1,3 +1,4 @@
+
 /**
  * Circuit Breaker implementation to prevent cascading failures
  */
@@ -11,24 +12,23 @@ export class CircuitBreaker {
   
   constructor(
     public name: string,
-    public maxFailures: number = 5,
-    public resetTimeout: number = 30000,
-    public halfOpenAttemptsAllowed: number = 1,
-  ) {}
+    public options?: {
+      maxFailures?: number;
+      resetTimeout?: number;
+      halfOpenAttemptsAllowed?: number;
+    }
+  ) {
+    this.name = name;
+    this.options = options || {};
+  }
 
   // Static factory method for convenience
-  static init(name: string, options?: Partial<{
-    maxFailures: number;
-    resetTimeout: number;
-    halfOpenAttemptsAllowed: number;
-  }>): CircuitBreaker {
-    const { maxFailures, resetTimeout, halfOpenAttemptsAllowed } = options || {};
-    return new CircuitBreaker(
-      name,
-      maxFailures,
-      resetTimeout,
-      halfOpenAttemptsAllowed
-    );
+  static init(name: string, options?: {
+    maxFailures?: number;
+    resetTimeout?: number;
+    halfOpenAttemptsAllowed?: number;
+  }): CircuitBreaker {
+    return new CircuitBreaker(name, options);
   }
 
   /**
@@ -46,7 +46,7 @@ export class CircuitBreaker {
     if (this.isOpen) {
       // Check if we should allow a test request
       const now = Date.now();
-      if (this.lastFailureTime && (now - this.lastFailureTime) > this.resetTimeout) {
+      if (this.lastFailureTime && (now - this.lastFailureTime) > (this.options?.resetTimeout || 30000)) {
         // Try to reset the circuit with a test request
         this.isOpen = false;
       } else if (fallback) {
@@ -69,7 +69,7 @@ export class CircuitBreaker {
       this.recordFailure();
       
       // Check if we've hit the threshold and open the circuit
-      if (this.failureCount >= this.maxFailures) {
+      if (this.failureCount >= (this.options?.maxFailures || 5)) {
         this.isOpen = true;
         this.lastFailureTime = Date.now();
       }
@@ -129,7 +129,7 @@ export class CircuitBreaker {
     // If circuit was open, check if it's time to reset
     if (this.isOpen && this.lastFailureTime) {
       const now = Date.now();
-      if ((now - this.lastFailureTime) > this.resetTimeout) {
+      if ((now - this.lastFailureTime) > (this.options?.resetTimeout || 30000)) {
         this.isOpen = false;
       }
     }

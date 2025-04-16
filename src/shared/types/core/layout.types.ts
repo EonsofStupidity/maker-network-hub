@@ -1,6 +1,9 @@
 
 import { ReactNode } from 'react';
 
+export type LayoutComponentType = 'page' | 'section' | 'widget' | string;
+export type LayoutScope = 'site' | 'admin' | 'feature' | string;
+
 export interface LayoutComponentProps {
   id: string;
   title: string;
@@ -28,10 +31,10 @@ export interface Layout {
   id: string;
   name: string;
   description?: string;
-  type: string;
+  type: LayoutComponentType;
   components: Record<string, LayoutComponent>;
   layout: LayoutItem[];
-  scope: string;
+  scope: LayoutScope;
   meta?: {
     version: number;
     isLocked: boolean;

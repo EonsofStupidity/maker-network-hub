@@ -1,6 +1,6 @@
 
-import { Layout, LayoutComponent } from '@/shared/types/layout.types';
-import { LoadingStates } from '@/shared/ui/loading-states';
+import { Layout, LayoutComponent } from '@/shared/types/core/layout.types';
+import { LoadingState } from '@/shared/ui/loading-state';
 import { cn } from '@/shared/utils/cn';
 
 interface LayoutRendererProps {
@@ -13,11 +13,11 @@ export function LayoutRenderer({ layout, isLoading, error }: LayoutRendererProps
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <LoadingStates type="text" count={1} className="max-w-sm" />
+        <LoadingState type="text" count={1} className="max-w-sm" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <LoadingStates type="card" count={3} />
+          <LoadingState type="card" count={3} />
         </div>
-        <LoadingStates type="text" count={1} className="h-64" />
+        <LoadingState type="text" count={1} className="h-64" />
       </div>
     );
   }
@@ -35,7 +35,7 @@ export function LayoutRenderer({ layout, isLoading, error }: LayoutRendererProps
 
   return (
     <div className="layout-root" data-layout-id={layout.id}>
-      {Object.values(layout.layout_json.components).map((component, index) => (
+      {Object.values(layout.components).map((component, index) => (
         <ComponentRenderer 
           key={component.id || index} 
           component={component} 
@@ -52,7 +52,7 @@ function ComponentRenderer({ component }: { component: LayoutComponent }) {
     case 'container':
       return (
         <div className={cn(baseStyles, "border rounded-md")} data-component-type="container">
-          {component.children?.map(child => (
+          {component.props?.children?.map((child: LayoutComponent) => (
             <ComponentRenderer key={child.id} component={child} />
           ))}
         </div>

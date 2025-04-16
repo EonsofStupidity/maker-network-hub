@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { Component, Layout } from '@/shared/types/features/layout.types';
+import { Layout, LayoutComponent } from '@/shared/types/core/layout.types';
 import { useLogger } from '@/hooks/use-logger';
 import { LogCategory } from '@/shared/types/core/logging.types';
 import { Skeleton } from '@/shared/ui/skeleton';
@@ -60,7 +60,7 @@ export function LayoutRenderer({ layout, isLoading, fallback, error }: LayoutRen
 }
 
 interface ComponentRendererProps {
-  component: { id: string; type: string; props: Record<string, any> };
+  component: LayoutComponent;
 }
 
 function ComponentRenderer({ component }: ComponentRendererProps) {

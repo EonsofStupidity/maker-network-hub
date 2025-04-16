@@ -1,8 +1,8 @@
 
 import { ReactNode } from 'react';
+import { LayoutComponentType, LayoutScope } from '../core/layout.types';
 
-export type LayoutComponentType = 'page' | 'section' | 'widget';
-export type LayoutScope = 'site' | 'admin' | 'feature';
+export type { LayoutComponentType, LayoutScope };
 
 export interface LayoutComponentProps {
   id: string;
@@ -32,8 +32,8 @@ export interface Layout {
     position: number;
     componentId: string;
   }>;
-  meta?: Record<string, any>;
   scope: LayoutScope;
+  meta?: Record<string, any>;
 }
 
 export interface LayoutSkeleton {
@@ -51,5 +51,4 @@ export interface LayoutSkeleton {
   created_by?: string;
 }
 
-// Export Component type for backward compatibility
-export type Component = LayoutComponent;
+export type { LayoutComponent as Component };
