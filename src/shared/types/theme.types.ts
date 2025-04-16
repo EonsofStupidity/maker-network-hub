@@ -1,25 +1,7 @@
 
-import type { Theme, ThemeEffect, ThemeEffectType } from './core/theme.types';
+import type { Theme, ThemeEffect, ThemeEffectType, DesignTokens, ComponentTokens } from './core/theme.types';
 
-export type { Theme, ThemeEffect, ThemeEffectType };
-
-export interface DesignTokens {
-  colors?: Record<string, string>;
-  typography?: any;
-  spacing?: Record<string, string>;
-  borders?: Record<string, string>;
-  shadows?: Record<string, string>;
-  radii?: Record<string, string>;
-  zIndices?: Record<string, string>;
-  breakpoints?: Record<string, string>;
-  transitions?: Record<string, string>;
-  animations?: Record<string, any>;
-  [key: string]: any;
-}
-
-export interface ComponentTokens {
-  [componentName: string]: Record<string, string>;
-}
+export type { Theme, ThemeEffect, ThemeEffectType, DesignTokens, ComponentTokens };
 
 export interface ThemeState {
   activeThemeId: string | null;
@@ -37,10 +19,10 @@ export interface ThemeState {
   componentStyles: Record<string, Record<string, string>>;
   animations: Record<string, any>;
   effects: ThemeEffect[];
-  setThemes?: (themes: Theme[]) => void;
-  setActiveTheme?: (themeId: string) => void;
-  setDesignTokens?: (tokens: DesignTokens) => void;
-  setComponentTokens?: (tokens: ComponentTokens) => void;
-  setEffects?: (effects: ThemeEffect[]) => void;
-  setVariables?: (variables: Record<string, string>) => void;
+  setThemes: (themes: Theme[]) => void;
+  setActiveTheme: (themeId: string) => void;
+  setDesignTokens: (tokens: DesignTokens) => void;
+  setComponentTokens: (tokens: ComponentTokens) => void;
+  setEffects: (effects: ThemeEffect[]) => void;
+  setVariables: (variables: Record<string, string>) => void;
 }

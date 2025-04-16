@@ -17,6 +17,8 @@ export const useThemeEffects = () => {
   
   // Add a theme effect
   const addEffect = useCallback((effect: ThemeEffect) => {
+    if (!setEffects) return;
+    
     if (!effects.some(e => e.type === effect.type)) {
       setEffects([...effects, effect]);
     }
@@ -24,20 +26,26 @@ export const useThemeEffects = () => {
   
   // Remove a theme effect
   const removeEffect = useCallback((effectType: ThemeEffectType) => {
+    if (!setEffects) return;
+    
     setEffects(effects.filter(e => e.type !== effectType));
   }, [effects, setEffects]);
   
   // Toggle a theme effect
   const toggleEffect = useCallback((effect: ThemeEffect) => {
+    if (!setEffects) return;
+    
     if (effects.some(e => e.type === effect.type)) {
       removeEffect(effect.type);
     } else {
       addEffect(effect);
     }
-  }, [effects, addEffect, removeEffect]);
+  }, [effects, addEffect, removeEffect, setEffects]);
   
   // Clear all effects
   const clearEffects = useCallback(() => {
+    if (!setEffects) return;
+    
     setEffects([]);
   }, [setEffects]);
   
@@ -48,6 +56,6 @@ export const useThemeEffects = () => {
     removeEffect,
     toggleEffect,
     clearEffects,
-    ThemeEffectType
+    ThemeEffectType: ThemeEffectType // Use the imported enum rather than the type
   };
 };

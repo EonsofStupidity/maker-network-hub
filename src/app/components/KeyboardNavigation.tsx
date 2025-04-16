@@ -59,7 +59,8 @@ export const KeyboardNavigation = ({ options = {} }: KeyboardNavigationProps) =>
       if (direction && mergedOptions.showToasts) {
         toast({
           title: `Scrolling ${direction}`,
-          description: "Use W/S or arrow keys to scroll"
+          description: "Use W/S or arrow keys to scroll",
+          variant: "default"
         });
       }
     };

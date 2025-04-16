@@ -2,43 +2,30 @@
 import { useCallback } from 'react';
 import { useThemeStore } from '@/stores/theme.store';
 
+/**
+ * Hook for getting and setting theme variables
+ */
 export const useThemeVariables = () => {
-  const store = useThemeStore();
-
-  const getToken = useCallback((token: string): string => {
-    return store.variables[token] || '';
-  }, [store.variables]);
+  const variables = useThemeStore(state => state.variables);
+  const setVariables = useThemeStore(state => state.setVariables);
   
-  const getComponentToken = useCallback((component: string, token: string): string => {
-    return store.componentTokens[component]?.[token] || store.variables[token] || '';
-  }, [store.componentTokens, store.variables]);
+  // Set a single variable
+  const setVariable = useCallback((name: string, value: string) => {
+    if (!setVariables) return;
+    
+    setVariables({ ...variables, [name]: value });
+  }, [variables, setVariables]);
   
-  const setToken = useCallback((token: string, value: string) => {
-    store.setVariables({ ...store.variables, [token]: value });
-  }, [store]);
+  // Set multiple variables at once
+  const setMultipleVariables = useCallback((newVars: Record<string, string>) => {
+    if (!setVariables) return;
+    
+    setVariables({ ...variables, ...newVars });
+  }, [variables, setVariables]);
   
-  const setComponentToken = useCallback((component: string, token: string, value: string) => {
-    const componentToken = store.componentTokens[component] || {};
-    store.setComponentTokens({
-      ...store.componentTokens,
-      [component]: {
-        ...componentToken,
-        [token]: value
-      }
-    });
-  }, [store]);
-
-  const getAllTokens = useCallback((): Record<string, string> => {
-    return store.variables;
-  }, [store.variables]);
-
   return {
-    variables: store.variables || {},
-    componentTokens: store.componentTokens,
-    getToken,
-    getComponentToken,
-    setToken,
-    setComponentToken,
-    getAllTokens,
+    variables,
+    setVariable,
+    setMultipleVariables
   };
 };
