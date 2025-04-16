@@ -31,7 +31,6 @@ export function UserMenu() {
   // Handle profile
   const handleShowProfile = useCallback(() => {
     setIsMenuOpen(false);
-    // Navigate to profile page if needed
   }, []);
   
   // Logout handler
@@ -63,9 +62,9 @@ export function UserMenu() {
   }
 
   // Get display name and email from user
-  const displayName = user.user_metadata?.full_name as string || user.email?.split('@')[0] || 'User';
+  const displayName = user.userMetadata?.full_name as string || user.email?.split('@')[0] || 'User';
   const userEmail = user.email || '';
-  const userAvatar = user.user_metadata?.avatar_url as string || '';
+  const userAvatar = user.avatarUrl || '';
 
   return (
     <>
@@ -75,7 +74,6 @@ export function UserMenu() {
         className="rounded-full p-1 transition hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         aria-label="User menu"
       >
-        {/* Placeholder for UserAvatar component */}
         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
           {displayName.charAt(0).toUpperCase()}
         </div>

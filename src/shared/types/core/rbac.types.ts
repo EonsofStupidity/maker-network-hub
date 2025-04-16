@@ -2,25 +2,21 @@
 export type UserRole = 'guest' | 'follower' | 'maker' | 'mod' | 'admin' | 'super_admin';
 
 export const ROLES = {
-  guest: 'guest',
-  follower: 'follower',
-  maker: 'maker', // replaces 'builder'
-  mod: 'mod',    // replaces 'moderator'
-  admin: 'admin',
-  super_admin: 'super_admin'
+  GUEST: 'guest' as UserRole,
+  FOLLOWER: 'follower' as UserRole,
+  MAKER: 'maker' as UserRole,
+  MOD: 'mod' as UserRole,
+  ADMIN: 'admin' as UserRole,
+  SUPER_ADMIN: 'super_admin' as UserRole
 } as const;
 
-export type Permission =
-  | 'canUseGus'
-  | 'canAccessVisualEditor'
-  | 'canManageParts'
-  | 'canModerate'
-  | 'canPublishStaticPages';
+export type Permission = 
+  | 'create_project'
+  | 'edit_project'
+  | 'delete_project'
+  | 'submit_build'
+  | 'access_admin'
+  | 'manage_api_keys'
+  | 'manage_users'
+  | 'settings:edit';
 
-export interface RBACState {
-  roles: UserRole[];
-  permissions: Permission[];
-  isLoading: boolean;
-  error: string | null;
-  isInitialized: boolean;
-}

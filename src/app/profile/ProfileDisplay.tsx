@@ -2,7 +2,9 @@
 import React from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { LogCategory, LogLevel } from '@/shared/types';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, Button, Avatar, AvatarImage, AvatarFallback } from '@/shared/ui';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/shared/ui/card';
+import { Button } from '@/shared/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/shared/ui/avatar';
 import { logger } from '@/logging/logger.service';
 
 interface ProfileDisplayProps {
@@ -64,8 +66,8 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({ onEdit }) => {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="flex flex-row items-center gap-4">
         <Avatar className="w-16 h-16">
-          {user.avatar_url ? (
-            <AvatarImage src={user.avatar_url} alt={user.name || 'User'} />
+          {user.avatarUrl ? (
+            <AvatarImage src={user.avatarUrl} alt={user.name || 'User'} />
           ) : (
             <AvatarFallback>{getInitials()}</AvatarFallback>
           )}
@@ -88,13 +90,13 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({ onEdit }) => {
           <h3 className="font-medium">Account Information</h3>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <span className="text-muted-foreground">Member since:</span>
-            <span>{formatDate(user.created_at)}</span>
+            <span>{formatDate(user.createdAt)}</span>
             
             <span className="text-muted-foreground">Last updated:</span>
-            <span>{formatDate(user.updated_at)}</span>
+            <span>{formatDate(user.updatedAt)}</span>
             
             <span className="text-muted-foreground">Last sign in:</span>
-            <span>{formatDate(user.last_sign_in_at)}</span>
+            <span>{formatDate(user.lastSignInAt)}</span>
           </div>
         </div>
       </CardContent>
