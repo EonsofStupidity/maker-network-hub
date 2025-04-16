@@ -5,7 +5,7 @@ import { ThemeEffect, ThemeEffectType } from '@/shared/types/core/theme.types';
 
 export function useThemeEffects() {
   // Access effects from the store with proper array access
-  const themeEffects = useThemeStore(state => state.effects);
+  const themeEffects = useThemeStore(state => state.effects) || [];
   
   const setThemeEffects = useCallback((effects: ThemeEffect[]) => {
     useThemeStore.getState().setEffects(effects);
@@ -19,7 +19,7 @@ export function useThemeEffects() {
     setThemeEffects(effects);
   }, [setThemeEffects]);
   
-  const toggleEffect = useCallback((type: string) => {
+  const toggleEffect = useCallback((type: ThemeEffectType) => {
     setThemeEffects(
       themeEffects.map(effect => 
         effect.type === type 
@@ -29,7 +29,7 @@ export function useThemeEffects() {
     );
   }, [themeEffects, setThemeEffects]);
   
-  const updateEffectIntensity = useCallback((type: string, intensity: number) => {
+  const updateEffectIntensity = useCallback((type: ThemeEffectType, intensity: number) => {
     setThemeEffects(
       themeEffects.map(effect => 
         effect.type === type 

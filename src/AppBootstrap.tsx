@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react';
 import { initializeLogging } from './logging/bootstrap';
 import { AuthBridge } from './bridges/AuthBridge';
-import { RBACBridge } from './bridges/RBACBridge';
+import { RBACBridge } from './shared/bridges/RBACBridge';
 import { ROLES } from './shared/types/core/rbac.types';
 import { AUTH_STATUS } from './shared/types/core/auth.types';
 import { logBridge } from './logging/bridge';
 import { LogCategory, LogLevel } from './shared/types/core/logging.types';
 import { useThemeStore } from './stores/theme.store';
+import { supabase } from './integrations/supabase/client';
 
 interface AppBootstrapProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
   const [error, setError] = useState<Error | null>(null);
   const setThemes = useThemeStore(state => state.setThemes);
   const setActiveTheme = useThemeStore(state => state.setActiveTheme);
+  const setEffects = useThemeStore(state => state.setEffects);
   
   useEffect(() => {
     async function bootstrap() {
@@ -30,20 +32,38 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
         
         // Step 2: Initialize Auth - but don't block on auth for public access
         try {
-          const session = await AuthBridge.getCurrentSession();
-          if (session?.user) {
+          const { data } = await supabase.auth.getSession();
+          
+          if (data?.session?.user) {
             logBridge.info(LogCategory.AUTH, 'User session found', { 
-              userId: session.user.id,
-              email: session.user.email
+              userId: data.session.user.id,
+              email: data.session.user.email
             });
             
-            // Set roles from user if available
-            if (session.user.roles && session.user.roles.length > 0) {
-              RBACBridge.setRoles(session.user.roles);
-            } else {
-              // Default to guest role
-              RBACBridge.setRoles([ROLES.GUEST]);
+            // Map Supabase roles to our app roles
+            let roles = [ROLES.GUEST];
+            
+            if (data.session.user.app_metadata?.roles) {
+              const appRoles = data.session.user.app_metadata.roles;
+              if (Array.isArray(appRoles) && appRoles.length > 0) {
+                // Map and validate roles
+                roles = appRoles.filter(role => 
+                  Object.values(ROLES).includes(role as any)
+                ) as any[];
+                
+                // Always include at least GUEST role
+                if (roles.length === 0) {
+                  roles = [ROLES.GUEST];
+                }
+              }
             }
+            
+            // Set roles in RBAC bridge
+            RBACBridge.setRoles(roles);
+            
+            logBridge.info(LogCategory.RBAC, 'User roles set', { 
+              roles 
+            });
           } else {
             logBridge.info(LogCategory.AUTH, 'No user session found, setting guest role');
             RBACBridge.setRoles([ROLES.GUEST]);
@@ -74,8 +94,28 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
               foreground: '#f9fafb'
             }
           };
+          
+          const defaultEffects = [
+            { 
+              type: 'cyber', 
+              intensity: 0.7, 
+              enabled: true,
+              color: '#00f0ff'
+            },
+            {
+              type: 'grain',
+              intensity: 0.3,
+              enabled: true
+            }
+          ];
+          
           setThemes([defaultTheme]);
           setActiveTheme('cyberpunk');
+          setEffects(defaultEffects);
+          
+          logBridge.info(LogCategory.THEME, 'Default theme initialized', {
+            details: { theme: 'cyberpunk' }
+          });
         } catch (themeError) {
           console.warn('Theme initialization error:', themeError);
           logBridge.warn(LogCategory.THEME, 'Theme initialization error', {
@@ -102,7 +142,7 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
     }
     
     bootstrap();
-  }, [setThemes, setActiveTheme]);
+  }, [setThemes, setActiveTheme, setEffects]);
   
   if (!initialized) {
     return (

@@ -6,6 +6,8 @@ import AppBootstrap from "./AppBootstrap";
 import { Toaster } from "./shared/ui/toaster";
 import { TooltipProvider } from "./shared/ui/tooltip";
 import { Toaster as Sonner } from "./shared/ui/sonner";
+import { PublicHome } from "./pages/public/Home";
+import { AuthProvider } from "./auth/context/AuthContext";
 
 const queryClient = new QueryClient();
 
@@ -13,20 +15,20 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AppBootstrap>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<div className="p-8 text-center">
-                <h1 className="text-3xl font-bold mb-4">App Loaded Successfully!</h1>
-                <p className="text-lg mb-2">RBAC and logging systems have been initialized.</p>
-                <p className="bg-muted p-2 rounded text-sm inline-block">Check console for logs.</p>
-              </div>} />
-              {/* Add your other routes here */}
-            </Routes>
-          </BrowserRouter>
-        </AppBootstrap>
+        <AuthProvider>
+          <AppBootstrap>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<PublicHome />} />
+                <Route path="/auth" element={<div>Login Page</div>} />
+                <Route path="/builds/explore" element={<div>Builds Explorer</div>} />
+                <Route path="*" element={<div>Page Not Found</div>} />
+              </Routes>
+            </BrowserRouter>
+          </AppBootstrap>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
