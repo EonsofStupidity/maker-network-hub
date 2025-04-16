@@ -1,5 +1,20 @@
 
-import { UserRole } from './auth.types';
+export const ROLES = {
+  super_admin: 'super_admin',
+  admin: 'admin',
+  moderator: 'moderator',
+  builder: 'builder',
+  user: 'user',
+  guest: 'guest'
+} as const;
+
+export type UserRole = typeof ROLES[keyof typeof ROLES];
+
+export type PermissionKey = 'canUseGus' | 'canEditParts' | 'canAccessVisualEditor';
+
+export interface RolePermissions {
+  [key in UserRole]: PermissionKey[];
+}
 
 export interface RBACState {
   roles: UserRole[];
@@ -9,17 +24,3 @@ export interface RBACState {
   isInitialized: boolean;
 }
 
-export interface IRBACBridge {
-  hasRole: (role: UserRole | UserRole[]) => boolean;
-  getRoles: () => UserRole[];
-  hasAdminAccess: () => boolean;
-  isSuperAdmin: () => boolean;
-  isModerator: () => boolean;
-  isBuilder: () => boolean;
-  setRoles: (roles: UserRole[]) => void;
-  clearRoles: () => void;
-  hasPermission: (permission: string) => boolean;
-  canAccessAdminSection: (section?: string) => boolean;
-}
-
-export type AdminSection = 'dashboard' | 'users' | 'content' | 'settings' | 'system';

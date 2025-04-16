@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useToast } from '../hooks/use-toast';
 
@@ -36,14 +35,12 @@ export const KeyboardNavigation: React.FC<KeyboardNavigationProps> = ({ options 
     if (!mergedOptions.enabled) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if in input fields
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName)) {
         return;
       }
 
       let direction: string | null = null;
       
-      // Determine the direction based on the key
       if (['ArrowUp', 'w', 'W'].includes(e.key)) {
         direction = 'up';
         window.scrollBy({
@@ -58,21 +55,17 @@ export const KeyboardNavigation: React.FC<KeyboardNavigationProps> = ({ options 
         });
       }
       
-      // If it's a navigation key and toasts are enabled, show a toast
       if (direction && mergedOptions.showToasts) {
         toast({
           title: `Scrolling ${direction}`,
           description: "Use W/S or arrow keys to scroll",
-          duration: 2000,
+          variant: "info"
         });
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mergedOptions, toast]);
   
   return null;

@@ -1,4 +1,45 @@
 
+export const THEME_EFFECTS = {
+  NONE: 'none',
+  CYBER: 'cyber',
+  NEON: 'neon',
+  ELECTRIC: 'electric',
+  GLITCH: 'glitch',
+  PULSE: 'pulse',
+  PARTICLE: 'particle'
+} as const;
+
+export type ThemeEffectType = typeof THEME_EFFECTS[keyof typeof THEME_EFFECTS];
+
+export interface ThemeEffect {
+  type: ThemeEffectType;
+  intensity: number;
+  color?: string;
+  enabled?: boolean;
+}
+
+export interface ThemeComponent {
+  id?: string;
+  name: string;
+  component_name?: string;
+  styles?: Record<string, string>;
+  tokens?: Record<string, string>;
+}
+
+export interface Theme {
+  id: string;
+  name: string;
+  label?: string;
+  description?: string;
+  isDark: boolean;
+  status?: string;
+  context?: string;
+  variables?: Record<string, string>;
+  designTokens?: DesignTokens;
+  componentTokens?: ComponentTokens;
+  metadata?: Record<string, any>;
+}
+
 export interface DesignTokens {
   colors?: Record<string, string>;
   typography?: any;
@@ -17,44 +58,21 @@ export interface ComponentTokens {
   [componentName: string]: Record<string, string>;
 }
 
-export interface Theme {
-  id: string;
-  name: string;
-  label?: string;
-  description?: string;
+export interface ThemeState {
+  activeThemeId: string | null;
   isDark: boolean;
-  status?: string;
-  context?: string;
+  primaryColor: string;
+  backgroundColor: string;
+  textColor: string;
+  designTokens: DesignTokens;
+  componentTokens: ComponentTokens;
+  isLoading?: boolean;
+  error?: string | null;
+  theme?: Theme | null;
+  isLoaded?: boolean;
   variables?: Record<string, string>;
-  designTokens?: DesignTokens;
-  componentTokens?: ComponentTokens;
-  metadata?: Record<string, any>;
+  componentStyles?: Record<string, Record<string, string>>;
+  animations?: Record<string, any>;
+  effects: ThemeEffect[];
 }
 
-// Theme effect types
-export enum ThemeEffectType {
-  NONE = 'none',
-  CYBER = 'cyber',
-  NEON = 'neon',
-  ELECTRIC = 'electric',
-  GLITCH = 'glitch',
-  SYNTHWAVE = 'synthwave',
-  HOLOGRAM = 'hologram',
-  BLUR = 'blur',
-  MORPH = 'morph',
-  NOISE = 'noise',
-  GRADIENT = 'gradient',
-  PULSE = 'pulse',
-  PARTICLE = 'particle',
-  GRAIN = 'grain',
-  GLOW = 'glow',
-  SHADOW = 'shadow'
-}
-
-export interface ThemeEffect {
-  type: ThemeEffectType;
-  intensity: number;
-  color?: string;
-  enabled?: boolean;
-  [key: string]: any;
-}

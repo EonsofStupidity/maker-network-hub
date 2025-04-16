@@ -1,6 +1,5 @@
-
 import { create } from 'zustand';
-import type { ThemeState, Theme, ComponentTokens, DesignTokens } from '@/shared/types/theme.types';
+import type { ThemeState, Theme, ComponentTokens, DesignTokens } from '@/shared/types/core/theme.types';
 
 const defaultTheme: Theme = {
   id: 'default',
@@ -90,12 +89,10 @@ export const useThemeStore = create<ThemeState>((set) => ({
   componentStyles: {},
   animations: {},
   effects: [],
-  themes: [defaultTheme], // Add the themes property
 
-  setThemes: (themes: Theme[]) => set({ themes, theme: themes[0] || null }),
   setActiveTheme: (themeId: string) => set((state) => ({
     activeThemeId: themeId,
-    theme: state.themes?.find(t => t.id === themeId) || state.theme
+    theme: state.theme?.id === themeId ? state.theme : defaultTheme
   })),
   setDesignTokens: (tokens: DesignTokens) => set({ designTokens: tokens }),
   setComponentTokens: (tokens: ComponentTokens) => set({ componentTokens: tokens }),
