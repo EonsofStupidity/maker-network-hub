@@ -1,20 +1,17 @@
 
-import { UserRole } from './auth.types';
+export type UserRole = 'guest' | 'follower' | 'maker' | 'mod' | 'admin' | 'super_admin';
 
 export const ROLES = {
-  super_admin: 'super_admin',
+  guest: 'guest',
+  follower: 'follower',
+  maker: 'maker',
+  mod: 'mod',
   admin: 'admin',
-  moderator: 'moderator',
-  builder: 'builder',
-  user: 'user',
-  guest: 'guest'
+  super_admin: 'super_admin'
 } as const;
 
-export type PermissionKey = 'canUseGus' | 'canEditParts' | 'canAccessVisualEditor';
-
-export interface RolePermissions {
-  [key: string]: PermissionKey[];
-}
+export type Permission = 'canAccessVisualEditor' | 'canUseGus' | 'canModerate' | 'canCreateProjects' | 'canManageParts';
+export type RolePermissions = Record<UserRole, Permission[]>;
 
 export interface RBACState {
   roles: UserRole[];
