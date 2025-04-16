@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { LogCategory, LogLevel } from '@/shared/types';

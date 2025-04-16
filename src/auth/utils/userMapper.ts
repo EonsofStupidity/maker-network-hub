@@ -22,6 +22,7 @@ export function mapUserToProfile(userData: any): UserProfile {
     lastSignInAt: userData.last_sign_in_at || new Date().toISOString(),
     bio: userData.user_metadata?.bio || '',
     userMetadata: userData.user_metadata || {},
-    appMetadata: userData.app_metadata || {}
+    appMetadata: userData.app_metadata || {},
+    roles: userData.app_metadata?.roles || []
   };
 }

@@ -43,8 +43,8 @@ export function AdminHeader({ title = "Admin Dashboard" }: AdminHeaderProps) {
   };
 
   // Get user's first initial for avatar fallback
-  const userInitial = user?.user_metadata?.full_name?.[0] || 'U';
-  const displayName = user?.user_metadata?.full_name as string || "Admin User";
+  const userInitial = user?.userMetadata?.full_name?.[0] || 'U';
+  const displayName = user?.userMetadata?.full_name as string || "Admin User";
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/40 bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -86,7 +86,7 @@ export function AdminHeader({ title = "Admin Dashboard" }: AdminHeaderProps) {
                 id: user.id,
                 email: user.email || '',
                 display_name: displayName,
-                user_metadata: user.user_metadata
+                user_metadata: user.userMetadata
               } : undefined}
               fallbackText={userInitial}
               size="sm"

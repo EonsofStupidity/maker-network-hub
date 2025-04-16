@@ -11,18 +11,29 @@ interface AppInitializerProps {
 
 export function AppInitializer({ children }: AppInitializerProps) {
   const [isInitialized, setIsInitialized] = useState(false);
-  const { status, isAuthenticated } = useAuthStore();
+  const { status, isAuthenticated, user } = useAuthStore();
   const { setUserRoles } = useRBACStore();
   
   useEffect(() => {
     if (status !== AuthStatusEnum.LOADING) {
-      if (isAuthenticated) {
+      if (isAuthenticated && user) {
+        // If user has roles in appMetadata, use those
+        const userRoles = user.appMetadata?.roles as string[] || [];
+        
+        // Always include guest role as fallback
+        if (userRoles.length === 0) {
+          setUserRoles([ROLES.guest]);
+        } else {
+          setUserRoles(userRoles as any[]);
+        }
+      } else {
+        // Set guest role for unauthenticated users
         setUserRoles([ROLES.guest]);
       }
       
       setIsInitialized(true);
     }
-  }, [status, isAuthenticated, setUserRoles]);
+  }, [status, isAuthenticated, user, setUserRoles]);
 
   if (!isInitialized) {
     return (

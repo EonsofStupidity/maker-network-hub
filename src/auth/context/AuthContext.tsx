@@ -1,22 +1,21 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { AuthStatus } from '@/shared/types/core/auth.types';
-import { UserProfile } from '@/shared/types/core/auth.types';
+import { AuthStatus, AuthStatusEnum, UserProfile } from '@/shared/types/core/auth.types';
 import { createClient } from '@supabase/supabase-js';
 
 interface AuthContextProps {
   user: UserProfile | null;
   isAuthenticated: boolean;
-  status: typeof AuthStatus[keyof typeof AuthStatus];
+  status: AuthStatus;
   setUser: React.Dispatch<React.SetStateAction<UserProfile | null>>;
-  setStatus: React.Dispatch<React.SetStateAction<typeof AuthStatus[keyof typeof AuthStatus]>>;
+  setStatus: React.Dispatch<React.SetStateAction<AuthStatus>>;
   supabase: any;
 }
 
 const AuthContext = createContext<AuthContextProps>({
   user: null,
   isAuthenticated: false,
-  status: AuthStatus.LOADING,
+  status: AuthStatusEnum.LOADING,
   setUser: () => {},
   setStatus: () => {},
   supabase: null,
@@ -24,7 +23,7 @@ const AuthContext = createContext<AuthContextProps>({
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [status, setStatus] = useState<typeof AuthStatus[keyof typeof AuthStatus]>(AuthStatus.LOADING);
+  const [status, setStatus] = useState<AuthStatus>(AuthStatusEnum.LOADING);
   const supabase = createClient(
     import.meta.env.VITE_SUPABASE_URL || 'https://example.supabase.co',
     import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key'
@@ -37,18 +36,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const userProfile: UserProfile = {
             id: session.user.id,
             email: session.user.email || '',
-            name: session.user.user_metadata?.full_name,
+            displayName: session.user.user_metadata?.full_name,
             avatarUrl: session.user.user_metadata?.avatar_url,
-            created_at: session.user.created_at,
-            updated_at: session.user.updated_at || session.user.created_at,
-            user_metadata: session.user.user_metadata,
-            app_metadata: session.user.app_metadata,
+            createdAt: session.user.created_at,
+            updatedAt: session.user.updated_at || session.user.created_at,
+            userMetadata: session.user.user_metadata,
+            appMetadata: session.user.app_metadata,
           };
           setUser(userProfile);
-          setStatus(AuthStatus.AUTHENTICATED);
+          setStatus(AuthStatusEnum.AUTHENTICATED);
         } else {
           setUser(null);
-          setStatus(AuthStatus.GUEST);
+          setStatus(AuthStatusEnum.GUEST);
         }
       }
     );
@@ -59,17 +58,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userProfile: UserProfile = {
           id: session.user.id,
           email: session.user.email || '',
-          name: session.user.user_metadata?.full_name,
+          displayName: session.user.user_metadata?.full_name,
           avatarUrl: session.user.user_metadata?.avatar_url,
-          created_at: session.user.created_at,
-          updated_at: session.user.updated_at || session.user.created_at,
-          user_metadata: session.user.user_metadata,
-          app_metadata: session.user.app_metadata,
+          createdAt: session.user.created_at,
+          updatedAt: session.user.updated_at || session.user.created_at,
+          userMetadata: session.user.user_metadata,
+          appMetadata: session.user.app_metadata,
         };
         setUser(userProfile);
-        setStatus(AuthStatus.AUTHENTICATED);
+        setStatus(AuthStatusEnum.AUTHENTICATED);
       } else {
-        setStatus(AuthStatus.GUEST);
+        setStatus(AuthStatusEnum.GUEST);
       }
     });
 
@@ -80,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value = {
     user,
-    isAuthenticated: status === AuthStatus.AUTHENTICATED,
+    isAuthenticated: status === AuthStatusEnum.AUTHENTICATED,
     status,
     setUser,
     setStatus,

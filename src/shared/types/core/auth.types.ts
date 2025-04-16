@@ -21,4 +21,15 @@ export interface UserProfile {
   name?: string; // Added for backward compatibility
   userMetadata?: Record<string, unknown>;
   appMetadata?: Record<string, unknown>;
+  roles?: string[]; // For compatibility with some components
 }
+
+// For legacy compatibility - mapping from snake_case property names
+export const userProfileMapping = {
+  user_metadata: 'userMetadata',
+  app_metadata: 'appMetadata',
+  avatar_url: 'avatarUrl',
+  created_at: 'createdAt',
+  updated_at: 'updatedAt',
+  last_sign_in_at: 'lastSignInAt'
+};

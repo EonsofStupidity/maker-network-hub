@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { RBACBridge } from '@/bridges/RBACBridge';
-import { UserRole } from '@/shared/types/core/auth.types';
+import { UserRole } from '@/shared/types/core/rbac.types';
 import { LogCategory } from '@/shared/types/core/logging.types';
 import { useLogger } from '@/logging/hooks/use-logger';
 

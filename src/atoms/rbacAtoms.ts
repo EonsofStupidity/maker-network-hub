@@ -1,6 +1,6 @@
 
 import { atom } from 'jotai';
-import { UserRole } from '@/shared/types/core/auth.types';
+import { UserRole } from '@/shared/types/core/rbac.types';
 import { RBACBridge } from '@/bridges/RBACBridge';
 
 // Ensure we're using the functions correctly

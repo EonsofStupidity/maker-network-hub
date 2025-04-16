@@ -5,7 +5,7 @@ import { Button } from '@/shared/ui/button';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { LogOut, Shield, User } from 'lucide-react';
 import { useToast } from '@/shared/hooks/use-toast';
-import { LogLevel, LogCategory } from '@/shared/types/shared.types';
+import { AuthStatusEnum, LogLevel, LogCategory } from '@/shared/types';
 import { logger } from '@/logging/logger.service';
 import { RBACBridge } from '@/rbac/bridge';
 
@@ -35,7 +35,7 @@ export default function AuthSection() {
     }
   };
 
-  if (status === 'LOADING') {
+  if (status === AuthStatusEnum.LOADING) {
     return (
       <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
     );

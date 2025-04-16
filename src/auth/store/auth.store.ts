@@ -130,8 +130,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: null, 
         profile: null,
         isAuthenticated: false,
-        status: AuthStatusEnum.GUEST,
-        roles: []
+        status: AuthStatusEnum.GUEST
       });
     } catch (error) {
       set({ 
@@ -187,8 +186,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       const { error } = await supabase.auth.updateUser({
         data: {
-          ...user.user_metadata,
-          ...profileData.user_metadata
+          ...user.userMetadata,
+          ...profileData.userMetadata
         }
       });
       

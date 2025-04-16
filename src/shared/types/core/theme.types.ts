@@ -1,54 +1,35 @@
 
-export type ThemeEffectType = 'pulse' | 'hover-glow' | 'float';
-
-// Constants for theme effects for use in code
-export const ThemeEffectTypes = {
-  PULSE: 'pulse',
-  HOVER_GLOW: 'hover-glow',
-  FLOAT: 'float'
-} as const;
-
-export interface ThemeComponent {
-  id: string;
-  name: string;
-  component_name?: string;
-  styles?: Record<string, string>;
-  tokens?: Record<string, string>;
+export enum ThemeEffectType {
+  NONE = 'none',
+  CYBER = 'cyber',
+  NEON = 'neon',
+  ELECTRIC = 'electric',
+  GLITCH = 'glitch',
+  SYNTHWAVE = 'synthwave',
+  HOLOGRAM = 'hologram',
+  BLUR = 'blur',
+  MORPH = 'morph',
+  NOISE = 'noise',
+  GRADIENT = 'gradient',
+  PULSE = 'pulse',
+  PARTICLE = 'particle',
+  GRAIN = 'grain',
+  GLOW = 'glow',
+  SHADOW = 'shadow'
 }
+
+export const THEME_EFFECTS = {
+  NONE: ThemeEffectType.NONE,
+  CYBER: ThemeEffectType.CYBER,
+  NEON: ThemeEffectType.NEON,
+  ELECTRIC: ThemeEffectType.ELECTRIC,
+  GLITCH: ThemeEffectType.GLITCH,
+  SYNTHWAVE: ThemeEffectType.SYNTHWAVE
+};
 
 export interface ThemeEffect {
   type: ThemeEffectType;
-  enabled: boolean;
   intensity: number;
   color?: string;
-}
-
-export interface Theme {
-  id: string;
-  name: string;
-  isDark: boolean;
-  variables?: Record<string, string>;
-  designTokens?: Record<string, unknown>;
-  componentTokens?: Record<string, unknown>;
-}
-
-export interface ThemeState {
-  themes: Theme[];
-  activeThemeId: string | null;
-  isDark: boolean;
-  primaryColor: string;
-  backgroundColor: string;
-  textColor: string;
-  designTokens: Record<string, unknown>;
-  componentTokens: Record<string, unknown>;
-  isLoading: boolean;
-  error: string | null;
-  theme: Theme | null;
-  isLoaded: boolean;
-  variables: Record<string, string>;
-  componentStyles: Record<string, Record<string, string>>;
-  animations: Record<string, unknown>;
-  effects: ThemeEffect[];
-  setEffects: (effects: ThemeEffect[]) => void;
-  setVariables: (variables: Record<string, string>) => void;
+  enabled?: boolean;
 }
