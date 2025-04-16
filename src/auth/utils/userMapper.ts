@@ -16,10 +16,12 @@ export function mapUserToProfile(userData: any): UserProfile {
     email: userData.email || '',
     displayName: userData.user_metadata?.full_name || userData.email?.split('@')[0] || '',
     avatarUrl: userData.user_metadata?.avatar_url || '',
-    created_at: userData.created_at || new Date().toISOString(),
-    updated_at: userData.updated_at || new Date().toISOString(),
-    last_sign_in_at: userData.last_sign_in_at || new Date().toISOString(),
-    user_metadata: userData.user_metadata || {},
-    app_metadata: userData.app_metadata || {}
+    name: userData.user_metadata?.full_name || '',
+    createdAt: userData.created_at || new Date().toISOString(),
+    updatedAt: userData.updated_at || new Date().toISOString(),
+    lastSignInAt: userData.last_sign_in_at || new Date().toISOString(),
+    bio: userData.user_metadata?.bio || '',
+    userMetadata: userData.user_metadata || {},
+    appMetadata: userData.app_metadata || {}
   };
 }

@@ -1,12 +1,10 @@
-
 import React, { useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
-import { LogCategory, LogLevel } from '@/shared/types/shared.types';
+import { LogCategory, LogLevel } from '@/shared/types';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
-import { Textarea } from '@/shared/ui/textarea';
 import { logger } from '@/logging/logger.service';
 
 interface ProfileEditorProps {
@@ -21,55 +19,32 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({
   const { user, updateProfile } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Initialize form state with user data
-  const userMetadata = user?.user_metadata || {};
-  const displayName = user?.name || userMetadata.full_name || '';
-  const bio = userMetadata.bio || '';
-  const avatarUrl = user?.avatar_url || userMetadata.avatar_url || '';
-  const locationValue = userMetadata.location || '';
-  const website = userMetadata.website || '';
-  
   const [formData, setFormData] = useState({
-    displayName,
-    bio,
-    avatarUrl,
-    location: locationValue,
-    website
+    displayName: user?.displayName || '',
+    bio: user?.bio || '',
+    avatarUrl: user?.avatarUrl || '',
   });
   
-  // Handle input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-  
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!user) return;
     
     try {
       setIsSubmitting(true);
       
-      // Update user profile
-      if (updateProfile) {
-        await updateProfile({
-          name: formData.displayName,
-          user_metadata: {
-            ...userMetadata,
-            full_name: formData.displayName,
-            bio: formData.bio || '',
-            avatar_url: formData.avatarUrl || '',
-            location: formData.location || '',
-            website: formData.website || ''
-          }
-        });
-      }
-      
-      logger.log(LogLevel.INFO, LogCategory.UI, 'Profile updated', {
-        userId: user.id
+      await updateProfile({
+        displayName: formData.displayName,
+        bio: formData.bio,
+        avatarUrl: formData.avatarUrl,
+        userMetadata: {
+          ...user.userMetadata,
+          full_name: formData.displayName,
+          bio: formData.bio,
+          avatar_url: formData.avatarUrl
+        }
       });
+      
+      logger.log(LogLevel.INFO, LogCategory.UI, 'Profile updated');
       
       if (onSave) {
         onSave();
@@ -110,22 +85,20 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({
               id="displayName"
               name="displayName"
               value={formData.displayName}
-              onChange={handleChange}
+              onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
               placeholder="Your name"
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="bio">Bio</Label>
             <Input 
-              id="email"
-              name="email"
-              value={user.email}
-              onChange={handleChange}
-              placeholder="Your email"
-              disabled
+              id="bio"
+              name="bio"
+              value={formData.bio}
+              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+              placeholder="Your bio"
             />
-            <p className="text-xs text-muted-foreground">Email cannot be changed.</p>
           </div>
           
           <div className="space-y-2">
@@ -134,42 +107,8 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({
               id="avatarUrl"
               name="avatarUrl"
               value={formData.avatarUrl}
-              onChange={handleChange}
+              onChange={(e) => setFormData({ ...formData, avatarUrl: e.target.value })}
               placeholder="https://example.com/avatar.jpg"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input 
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="Your location"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="website">Website</Label>
-            <Input 
-              id="website"
-              name="website"
-              value={formData.website}
-              onChange={handleChange}
-              placeholder="https://yourwebsite.com"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea 
-              id="bio"
-              name="bio"
-              value={formData.bio}
-              onChange={handleChange}
-              placeholder="Tell us about yourself"
-              rows={4}
             />
           </div>
         </CardContent>
@@ -186,5 +125,3 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({
     </Card>
   );
 };
-
-export default ProfileEditor;
