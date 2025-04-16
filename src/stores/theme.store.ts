@@ -5,7 +5,8 @@ import {
   DesignTokens,
   ComponentTokens,
   Theme,
-  ThemeEffect
+  ThemeEffect,
+  ThemeEffectType
 } from '@/shared/types/core/theme.types';
 
 // Define default design tokens
@@ -53,6 +54,15 @@ const DEFAULT_COMPONENT_TOKENS: ComponentTokens = {
   }
 };
 
+// Define default theme effects
+const DEFAULT_THEME_EFFECTS: ThemeEffect[] = [
+  { 
+    type: ThemeEffectType.NONE, 
+    intensity: 0, 
+    enabled: false 
+  }
+];
+
 // Adding effects to the interface
 interface ThemeStoreState extends ThemeState {
   // Actions
@@ -79,7 +89,7 @@ export const useThemeStore = create<ThemeStoreState>((set) => ({
   error: null,
   themes: [],
   theme: null,
-  effects: [], // Explicitly include effects array
+  effects: DEFAULT_THEME_EFFECTS, // Initialize with default effects
   
   // Actions
   setActiveTheme: (themeId: string) => set({ activeThemeId: themeId }),
