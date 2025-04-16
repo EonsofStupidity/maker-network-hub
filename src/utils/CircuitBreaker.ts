@@ -3,23 +3,30 @@
  * Circuit Breaker implementation to prevent cascading failures
  */
 export class CircuitBreaker {
-  // Make properties public instead of private
+  // Properties
   public isOpen: boolean = false;
   public failureCount: number = 0;
   public successCount: number = 0;
   public lastFailureTime: number = 0;
   public count: number = 0;
   
+  // Options with defaults
+  private readonly maxFailures: number;
+  private readonly resetTimeout: number;
+  private readonly halfOpenAttemptsAllowed: number;
+  
   constructor(
     public name: string,
-    public options?: {
+    options?: {
       maxFailures?: number;
       resetTimeout?: number;
       halfOpenAttemptsAllowed?: number;
     }
   ) {
     this.name = name;
-    this.options = options || {};
+    this.maxFailures = options?.maxFailures ?? 5;
+    this.resetTimeout = options?.resetTimeout ?? 30000;
+    this.halfOpenAttemptsAllowed = options?.halfOpenAttemptsAllowed ?? 1;
   }
 
   // Static factory method for convenience
@@ -46,12 +53,12 @@ export class CircuitBreaker {
     if (this.isOpen) {
       // Check if we should allow a test request
       const now = Date.now();
-      if (this.lastFailureTime && (now - this.lastFailureTime) > (this.options?.resetTimeout || 30000)) {
+      if (this.lastFailureTime && (now - this.lastFailureTime) > this.resetTimeout) {
         // Try to reset the circuit with a test request
         this.isOpen = false;
       } else if (fallback) {
         // Circuit is still open, use fallback
-        return fallback();
+        return await Promise.resolve(fallback());
       } else {
         // Circuit is open with no fallback
         throw new Error(`Circuit [${this.name}] is open`);
@@ -61,22 +68,26 @@ export class CircuitBreaker {
     // Execute the function
     try {
       const result = await fn();
-      // Success, reset failure count
-      this.reset();
+      // Success, increment success count and reset failure count if needed
+      this.successCount++;
+      this.count++;
+      if (this.failureCount > 0) {
+        this.failureCount = 0;
+      }
       return result;
     } catch (error) {
       // Handle failure
       this.recordFailure();
       
       // Check if we've hit the threshold and open the circuit
-      if (this.failureCount >= (this.options?.maxFailures || 5)) {
+      if (this.failureCount >= this.maxFailures) {
         this.isOpen = true;
         this.lastFailureTime = Date.now();
       }
       
       // Use fallback if available
       if (fallback) {
-        return fallback();
+        return await Promise.resolve(fallback());
       }
       
       // No fallback, re-throw the error
@@ -91,7 +102,6 @@ export class CircuitBreaker {
     this.failureCount = 0;
     this.isOpen = false;
     this.lastFailureTime = 0;
-    this.count = 0;
   }
   
   /**
@@ -99,40 +109,25 @@ export class CircuitBreaker {
    */
   recordFailure(): void {
     this.failureCount++;
+    this.count++;
   }
   
   /**
-   * Get the current failure count
+   * Get the current status as a plain object
    */
-  getFailureCount(): number {
-    return this.failureCount;
-  }
-  
-  /**
-   * Get the current success count
-   */
-  getSuccessCount(): number {
-    return this.successCount;
-  }
-  
-  /**
-   * Get the current count
-   */
-  getCount(): number {
-    return this.count;
-  }
-  
-  /**
-   * Check if the circuit is currently open
-   */
-  getIsOpen(): boolean {
-    // If circuit was open, check if it's time to reset
-    if (this.isOpen && this.lastFailureTime) {
-      const now = Date.now();
-      if ((now - this.lastFailureTime) > (this.options?.resetTimeout || 30000)) {
-        this.isOpen = false;
-      }
-    }
-    return this.isOpen;
+  getStatus(): {
+    isOpen: boolean;
+    failureCount: number;
+    successCount: number; 
+    count: number;
+    lastFailureTime: number | null;
+  } {
+    return {
+      isOpen: this.isOpen,
+      failureCount: this.failureCount,
+      successCount: this.successCount,
+      count: this.count,
+      lastFailureTime: this.lastFailureTime || null
+    };
   }
 }

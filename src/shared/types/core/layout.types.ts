@@ -1,25 +1,19 @@
 
 import { ReactNode } from 'react';
 
-export type LayoutComponentType = 'page' | 'section' | 'widget' | string;
-export type LayoutScope = 'site' | 'admin' | 'feature' | string;
+// Base types
+export type LayoutComponentType = 'page' | 'section' | 'container' | 'widget' | 'text' | 'image' | string;
+export type LayoutScope = 'site' | 'admin' | 'feature' | 'chat' | string;
 
-export interface LayoutComponentProps {
-  id: string;
-  title: string;
-  icon?: ReactNode;
-  position: number;
-  children?: ReactNode;
-  requiresAuth?: boolean;
-  requiredRole?: string;
-}
-
+// Core layout component interface
 export interface LayoutComponent {
   id: string;
-  type: string;
+  type: LayoutComponentType;
   props: Record<string, any>;
+  children?: LayoutComponent[];
 }
 
+// Layout structure definition
 export interface LayoutItem {
   id: string;
   parentId?: string;
@@ -27,11 +21,12 @@ export interface LayoutItem {
   componentId: string;
 }
 
+// Main layout interface
 export interface Layout {
   id: string;
   name: string;
   description?: string;
-  type: LayoutComponentType;
+  type: LayoutComponentType; 
   components: Record<string, LayoutComponent>;
   layout: LayoutItem[];
   scope: LayoutScope;
@@ -45,6 +40,7 @@ export interface Layout {
   };
 }
 
+// Database layout skeleton (matches Supabase structure)
 export interface LayoutSkeleton {
   id: string;
   name: string;
@@ -52,8 +48,8 @@ export interface LayoutSkeleton {
   type: string;
   scope: string;
   layout_json: {
-    layout: LayoutItem[];
     components: Record<string, LayoutComponent>;
+    layout: LayoutItem[];
   };
   is_locked: boolean;
   version: number;
@@ -61,4 +57,25 @@ export interface LayoutSkeleton {
   created_at: string;
   updated_at: string;
   created_by?: string;
+}
+
+// Utility functions for layout conversions
+export function mapSkeletonToLayout(skeleton: LayoutSkeleton): Layout {
+  return {
+    id: skeleton.id,
+    name: skeleton.name,
+    description: skeleton.description,
+    type: skeleton.type as LayoutComponentType,
+    components: skeleton.layout_json?.components || {},
+    layout: skeleton.layout_json?.layout || [],
+    scope: skeleton.scope as LayoutScope,
+    meta: {
+      version: skeleton.version,
+      isLocked: skeleton.is_locked,
+      isActive: skeleton.is_active,
+      createdAt: skeleton.created_at,
+      updatedAt: skeleton.updated_at,
+      createdBy: skeleton.created_by
+    }
+  };
 }
