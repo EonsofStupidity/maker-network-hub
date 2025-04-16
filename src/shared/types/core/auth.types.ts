@@ -3,13 +3,16 @@ import { UserRole, ROLES } from './rbac.types';
 
 export const AUTH_STATUS = {
   LOADING: 'LOADING',
-  AUTHENTICATED: 'AUTHENTICATED', 
+  AUTHENTICATED: 'AUTHENTICATED',
   GUEST: 'GUEST',
   ERROR: 'ERROR',
   IDLE: 'IDLE'
 } as const;
 
 export type AuthStatus = typeof AUTH_STATUS[keyof typeof AUTH_STATUS];
+
+// Re-export logging types needed by auth components
+export { LogLevel, LogCategory } from './logging.types';
 
 export interface UserProfile {
   id: string;
@@ -26,5 +29,5 @@ export interface UserProfile {
   roles?: UserRole[];
 }
 
-// Re-export RBAC types
+// Re-export RBAC types for auth components
 export { UserRole, ROLES };

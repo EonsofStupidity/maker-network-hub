@@ -1,8 +1,4 @@
 
-/**
- * Logging related type definitions
- */
-
 export enum LogCategory {
   APP = 'APP',
   ADMIN = 'ADMIN',
@@ -32,19 +28,6 @@ export enum LogLevel {
   FATAL = 6,
   SILENT = 100
 }
-
-// Mapping for log level values
-export const LOG_LEVEL_VALUES: Record<LogLevel, number> = {
-  [LogLevel.TRACE]: -1,
-  [LogLevel.DEBUG]: 0,
-  [LogLevel.INFO]: 1,
-  [LogLevel.WARN]: 2,
-  [LogLevel.ERROR]: 3,
-  [LogLevel.CRITICAL]: 4,
-  [LogLevel.SUCCESS]: 5,
-  [LogLevel.FATAL]: 6,
-  [LogLevel.SILENT]: 100
-};
 
 export interface LogDetails {
   source?: string;
