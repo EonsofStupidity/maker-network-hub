@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { LogCategory, LogLevel } from '@/shared/types/core/logging.types';
+import { getErrorMessage } from '@/utils/errors';
 
 // Example function with the error
 export async function logToDatabase(level: LogLevel, category: LogCategory, message: string, details?: any) {
@@ -16,12 +17,12 @@ export async function logToDatabase(level: LogLevel, category: LogCategory, mess
       .select('id');
       
     if (response.error) {
-      console.error('Failed to log to database:', response.error.message || 'Unknown error');
+      console.error('Failed to log to database:', getErrorMessage(response.error));
     }
     
     return true;
   } catch (err) {
-    console.error('Logging error:', err instanceof Error ? err.message : String(err));
+    console.error('Logging error:', getErrorMessage(err));
     return false;
   }
 }

@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Layout, LayoutSchema } from '@/shared/types/layout.types';
 import { toast } from '@/shared/ui';
+import { getErrorMessage } from '@/utils/errors';
 
 export async function loadLayout(type: string, scope: string): Promise<Layout | null> {
   try {
@@ -19,7 +20,7 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
     const data = filteredData?.length > 0 ? filteredData[0] : null;
     const responseError = response.error;
 
-    if (responseError) throw new Error(responseError.message || 'Unknown error');
+    if (responseError) throw new Error(getErrorMessage(responseError));
     
     if (!data) return null;
     
@@ -30,7 +31,7 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
     console.error('Error loading layout:', error);
     toast({
       title: 'Error loading layout',
-      description: error instanceof Error ? error.message : 'Unknown error',
+      description: getErrorMessage(error),
       variant: 'destructive'
     });
     return null;

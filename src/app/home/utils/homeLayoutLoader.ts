@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/shared/ui/use-toast';
 import type { HomeLayout } from '../types/layout.types';
+import { getErrorMessage } from '@/utils/errors';
 
 export async function loadHomeLayout(): Promise<HomeLayout | null> {
   try {
@@ -14,14 +15,14 @@ export async function loadHomeLayout(): Promise<HomeLayout | null> {
     const responseError = response.error;
 
     if (responseError) {
-      throw new Error(responseError.message || 'Failed to load home layout');
+      throw new Error(getErrorMessage(responseError));
     }
 
     return data as HomeLayout;
   } catch (error) {
     toast({
       title: "Error loading layout",
-      description: error instanceof Error ? error.message : 'Unknown error',
+      description: getErrorMessage(error),
       variant: "destructive"
     });
     return null;
@@ -37,7 +38,7 @@ export async function saveHomeLayout(layout: Partial<HomeLayout>) {
 
     const responseError = response.error;
     if (responseError) {
-      throw new Error(responseError.message || 'Error saving layout');
+      throw new Error(getErrorMessage(responseError));
     }
 
     toast({
@@ -49,7 +50,7 @@ export async function saveHomeLayout(layout: Partial<HomeLayout>) {
   } catch (error) {
     toast({
       title: "Error saving layout",
-      description: error instanceof Error ? error.message : 'Unknown error',
+      description: getErrorMessage(error),
       variant: "destructive"
     });
     return false;

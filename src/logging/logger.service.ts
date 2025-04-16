@@ -1,5 +1,6 @@
 
 import { LogLevel, LogCategory, LogCategoryType, LogDetails, LogEntry, LogFilter } from '@/shared/types/shared.types';
+import { getErrorMessage } from '@/utils/errors';
 
 /**
  * Logger service for application-wide logging
