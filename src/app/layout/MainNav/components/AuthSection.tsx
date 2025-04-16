@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/ui/button';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { LogOut, Shield, User } from 'lucide-react';
 import { useToast } from '@/shared/hooks/use-toast';
-import { AuthStatusEnum, LogLevel, LogCategory } from '@/shared/types';
+import { AUTH_STATUS, LogLevel, LogCategory } from '@/shared/types/core/auth.types';
 import { logger } from '@/logging/logger.service';
 import { RBACBridge } from '@/rbac/bridge';
 
@@ -35,7 +34,7 @@ export default function AuthSection() {
     }
   };
 
-  if (status === AuthStatusEnum.LOADING) {
+  if (status === AUTH_STATUS.LOADING) {
     return (
       <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
     );

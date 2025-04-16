@@ -1,5 +1,4 @@
 
-// User role types
 export type UserRole = 'GUEST' | 'FOLLOWER' | 'MAKER' | 'MOD' | 'ADMIN' | 'SUPER_ADMIN';
 
 export const ROLES = {

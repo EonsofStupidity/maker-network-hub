@@ -9,10 +9,6 @@ interface RoleGateProps {
   fallback?: React.ReactNode;
 }
 
-/**
- * Role-based access control gate component
- * Only renders children if the user has the required role(s)
- */
 export const RoleGate: React.FC<RoleGateProps> = ({ 
   children, 
   allowedRoles,
@@ -30,29 +26,23 @@ export const RoleGate: React.FC<RoleGateProps> = ({
   return <>{children}</>;
 };
 
-/**
- * AdminGate - Only allows admin and super admin users
- */
 export const AdminGate: React.FC<Omit<RoleGateProps, 'allowedRoles'>> = ({ 
   children, 
   fallback = null 
 }) => {
   return (
-    <RoleGate allowedRoles={[ROLES.admin, ROLES.super_admin]} fallback={fallback}>
+    <RoleGate allowedRoles={[ROLES.ADMIN, ROLES.SUPER_ADMIN]} fallback={fallback}>
       {children}
     </RoleGate>
   );
 };
 
-/**
- * SuperAdminGate - Only allows super admin users
- */
 export const SuperAdminGate: React.FC<Omit<RoleGateProps, 'allowedRoles'>> = ({ 
   children, 
   fallback = null 
 }) => {
   return (
-    <RoleGate allowedRoles={[ROLES.super_admin]} fallback={fallback}>
+    <RoleGate allowedRoles={[ROLES.SUPER_ADMIN]} fallback={fallback}>
       {children}
     </RoleGate>
   );

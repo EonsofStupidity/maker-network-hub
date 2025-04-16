@@ -18,7 +18,7 @@ export const AdminOverlay: React.FC<AdminOverlayProps> = ({ enabled = false }) =
   const { user } = useAuthStore();
   
   // Only show for admin users
-  const isAllowed = RBACBridge.hasRole(ROLES.admin);
+  const isAllowed = RBACBridge.hasRole(ROLES.ADMIN);
   
   useEffect(() => {
     if (!enabled || !isAllowed) return;
@@ -28,7 +28,7 @@ export const AdminOverlay: React.FC<AdminOverlayProps> = ({ enabled = false }) =
       roles: RBACBridge.getRoles(),
       userId: user?.id,
       email: user?.email,
-      isAdmin: RBACBridge.hasRole(ROLES.admin),
+      isAdmin: RBACBridge.hasRole(ROLES.ADMIN),
       isSuperAdmin: RBACBridge.isSuperAdmin(),
       authStatus: useAuthStore.getState().status,
     };

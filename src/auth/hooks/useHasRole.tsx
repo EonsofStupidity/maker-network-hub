@@ -11,27 +11,27 @@ export function useHasRole(role: UserRole | UserRole[]) {
 export function useIsAdmin() {
   const { hasRole } = useRbac();
   return useCallback(() => {
-    return hasRole([ROLES.admin, ROLES.super_admin]);
+    return hasRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]);
   }, [hasRole]);
 }
 
 export function useIsSuperAdmin() {
   const { hasRole } = useRbac();
   return useCallback(() => {
-    return hasRole(ROLES.super_admin);
+    return hasRole(ROLES.SUPER_ADMIN);
   }, [hasRole]);
 }
 
 export function useIsModerator() {
   const { hasRole } = useRbac();
   return useCallback(() => {
-    return hasRole([ROLES.mod, ROLES.admin, ROLES.super_admin]);
+    return hasRole([ROLES.MOD, ROLES.ADMIN, ROLES.SUPER_ADMIN]);
   }, [hasRole]);
 }
 
 export function useIsBuilder() {
   const { hasRole } = useRbac();
   return useCallback(() => {
-    return hasRole([ROLES.maker, ROLES.admin, ROLES.super_admin]);
+    return hasRole([ROLES.MAKER, ROLES.ADMIN, ROLES.SUPER_ADMIN]);
   }, [hasRole]);
 }

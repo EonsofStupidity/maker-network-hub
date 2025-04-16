@@ -1,4 +1,3 @@
-
 import { useState, memo, useCallback } from "react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useLogger } from "@/logging/hooks/use-logger";
@@ -9,6 +8,7 @@ import { Button } from "@/shared/ui/button";
 import { UserMenuSheet } from "./UserMenuSheet";
 import { useAuthStore } from "@/auth/store/auth.store";
 import { logger } from "@/logging/logger.service";
+import { UserRole } from "@/shared/types/core/rbac.types";
 
 export function UserMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -91,4 +91,15 @@ export function UserMenu() {
       />
     </>
   );
+}
+
+interface UserMenuSheetProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  userDisplayName: string;
+  userEmail: string;
+  userAvatar?: string;
+  onShowProfile: () => void;
+  onLogout: () => void;
+  roles: UserRole[];
 }

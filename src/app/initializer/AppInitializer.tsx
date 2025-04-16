@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { useRBACStore } from '@/rbac/rbac.store';
-import { AuthStatusEnum } from '@/shared/types/core/auth.types';
+import { AUTH_STATUS, AuthStatus } from '@/shared/types/core/auth.types';
 import { ROLES } from '@/shared/types/core/rbac.types';
 
 interface AppInitializerProps {
@@ -15,20 +15,20 @@ export function AppInitializer({ children }: AppInitializerProps) {
   const { setUserRoles } = useRBACStore();
   
   useEffect(() => {
-    if (status !== AuthStatusEnum.LOADING) {
+    if (status !== AUTH_STATUS.LOADING) {
       if (isAuthenticated && user) {
         // If user has roles in appMetadata, use those
         const userRoles = user.appMetadata?.roles as string[] || [];
         
         // Always include guest role as fallback
         if (userRoles.length === 0) {
-          setUserRoles([ROLES.guest]);
+          setUserRoles([ROLES.GUEST]);
         } else {
           setUserRoles(userRoles as any[]);
         }
       } else {
         // Set guest role for unauthenticated users
-        setUserRoles([ROLES.guest]);
+        setUserRoles([ROLES.GUEST]);
       }
       
       setIsInitialized(true);
