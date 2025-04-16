@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { UserProfile, AUTH_STATUS, AuthStatus } from '@/shared/types/core/auth.types';
 import { mapUserToProfile } from '@/auth/utils/userMapper';

@@ -1,64 +1,40 @@
-
 import React from 'react';
 import { useThemeVariables } from '@/hooks/useThemeVariables';
-import { Theme } from '@/shared/types/theme.types';
-
-interface ThemeColorBlockProps {
-  color: string;
-  name: string;
-  value: string;
-}
-
-const ThemeColorBlock = ({ color, name, value }: ThemeColorBlockProps) => (
-  <div className="flex flex-col">
-    <div className="h-12 w-full rounded-md border" style={{ backgroundColor: value }} />
-    <div className="mt-1">
-      <p className="text-sm font-medium">{name}</p>
-      <p className="text-xs text-muted-foreground">{value}</p>
-    </div>
-  </div>
-);
 
 interface ThemeColorSystemProps {
-  theme?: Theme | null;
-  className?: string;
+  children?: React.ReactNode;
 }
 
-export const ThemeColorSystem: React.FC<ThemeColorSystemProps> = ({
-  theme,
-  className = '',
-}) => {
+export function ThemeColorSystem({ children }: ThemeColorSystemProps) {
   const { variables } = useThemeVariables();
-
-  if (!theme && !variables) return null;
-
-  const colors = {
-    primary: variables.primary || '#000',
-    secondary: variables.secondary || '#000',
-    accent: variables.accent || '#000',
-    background: variables.background || '#000',
-    foreground: variables.foreground || '#fff',
-    muted: variables.muted || '#000',
-    mutedForeground: variables.mutedForeground || '#000',
-    card: variables.card || '#000',
-    cardForeground: variables.cardForeground || '#000',
+  
+  // Safe guard if variables haven't been loaded yet
+  if (!variables) {
+    return <>{children}</>;
+  }
+  
+  // Extract all CSS variables and apply them
+  const cssVariables: React.CSSProperties = {
+    // Convert theme variables to CSS variables
+    '--color-primary': variables['primary'] || '#3b82f6',
+    '--color-secondary': variables['secondary'] || '#8b5cf6',
+    '--color-background': variables['background'] || '#ffffff',
+    '--color-foreground': variables['foreground'] || '#0f172a',
+    '--color-muted': variables['muted'] || '#64748b',
+    '--color-accent': variables['accent'] || '#ec4899',
+    '--color-destructive': variables['destructive'] || '#ef4444',
+    '--color-success': variables['success'] || '#22c55e',
+    '--color-warning': variables['warning'] || '#f59e0b',
+    
+    // Other CSS variables
+    '--font-family': variables['fontFamily'] || 'Inter, system-ui, sans-serif',
+    
+    // Here you could add other variables
   };
-
+  
   return (
-    <div className={`space-y-4 ${className}`}>
-      <h3 className="text-lg font-medium">Color System</h3>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        <ThemeColorBlock color="primary" name="Primary" value={colors.primary} />
-        <ThemeColorBlock color="secondary" name="Secondary" value={colors.secondary} />
-        <ThemeColorBlock color="accent" name="Accent" value={colors.accent} />
-        <ThemeColorBlock color="background" name="Background" value={colors.background} />
-        <ThemeColorBlock color="foreground" name="Foreground" value={colors.foreground} />
-        <ThemeColorBlock color="muted" name="Muted" value={colors.muted} />
-        <ThemeColorBlock color="mutedForeground" name="Muted Foreground" value={colors.mutedForeground} />
-        <ThemeColorBlock color="card" name="Card" value={colors.card} />
-      </div>
+    <div style={cssVariables} className="theme-container">
+      {children}
     </div>
   );
-};
-
-export default ThemeColorSystem;
+}

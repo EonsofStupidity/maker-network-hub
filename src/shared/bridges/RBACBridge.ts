@@ -1,6 +1,6 @@
 
-import { UserRole, ROLES, Permission } from '@/shared/types/core/rbac.types';
-import type { AdminSection, SECTION_PERMISSIONS } from '@/shared/types/core/rbac.types';
+import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
+import { useRBACStore } from '@/rbac/rbac.store';
 
 export interface IRBACBridge {
   hasRole: (role: UserRole | UserRole[]) => boolean;
@@ -11,15 +11,13 @@ export interface IRBACBridge {
   isBuilder: () => boolean;
   setRoles: (roles: UserRole[]) => void;
   clearRoles: () => void;
-  hasPermission: (permission: Permission) => boolean;
+  hasPermission: (permission: string) => boolean;
   canAccessAdminSection: (section?: string) => boolean;
 }
 
 class RBACBridgeClass implements IRBACBridge {
-  private roles: UserRole[] = [];
-
   setRoles(roles: UserRole[]): void {
-    this.roles = roles.filter(role => 
+    const validRoles = roles.filter(role => 
       role === ROLES.GUEST || 
       role === ROLES.FOLLOWER || 
       role === ROLES.MAKER || 
@@ -27,20 +25,19 @@ class RBACBridgeClass implements IRBACBridge {
       role === ROLES.ADMIN || 
       role === ROLES.SUPER_ADMIN
     );
+    useRBACStore.getState().setUserRoles(validRoles);
   }
 
   clearRoles(): void {
-    this.roles = [];
+    useRBACStore.getState().clearUserRoles();
   }
 
   getRoles(): UserRole[] {
-    return [...this.roles];
+    return useRBACStore.getState().userRoles;
   }
 
   hasRole(roleOrRoles: UserRole | UserRole[]): boolean {
-    if (!this.roles || this.roles.length === 0) return false;
-    const rolesToCheck = Array.isArray(roleOrRoles) ? roleOrRoles : [roleOrRoles];
-    return rolesToCheck.some(role => this.roles.includes(role));
+    return useRBACStore.getState().hasRole(roleOrRoles);
   }
 
   hasAdminAccess(): boolean {
@@ -59,12 +56,33 @@ class RBACBridgeClass implements IRBACBridge {
     return this.hasRole([ROLES.MAKER, ROLES.ADMIN, ROLES.SUPER_ADMIN]);
   }
 
-  hasPermission(permission: Permission): boolean {
-    return this.isSuperAdmin() || this.hasAdminAccess();
+  hasPermission(permission: string): boolean {
+    return useRBACStore.getState().hasPermission(permission);
   }
 
   canAccessAdminSection(section?: string): boolean {
-    return this.hasAdminAccess();
+    if (!section) return this.hasAdminAccess();
+    
+    // Super admin can access everything
+    if (this.isSuperAdmin()) return true;
+    
+    // Check if user has the role required for this section
+    const userRoles = this.getRoles();
+    
+    switch (section) {
+      case 'dashboard':
+        return userRoles.some(role => [ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(role));
+      case 'users':
+        return userRoles.some(role => [ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(role));
+      case 'content':
+        return userRoles.some(role => [ROLES.MOD, ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(role));
+      case 'settings':
+        return userRoles.includes(ROLES.SUPER_ADMIN);
+      case 'system':
+        return userRoles.includes(ROLES.SUPER_ADMIN);
+      default:
+        return this.hasAdminAccess();
+    }
   }
 }
 

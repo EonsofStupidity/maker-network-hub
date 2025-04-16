@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { useRBACStore } from '@/rbac/rbac.store';
+import { RBACBridge } from '@/shared/bridges/RBACBridge';
 import { AUTH_STATUS } from '@/shared/types/core/auth.types';
 import { ROLES, UserRole } from '@/shared/types/core/rbac.types';
 import { useLogger } from '@/logging/hooks/use-logger';
@@ -33,21 +34,18 @@ export function AppInitializer({ children }: AppInitializerProps) {
         // If user has roles in appMetadata, use those
         const userRoles = user.roles || [];
         
-        // Map roles to correct format
+        // Map roles to correct format and validate
         const validRoles = userRoles.filter(role => 
-          role === ROLES.GUEST || 
-          role === ROLES.FOLLOWER || 
-          role === ROLES.MAKER || 
-          role === ROLES.MOD || 
-          role === ROLES.ADMIN || 
-          role === ROLES.SUPER_ADMIN
+          Object.values(ROLES).includes(role as UserRole)
         ) as UserRole[];
         
         // Always include guest role as fallback
         if (validRoles.length === 0) {
           setUserRoles([ROLES.GUEST]);
+          RBACBridge.setRoles([ROLES.GUEST]);
         } else {
           setUserRoles(validRoles);
+          RBACBridge.setRoles(validRoles);
         }
         
         logger.info('User roles set in RBAC store', {
@@ -56,6 +54,7 @@ export function AppInitializer({ children }: AppInitializerProps) {
       } else {
         // Set guest role for unauthenticated users
         setUserRoles([ROLES.GUEST]);
+        RBACBridge.setRoles([ROLES.GUEST]);
         logger.info('Guest role set in RBAC store');
       }
     }

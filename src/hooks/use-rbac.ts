@@ -1,8 +1,8 @@
 
 import { useCallback } from 'react';
-import { RBACBridge } from '@/rbac/bridge';
-import { UserRole } from '@/shared/types/core/rbac.types';
-import { Permission } from '@/shared/types/core/rbac.types';
+import { RBACBridge } from '@/shared/bridges/RBACBridge';
+import { UserRole, ROLES, Permission } from '@/shared/types/core/rbac.types';
+import { useRBACStore } from '@/rbac/rbac.store';
 
 export interface IRBACHook {
   roles: UserRole[];
@@ -19,7 +19,7 @@ export interface IRBACHook {
  * @returns Object with RBAC methods and state
  */
 export const useRbac = (): IRBACHook => {
-  const roles = RBACBridge.getRoles();
+  const roles = useRBACStore(state => state.userRoles);
   
   // Check if user has a specific role
   const hasRole = useCallback((role: UserRole | UserRole[]): boolean => {

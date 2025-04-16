@@ -3,8 +3,8 @@ import { useState, memo, useCallback } from "react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useLogger } from "@/logging/hooks/use-logger";
 import { LogCategory, LogLevel } from "@/shared/types/core/logging.types";
-import { AuthBridge, authBridge } from "@/bridges/AuthBridge";
-import { RBACBridge } from "@/rbac/bridge";
+import { authBridge } from "@/auth/lib/AuthBridgeImpl";
+import { RBACBridge } from "@/shared/bridges/RBACBridge";
 import { Button } from "@/shared/ui/button";
 import { UserMenuSheet } from "./UserMenuSheet";
 import { useAuthStore } from "@/auth/store/auth.store";
@@ -63,7 +63,7 @@ export function UserMenu() {
   }
 
   // Get display name and email from user
-  const displayName = user.userMetadata?.full_name as string || user.email?.split('@')[0] || 'User';
+  const displayName = user.displayName || user.email?.split('@')[0] || 'User';
   const userEmail = user.email || '';
   const userAvatar = user.avatarUrl || '';
 
@@ -92,16 +92,4 @@ export function UserMenu() {
       />
     </>
   );
-}
-
-// Define the props for UserMenuSheet
-interface UserMenuSheetProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  userDisplayName: string;
-  userEmail: string;
-  userAvatar?: string;
-  onShowProfile: () => void;
-  onLogout: () => void;
-  roles: UserRole[];
 }

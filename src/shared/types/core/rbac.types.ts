@@ -30,3 +30,63 @@ export const SECTION_PERMISSIONS: Record<AdminSection, UserRole[]> = {
   settings: [ROLES.SUPER_ADMIN],
   system: [ROLES.SUPER_ADMIN]
 };
+
+// Role labels for UI display
+export const ROLE_LABELS: Record<UserRole, string> = {
+  [ROLES.SUPER_ADMIN]: 'Super Admin',
+  [ROLES.ADMIN]: 'Admin',
+  [ROLES.MOD]: 'Moderator',
+  [ROLES.MAKER]: 'Maker',
+  [ROLES.FOLLOWER]: 'Follower',
+  [ROLES.GUEST]: 'Guest'
+};
+
+// Default permissions for each role
+export const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
+  [ROLES.GUEST]: [
+    'view:public:content',
+    'view:builds'
+  ],
+  [ROLES.FOLLOWER]: [
+    'view:profile',
+    'edit:profile',
+    'view:builds',
+    'comment:builds'
+  ],
+  [ROLES.MAKER]: [
+    'view:profile',
+    'edit:profile',
+    'create:build',
+    'edit:own:build',
+    'delete:own:build',
+    'view:builds',
+    'comment:builds',
+    'feature:own:build',
+    'upload:firmware'
+  ],
+  [ROLES.MOD]: [
+    'view:profile',
+    'edit:profile',
+    'view:builds',
+    'comment:builds',
+    'moderate:comments',
+    'review:builds'
+  ],
+  [ROLES.ADMIN]: [
+    'view:profile',
+    'edit:profile',
+    'view:builds',
+    'comment:builds',
+    'moderate:comments',
+    'review:builds',
+    'edit:any:build',
+    'delete:any:build',
+    'feature:any:build',
+    'view:admin',
+    'manage:users',
+    'manage:builds'
+  ],
+  [ROLES.SUPER_ADMIN]: [
+    '*' // All permissions
+  ]
+};

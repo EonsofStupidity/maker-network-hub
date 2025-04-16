@@ -1,8 +1,7 @@
 
-import { useContext } from 'react';
 import { useAuthStore } from '../store/auth.store';
-import { RBACBridge } from '@/rbac/bridge';
-import { UserRole } from '@/shared/types/core/auth.types';
+import { RBACBridge } from '@/shared/bridges/RBACBridge';
+import { UserRole } from '@/shared/types/core/rbac.types';
 
 export function useAuth() {
   const { 

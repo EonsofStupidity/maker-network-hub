@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { UserRole, ROLES, Permission } from '@/shared/types/core/rbac.types';
+import { UserRole, ROLES, Permission, DEFAULT_PERMISSIONS } from '@/shared/types/core/rbac.types';
 import { LogCategory } from '@/shared/types/core/logging.types';
 import { useLogger } from '@/hooks/use-logger';
 
@@ -9,7 +9,7 @@ import { useLogger } from '@/hooks/use-logger';
  */
 interface RBACState {
   roles: UserRole[];
-  permissions: Record<string, boolean>;
+  permissions: string[];
   
   // Role methods
   hasRole: (check: UserRole | UserRole[]) => boolean;
@@ -17,7 +17,7 @@ interface RBACState {
   
   // Permission methods
   can: (permission: string) => boolean;
-  setPermissions: (permissions: Record<string, boolean>) => void;
+  setPermissions: (permissions: string[]) => void;
   
   // Utility methods
   clear: () => void;
@@ -32,22 +32,17 @@ export const useRbacStore = create<RBACState>((set, get) => {
   
   return {
     roles: [],
-    permissions: {
-      'create_project': false,
-      'edit_project': false,
-      'delete_project': false,
-      'submit_build': false,
-      'access_admin': false,
-      'manage_api_keys': false,
-      'manage_users': false,
-      'settings:edit': false
-    },
+    permissions: [],
     
     /**
      * Check if user has the specified role(s)
      */
     hasRole: (check: UserRole | UserRole[]) => {
       const { roles } = get();
+      
+      // Super admin has all roles
+      if (roles.includes(ROLES.SUPER_ADMIN)) return true;
+      
       const checkRoles = Array.isArray(check) ? check : [check];
       return checkRoles.some(role => roles.includes(role));
     },
@@ -56,7 +51,9 @@ export const useRbacStore = create<RBACState>((set, get) => {
      * Set user roles
      */
     setRoles: (roles: UserRole[]) => {
-      set({ roles });
+      // Set roles and generate permissions
+      const permissions = roles.flatMap(role => DEFAULT_PERMISSIONS[role] || []);
+      set({ roles, permissions });
       logger.info('Roles updated', { details: { roles } });
     },
     
@@ -65,13 +62,13 @@ export const useRbacStore = create<RBACState>((set, get) => {
      */
     can: (permission: string) => {
       const { permissions } = get();
-      return permissions[permission] === true;
+      return permissions.includes('*') || permissions.includes(permission);
     },
     
     /**
      * Set user permissions
      */
-    setPermissions: (permissions: Record<string, boolean>) => {
+    setPermissions: (permissions: string[]) => {
       set({ permissions });
       logger.info('Permissions updated', { details: { permissions } });
     },
@@ -80,18 +77,7 @@ export const useRbacStore = create<RBACState>((set, get) => {
      * Clear RBAC state
      */
     clear: () => {
-      const defaultPermissions: Record<string, boolean> = {
-        'create_project': false,
-        'edit_project': false,
-        'delete_project': false,
-        'submit_build': false,
-        'access_admin': false,
-        'manage_api_keys': false,
-        'manage_users': false,
-        'settings:edit': false
-      };
-      
-      set({ roles: [], permissions: defaultPermissions });
+      set({ roles: [], permissions: [] });
       logger.info('RBAC state cleared');
     }
   };

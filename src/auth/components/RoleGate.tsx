@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useAuth } from '@/auth/hooks/useAuth';
+import { useRbac } from '@/hooks/use-rbac';
 import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
 
 interface RoleGateProps {
@@ -14,7 +14,7 @@ export const RoleGate: React.FC<RoleGateProps> = ({
   allowedRoles,
   fallback = null
 }) => {
-  const { hasRole } = useAuth();
+  const { hasRole } = useRbac();
   
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
   const hasPermission = roles.some(role => hasRole(role));

@@ -13,12 +13,7 @@ export function mapUserToProfile(user: User): UserProfile {
   // Validate roles against our system roles
   const validRoles = appRoles
     .filter(role => 
-      role === ROLES.GUEST ||
-      role === ROLES.FOLLOWER ||
-      role === ROLES.MAKER ||
-      role === ROLES.MOD ||
-      role === ROLES.ADMIN ||
-      role === ROLES.SUPER_ADMIN
+      Object.values(ROLES).includes(role as UserRole)
     ) as UserRole[];
   
   // Always include GUEST role as a fallback

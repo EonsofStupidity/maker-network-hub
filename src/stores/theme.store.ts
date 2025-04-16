@@ -1,102 +1,102 @@
 
 import { create } from 'zustand';
-import type { ThemeState, Theme, ComponentTokens, DesignTokens, ThemeEffect } from '@/shared/types/core/theme.types';
+import {
+  ThemeState,
+  DesignTokens,
+  ComponentTokens,
+  Theme,
+  ThemeEffect
+} from '@/shared/types/core/theme.types';
 
-const defaultTheme: Theme = {
-  id: 'default',
-  name: 'Default Theme',
-  label: 'Default',
-  description: 'Default theme',
-  isDark: false,
-  status: 'active',
-  context: 'site',
-  variables: {
-    background: '#ffffff',
-    foreground: '#000000',
-    card: '#f7f7f7',
-    cardForeground: '#000000',
+const DEFAULT_DESIGN_TOKENS: DesignTokens = {
+  colors: {
     primary: '#3b82f6',
-    primaryForeground: '#ffffff',
-    secondary: '#f3f4f6',
-    secondaryForeground: '#000000',
-    muted: '#f1f5f9',
-    mutedForeground: '#64748b',
-    accent: '#f59e0b',
-    accentForeground: '#000000',
-    destructive: '#ef4444',
-    destructiveForeground: '#ffffff',
-    border: '#e2e8f0',
-    input: '#e2e8f0',
-    ring: '#3b82f6',
-    effectColor: '#3b82f6',
-    effectSecondary: '#f59e0b',
-    effectTertiary: '#10b981',
-    transitionFast: '150ms',
-    transitionNormal: '300ms',
-    transitionSlow: '500ms',
-    animationFast: '300ms',
-    animationNormal: '500ms',
-    animationSlow: '1000ms',
-    radiusSm: '0.125rem',
-    radiusMd: '0.25rem',
-    radiusLg: '0.5rem',
-    radiusFull: '9999px'
+    background: '#ffffff',
+    text: '#0f172a',
+    muted: '#64748b',
+    accent: '#8b5cf6'
   },
-  designTokens: {
-    colors: {
-      primary: '#3b82f6',
-      secondary: '#f3f4f6',
-      background: '#ffffff',
-      foreground: '#000000',
-    },
-    typography: {
-      fontFamily: 'system-ui, sans-serif',
-      fontSize: {
-        xs: '0.75rem',
-        sm: '0.875rem',
-        md: '1rem',
-        lg: '1.125rem',
-        xl: '1.25rem',
-      }
-    }
+  typography: {
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headingFont: 'Inter, system-ui, sans-serif',
+    bodyFont: 'Inter, system-ui, sans-serif',
+    codeFont: 'monospace'
   },
-  componentTokens: {
-    button: {
-      padding: '0.5rem 1rem',
-      borderRadius: '0.25rem',
-      fontWeight: '500',
-    },
-    card: {
-      padding: '1rem',
-      borderRadius: '0.5rem',
-      shadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-    }
+  spacing: {
+    1: '0.25rem',
+    2: '0.5rem',
+    3: '0.75rem',
+    4: '1rem',
+    5: '1.25rem',
+    6: '1.5rem',
+    8: '2rem',
+    10: '2.5rem',
+    12: '3rem',
+    16: '4rem',
+    20: '5rem'
   }
 };
 
-export const useThemeStore = create<ThemeState>((set) => ({
-  activeThemeId: defaultTheme.id,
-  isDark: defaultTheme.isDark || false,
-  primaryColor: defaultTheme.variables?.primary || '',
-  backgroundColor: defaultTheme.variables?.background || '',
-  textColor: defaultTheme.variables?.foreground || '',
-  designTokens: defaultTheme.designTokens || {},
-  componentTokens: defaultTheme.componentTokens || {},
-  isLoading: false,
-  error: null,
-  theme: defaultTheme,
-  isLoaded: true,
-  variables: defaultTheme.variables || {},
-  componentStyles: {},
-  animations: {},
-  effects: [],
+const DEFAULT_COMPONENT_TOKENS: ComponentTokens = {
+  button: {
+    borderRadius: '0.375rem',
+    fontSize: '0.875rem',
+    paddingX: '1rem',
+    paddingY: '0.5rem',
+  },
+  card: {
+    borderRadius: '0.5rem',
+    padding: '1.5rem',
+    shadowColor: 'rgba(0,0,0,0.1)',
+  }
+};
 
-  setActiveTheme: (themeId: string) => set((state) => ({
-    activeThemeId: themeId,
-    theme: state.theme?.id === themeId ? state.theme : defaultTheme
+interface ThemeStoreState extends ThemeState {
+  // Actions
+  setActiveTheme: (themeId: string) => void;
+  setDesignTokens: (tokens: DesignTokens) => void;
+  setComponentTokens: (tokens: ComponentTokens) => void;
+  setThemes: (themes: Theme[]) => void;
+  setThemeVariables: (variables: Record<string, string>) => void;
+  toggleDarkMode: () => void;
+}
+
+export const useThemeStore = create<ThemeStoreState>((set) => ({
+  activeThemeId: 'default',
+  isDark: false,
+  primaryColor: '#3b82f6',
+  backgroundColor: '#ffffff',
+  textColor: '#0f172a',
+  designTokens: DEFAULT_DESIGN_TOKENS,
+  componentTokens: DEFAULT_COMPONENT_TOKENS,
+  variables: {},
+  isLoading: false,
+  isLoaded: false,
+  error: null,
+  themes: [],
+  theme: null,
+  
+  // Actions
+  setActiveTheme: (themeId: string) => set({ activeThemeId: themeId }),
+  
+  setDesignTokens: (tokens: DesignTokens) => set((state) => ({
+    designTokens: { ...state.designTokens, ...tokens }
   })),
-  setDesignTokens: (tokens: DesignTokens) => set({ designTokens: tokens }),
-  setComponentTokens: (tokens: ComponentTokens) => set({ componentTokens: tokens }),
-  setEffects: (effects: ThemeEffect[]) => set({ effects }),
-  setVariables: (vars: Record<string, string>) => set({ variables: vars })
+  
+  setComponentTokens: (tokens: ComponentTokens) => set((state) => ({
+    componentTokens: { ...state.componentTokens, ...tokens }
+  })),
+  
+  setThemes: (themes: Theme[]) => set({ themes, isLoaded: true }),
+  
+  setThemeVariables: (variables: Record<string, string>) => set({ variables }),
+  
+  toggleDarkMode: () => set((state) => {
+    const isDark = !state.isDark;
+    return {
+      isDark,
+      backgroundColor: isDark ? '#0f172a' : '#ffffff',
+      textColor: isDark ? '#f8fafc' : '#0f172a',
+    };
+  })
 }));

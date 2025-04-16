@@ -1,61 +1,87 @@
-
 import { useCallback } from 'react';
 import { useThemeStore } from '@/stores/theme.store';
-import { ThemeEffect, ThemeEffectType, THEME_EFFECTS } from '@/shared/types/core/theme.types';
+import { ThemeEffect, ThemeEffectType } from '@/shared/types/core/theme.types';
 
-/**
- * Hook for managing theme effects
- */
-export const useThemeEffects = () => {
-  const effects = useThemeStore((state) => state.effects || []);
-  const setEffects = useThemeStore((state) => state.setEffects);
+export function useThemeEffects() {
+  const themeEffects = useThemeStore(state => state.effects || []);
+  const setThemeEffects = useCallback((effects: ThemeEffect[]) => {
+    useThemeStore.setState({ effects });
+  }, []);
   
-  // Check if an effect is active
-  const hasEffect = useCallback((effectType: ThemeEffectType): boolean => {
-    return effects.some(effect => effect.type === effectType);
-  }, [effects]);
+  const getEffects = useCallback(() => {
+    return themeEffects;
+  }, [themeEffects]);
   
-  // Add a theme effect
-  const addEffect = useCallback((effect: ThemeEffect) => {
-    if (!setEffects) return;
+  const setEffects = useCallback((effects: ThemeEffect[]) => {
+    setThemeEffects(effects);
+  }, [setThemeEffects]);
+  
+  const toggleEffect = useCallback((type: string) => {
+    setThemeEffects(
+      themeEffects.map(effect => 
+        effect.type === type 
+          ? { ...effect, enabled: !effect.enabled } 
+          : effect
+      )
+    );
+  }, [themeEffects, setThemeEffects]);
+  
+  const updateEffectIntensity = useCallback((type: string, intensity: number) => {
+    setThemeEffects(
+      themeEffects.map(effect => 
+        effect.type === type 
+          ? { ...effect, intensity } 
+          : effect
+      )
+    );
+  }, [themeEffects, setThemeEffects]);
+  
+  const addEffect = useCallback((type: ThemeEffectType, intensity: number = 0.5, enabled: boolean = true) => {
+    // Check if effect already exists
+    const existingEffect = themeEffects.find(effect => effect.type === type);
     
-    if (!effects.some(e => e.type === effect.type)) {
-      setEffects([...effects, effect]);
-    }
-  }, [effects, setEffects]);
-  
-  // Remove a theme effect
-  const removeEffect = useCallback((effectType: ThemeEffectType) => {
-    if (!setEffects) return;
-    
-    setEffects(effects.filter(e => e.type !== effectType));
-  }, [effects, setEffects]);
-  
-  // Toggle a theme effect
-  const toggleEffect = useCallback((effect: ThemeEffect) => {
-    if (!setEffects) return;
-    
-    if (effects.some(e => e.type === effect.type)) {
-      removeEffect(effect.type);
+    if (existingEffect) {
+      // Update existing effect
+      setThemeEffects(
+        themeEffects.map(effect => 
+          effect.type === type 
+            ? { ...effect, intensity, enabled } 
+            : effect
+        )
+      );
     } else {
-      addEffect(effect);
+      // Add new effect
+      setThemeEffects([
+        ...themeEffects,
+        { type, intensity, enabled }
+      ]);
     }
-  }, [effects, addEffect, removeEffect, setEffects]);
+  }, [themeEffects, setThemeEffects]);
   
-  // Clear all effects
-  const clearEffects = useCallback(() => {
-    if (!setEffects) return;
-    
-    setEffects([]);
-  }, [setEffects]);
+  const removeEffect = useCallback((type: ThemeEffectType) => {
+    setThemeEffects(
+      themeEffects.filter(effect => effect.type !== type)
+    );
+  }, [themeEffects, setThemeEffects]);
   
+  const getEffectByType = useCallback((type: ThemeEffectType): ThemeEffect | undefined => {
+    return themeEffects.find(effect => effect.type === type);
+  }, [themeEffects]);
+  
+  const isEffectEnabled = useCallback((type: ThemeEffectType): boolean => {
+    const effect = themeEffects.find(effect => effect.type === type);
+    return effect ? !!effect.enabled : false;
+  }, [themeEffects]);
+
   return {
-    effects,
-    hasEffect,
+    effects: themeEffects,
+    getEffects,
+    setEffects,
+    toggleEffect,
+    updateEffectIntensity,
     addEffect,
     removeEffect,
-    toggleEffect,
-    clearEffects,
-    THEME_EFFECTS
+    getEffectByType,
+    isEffectEnabled
   };
-};
+}

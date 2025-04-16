@@ -2,30 +2,36 @@
 import { useCallback } from 'react';
 import { useThemeStore } from '@/stores/theme.store';
 
-/**
- * Hook for getting and setting theme variables
- */
-export const useThemeVariables = () => {
-  const variables = useThemeStore(state => state.variables);
-  const setVariables = useThemeStore(state => state.setVariables);
+export function useThemeVariables() {
+  const themeVariables = useThemeStore(state => state.variables);
   
-  // Set a single variable
-  const setVariable = useCallback((name: string, value: string) => {
-    if (!setVariables) return;
-    
-    setVariables({ ...variables, [name]: value });
-  }, [variables, setVariables]);
+  const getVariable = useCallback((name: string, fallback?: string): string => {
+    if (!themeVariables) return fallback || '';
+    return themeVariables[name] || fallback || '';
+  }, [themeVariables]);
   
-  // Set multiple variables at once
-  const setMultipleVariables = useCallback((newVars: Record<string, string>) => {
-    if (!setVariables) return;
-    
-    setVariables({ ...variables, ...newVars });
-  }, [variables, setVariables]);
+  const setVariable = useCallback((name: string, value: string): void => {
+    useThemeStore.setState(state => ({
+      variables: {
+        ...(state.variables || {}),
+        [name]: value
+      }
+    }));
+  }, []);
+  
+  const updateVariables = useCallback((newVariables: Record<string, string>): void => {
+    useThemeStore.setState(state => ({
+      variables: {
+        ...(state.variables || {}),
+        ...newVariables
+      }
+    }));
+  }, []);
   
   return {
-    variables,
+    variables: themeVariables || {},
+    getVariable,
     setVariable,
-    setMultipleVariables
+    updateVariables
   };
-};
+}
