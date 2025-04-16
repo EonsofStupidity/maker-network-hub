@@ -33,11 +33,11 @@ export async function saveHomeLayout(layout: Partial<HomeLayout>) {
     const response = await supabase
       .from('home_layout')
       .insert(layout)
-      .select();
+      .select('*');
 
     const responseError = response.error;
     if (responseError) {
-      throw new Error(responseError.message);
+      throw new Error(responseError.message || 'Error saving layout');
     }
 
     toast({

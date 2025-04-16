@@ -19,7 +19,7 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
     const data = filteredData?.length > 0 ? filteredData[0] : null;
     const responseError = response.error;
 
-    if (responseError) throw new Error(responseError.message);
+    if (responseError) throw new Error(responseError.message || 'Unknown error');
     
     if (!data) return null;
     

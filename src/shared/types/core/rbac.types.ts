@@ -29,7 +29,7 @@ export const SECTION_PERMISSIONS: Record<AdminSection, UserRole[]> = {
   content: [ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.MOD],
   settings: [ROLES.SUPER_ADMIN],
   system: [ROLES.SUPER_ADMIN]
-};
+} as const;
 
 // Role labels with explicit typing
 export const ROLE_LABELS: Record<UserRole, string> = {
