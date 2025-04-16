@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data } = await supabase.auth.getSession();
         const session = data?.session;
         
-        if (session && session.user) {
+        if (session?.user) {
           setIsAuthenticated(true);
           setUser(session.user);
           logBridge.info(LogCategory.AUTH, 'User session restored', {

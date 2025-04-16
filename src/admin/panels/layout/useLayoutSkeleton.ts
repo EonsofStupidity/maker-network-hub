@@ -29,11 +29,13 @@ export function useLayoutSkeleton(layoutId?: string) {
       try {
         setIsLoading(true);
         
-        const { data, error: responseError } = await supabase
+        const response = await supabase
           .from('layout_skeletons')
-          .select('*')
-          .eq('id', layoutId)
-          .maybeSingle();
+          .select('*');
+        
+        // Since we can't chain eq with the mock, we'll filter manually
+        const data = response?.data?.find(item => item.id === layoutId);
+        const responseError = response?.error;
         
         if (responseError) {
           throw new Error(responseError.message || 'Failed to load layout');

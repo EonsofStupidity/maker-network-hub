@@ -70,7 +70,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       if (error) throw error;
       
-      if (data.user) {
+      if (data?.user) {
         // Create a full mock user if we're using the mock client
         const fullUser = createMockUser(data.user.id);
         const userProfile = mapUserToProfile(fullUser);
@@ -104,7 +104,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       if (error) throw error;
       
-      if (data.user) {
+      if (data?.user) {
         // Create a full mock user if we're using the mock client
         const fullUser = createMockUser(data.user.id);
         const userProfile = mapUserToProfile(fullUser);
@@ -181,22 +181,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       if (error) throw error;
       
-      if (data.session?.user) {
-        // Create a full mock user if we're using the mock client
-        const fullUser = createMockUser(data.session.user.id);
-        const userProfile = mapUserToProfile(fullUser);
-        
-        const roles = userProfile?.roles || [];
-        
-        if (userProfile) {
-          set({ 
-            user: userProfile,
-            profile: userProfile,
-            isAuthenticated: true,
-            status: AUTH_STATUS.AUTHENTICATED,
-            roles,
-            initialized: true
-          });
+      if (data?.session?.user) {
+        const sessionUser = data.session.user;
+        if (sessionUser) {
+          // Create a full mock user if we're using the mock client
+          const fullUser = createMockUser(sessionUser.id);
+          const userProfile = mapUserToProfile(fullUser);
+          
+          const roles = userProfile?.roles || [];
+          
+          if (userProfile) {
+            set({ 
+              user: userProfile,
+              profile: userProfile,
+              isAuthenticated: true,
+              status: AUTH_STATUS.AUTHENTICATED,
+              roles,
+              initialized: true
+            });
+          }
         }
       } else {
         set({

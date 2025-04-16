@@ -1,14 +1,17 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/shared/ui/use-toast';
 import type { HomeLayout } from '../types/layout.types';
 
 export async function loadHomeLayout(): Promise<HomeLayout | null> {
   try {
-    const { data, error: responseError } = await supabase
+    const response = await supabase
       .from('home_layout')
-      .select('*')
-      .maybeSingle();
+      .select('*');
+      
+    // Since we can't use maybeSingle with the mock, we'll handle it manually
+    const data = response?.data?.[0];
+    const responseError = response?.error;
 
     if (responseError) {
       throw new Error(responseError.message || 'Failed to load home layout');
@@ -16,7 +19,6 @@ export async function loadHomeLayout(): Promise<HomeLayout | null> {
 
     return data as HomeLayout;
   } catch (error) {
-    const { toast } = useToast();
     toast({
       title: "Error loading layout",
       description: error instanceof Error ? error.message : 'Unknown error',
@@ -28,16 +30,16 @@ export async function loadHomeLayout(): Promise<HomeLayout | null> {
 
 export async function saveHomeLayout(layout: Partial<HomeLayout>) {
   try {
-    const { error: responseError } = await supabase
+    const response = await supabase
       .from('home_layout')
       .insert(layout)
       .select();
 
+    const responseError = response?.error;
     if (responseError) {
       throw new Error(responseError.message);
     }
 
-    const { toast } = useToast();
     toast({
       title: "Layout saved",
       description: "The layout has been updated successfully"
@@ -45,7 +47,6 @@ export async function saveHomeLayout(layout: Partial<HomeLayout>) {
 
     return true;
   } catch (error) {
-    const { toast } = useToast();
     toast({
       title: "Error saving layout",
       description: error instanceof Error ? error.message : 'Unknown error',

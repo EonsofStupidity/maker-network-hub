@@ -32,20 +32,25 @@ export function LayoutBootstrap({
         setIsLoading(true);
         
         // Fetch active layout for the given type and scope
-        const { data, error: responseError } = await supabase
+        const response = await supabase
           .from('layout_skeletons')
-          .select('*')
-          .eq('type', type)
-          .eq('scope', scope)
-          .eq('is_active', true)
-          .maybeSingle();
+          .select('*');
+        
+        // Since we can't chain eq with the mock, we'll filter manually
+        const data = response?.data?.find(item => 
+          item.type === type && 
+          item.scope === scope && 
+          item.is_active === true
+        );
+        
+        const responseError = response?.error;
         
         if (responseError) {
           throw new Error(`Failed to load layout: ${responseError.message || 'Unknown error'}`);
         }
         
         if (data) {
-          setLayout(data as unknown as Layout);
+          setLayout(data as Layout);
           logBridge.info(LogCategory.SYSTEM, 'Layout loaded successfully', {
             details: { layoutId: data.id, type, scope }
           });

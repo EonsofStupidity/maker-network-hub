@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { initializeLogging } from './logging/bootstrap';
 import { AuthBridge } from './bridges/AuthBridge';
@@ -36,35 +37,37 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
           
           if (data?.session?.user) {
             const sessionUser = data.session.user;
-            logBridge.info(LogCategory.AUTH, 'User session found', { 
-              userId: sessionUser?.id || 'unknown',
-              email: sessionUser?.email || 'unknown'
-            });
-            
-            // Map Supabase roles to our app roles
-            let roles = [ROLES.GUEST];
-            
-            if (sessionUser?.app_metadata?.roles) {
-              const appRoles = sessionUser.app_metadata.roles;
-              if (Array.isArray(appRoles) && appRoles.length > 0) {
-                // Map and validate roles
-                roles = appRoles.filter(role => 
-                  Object.values(ROLES).includes(role as any)
-                ) as any[];
-                
-                // Always include at least GUEST role
-                if (roles.length === 0) {
-                  roles = [ROLES.GUEST];
+            if (sessionUser) {
+              logBridge.info(LogCategory.AUTH, 'User session found', { 
+                userId: sessionUser.id || 'unknown',
+                email: sessionUser.email || 'unknown'
+              });
+              
+              // Map Supabase roles to our app roles
+              let roles = [ROLES.GUEST];
+              
+              if (sessionUser.app_metadata?.roles) {
+                const appRoles = sessionUser.app_metadata.roles;
+                if (Array.isArray(appRoles) && appRoles.length > 0) {
+                  // Map and validate roles
+                  roles = appRoles.filter(role => 
+                    Object.values(ROLES).includes(role as any)
+                  ) as any[];
+                  
+                  // Always include at least GUEST role
+                  if (roles.length === 0) {
+                    roles = [ROLES.GUEST];
+                  }
                 }
               }
+              
+              // Set roles in RBAC bridge
+              RBACBridge.setRoles(roles);
+              
+              logBridge.info(LogCategory.RBAC, 'User roles set', { 
+                roles 
+              });
             }
-            
-            // Set roles in RBAC bridge
-            RBACBridge.setRoles(roles);
-            
-            logBridge.info(LogCategory.RBAC, 'User roles set', { 
-              roles 
-            });
           } else {
             logBridge.info(LogCategory.AUTH, 'No user session found, setting guest role');
             RBACBridge.setRoles([ROLES.GUEST]);

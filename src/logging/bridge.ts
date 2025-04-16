@@ -119,13 +119,7 @@ export class LogBridge {
    * Query logs with filter
    */
   public query(filter: LogFilter = {}): LogEntry[] {
-    return logger.getEntries({
-      level: filter.level,
-      category: filter.category,
-      search: filter.search,
-      from: filter.from ? (filter.from instanceof Date ? filter.from.getTime() : filter.from) : undefined,
-      to: filter.to ? (filter.to instanceof Date ? filter.to.getTime() : filter.to) : undefined
-    });
+    return logger.getEntries(filter);
   }
   
   /**
