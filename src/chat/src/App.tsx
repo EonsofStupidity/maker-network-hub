@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import DevChatPage from "./pages/DevChatPage";
+import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient({
@@ -20,21 +21,23 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/chat" element={<DevChatPage mode="normal" />} />
-          <Route path="/chat/dev" element={<DevChatPage mode="dev" />} />
-          <Route path="/chat/debug" element={<DevChatPage mode="debug" />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary fallback={<div className="p-4">Error loading chat application</div>}>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/chat" element={<DevChatPage mode="normal" />} />
+            <Route path="/chat/dev" element={<DevChatPage mode="dev" />} />
+            <Route path="/chat/debug" element={<DevChatPage mode="debug" />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

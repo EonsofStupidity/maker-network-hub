@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from 'react';
 import { AuthBridge } from './bridges/AuthBridge';
 import { RBACBridge } from './shared/bridges/RBACBridge';
-import { ROLES } from './shared/types/core/rbac.types';
+import { ROLES, UserRole } from './shared/types/core/rbac.types';
 import { AUTH_STATUS } from './shared/types/core/auth.types';
 import { logBridge } from './logging/bridge';
 import { LogCategory, LogLevel } from './shared/types/core/logging.types';
@@ -39,15 +38,15 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
             });
             
             // Map Supabase roles to our app roles
-            let roles = [ROLES.GUEST];
+            let roles: UserRole[] = [ROLES.GUEST];
             
             if (session.user.app_metadata?.roles) {
               const appRoles = session.user.app_metadata.roles;
               if (Array.isArray(appRoles) && appRoles.length > 0) {
-                // Map and validate roles
+                // Map and validate roles with proper type casting
                 roles = appRoles.filter(role => 
-                  Object.values(ROLES).includes(role as any)
-                ) as any[];
+                  Object.values(ROLES).includes(role as UserRole)
+                ) as UserRole[];
                 
                 // Always include at least GUEST role
                 if (roles.length === 0) {
@@ -85,15 +84,15 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
             });
             
             // Map Supabase roles to our app roles
-            let roles = [ROLES.GUEST];
+            let roles: UserRole[] = [ROLES.GUEST];
             
             if (sessionUser.app_metadata?.roles) {
               const appRoles = sessionUser.app_metadata.roles;
               if (Array.isArray(appRoles) && appRoles.length > 0) {
-                // Map and validate roles
+                // Map and validate roles with proper type casting
                 roles = appRoles.filter(role => 
-                  Object.values(ROLES).includes(role as any)
-                ) as any[];
+                  Object.values(ROLES).includes(role as UserRole)
+                ) as UserRole[];
                 
                 // Always include at least GUEST role
                 if (roles.length === 0) {

@@ -9,7 +9,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    cors: true,
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+      credentials: true
+    },
     watch: {
       usePolling: true,
       interval: 100,
@@ -21,6 +26,12 @@ export default defineConfig(({ mode }) => ({
       clientPort: mode === 'production' ? 443 : undefined,
       protocol: mode === 'production' ? 'wss' : 'ws',
     },
+    headers: {
+      // Add permissive CORS headers for development
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    }
   },
   plugins: [
     react(),

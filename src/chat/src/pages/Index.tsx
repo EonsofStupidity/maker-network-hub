@@ -1,48 +1,49 @@
 
 import React from 'react';
 import { Button } from '@/shared/ui/button';
-import { authBridge } from '@/auth/bridge';
-import { useState } from 'react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/shared/ui/card';
+import { useNavigate } from 'react-router-dom';
 
-export default function Index() {
-  const [isLoading, setIsLoading] = useState(false);
-  const auth = {
-    user: null,
-    status: {
-      isAuthenticated: false,
-      isLoading: false,
-    },
-    signIn: async () => null,
-    signInWithGoogle: async () => null,
-    logout: async () => {},
-    hasRole: () => false,
-    isAdmin: () => false,
-    isSuperAdmin: () => false,
-  };
-
-  const handleLogin = async () => {
-    setIsLoading(true);
-    try {
-      await authBridge.signIn('test@example.com', 'password123');
-    } catch (error) {
-      console.error('Login error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+const Index: React.FC = () => {
+  const navigate = useNavigate();
+  
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">Chat Application</h1>
-      
-      <div className="flex flex-col space-y-4">
-        <Button
-          onClick={handleLogin}
-          disabled={isLoading || auth.status.isAuthenticated}
-        >
-          {isLoading ? 'Logging in...' : auth.status.isAuthenticated ? 'Logged In' : 'Login'}
-        </Button>
-      </div>
+    <div className="container mx-auto p-4 flex flex-col items-center justify-center min-h-screen">
+      <Card className="max-w-md w-full">
+        <CardHeader>
+          <CardTitle>Chat Module</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Choose a chat mode to continue:
+          </p>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-2">
+          <Button 
+            onClick={() => navigate('/chat')} 
+            className="w-full"
+            variant="default"
+          >
+            Standard Chat
+          </Button>
+          <Button 
+            onClick={() => navigate('/chat/dev')}
+            className="w-full" 
+            variant="outline"
+          >
+            Developer Chat
+          </Button>
+          <Button 
+            onClick={() => navigate('/chat/debug')}
+            className="w-full" 
+            variant="outline"
+          >
+            Debug Chat
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
-}
+};
+
+export default Index;

@@ -30,14 +30,27 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
         name: 'Default Layout',
         type,
         scope,
-        components: {},
         layout: [],
-        meta: {}
+        meta: {},
+        components: {},
       };
     }
     
+    // If the data is present, we need to extract the layout data from layout_json
+    const layoutData = data.layout_json || {};
+    
     console.log('Layout loaded successfully:', data);
-    return data as Layout;
+    
+    // Transform the data to match the Layout type
+    return {
+      id: data.id,
+      name: data.name,
+      type: data.type,
+      scope: data.scope,
+      components: layoutData.components || {},
+      layout: layoutData.layout || [],
+      meta: data.meta || {}
+    };
   } catch (error) {
     console.error('Error loading layout:', error);
     toast({
