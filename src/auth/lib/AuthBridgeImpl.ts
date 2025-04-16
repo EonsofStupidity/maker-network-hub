@@ -1,4 +1,3 @@
-
 import { UserProfile, AuthStatus, AUTH_STATUS, UserRole, ROLES } from '@/shared/types/core/auth.types';
 
 /**

@@ -1,7 +1,7 @@
 
 import { useEffect, useCallback, useState } from 'react';
 import { RBACBridge } from '@/bridges/RBACBridge';
-import { UserRole, ROLES } from '@/shared/types/core/auth.types';
+import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
 import { useAuthStore } from '@/stores/auth/auth.store';
 
 /**
@@ -18,15 +18,22 @@ export function useRbac() {
   // Sync roles from auth store to RBAC bridge
   useEffect(() => {
     if (userRoles && userRoles.length > 0) {
+      // Only accept valid roles
       const typedRoles = userRoles.filter((role): role is UserRole => 
-        Object.values(ROLES).includes(role as UserRole));
+        role === 'guest' || 
+        role === 'follower' || 
+        role === 'maker' || 
+        role === 'mod' || 
+        role === 'admin' || 
+        role === 'super_admin');
+      
       RBACBridge.setRoles(typedRoles);
       setRoles(typedRoles);
-    } else if (authUser && authUser.roles) {
-      const typedRoles = authUser.roles.filter((role): role is UserRole => 
-        Object.values(ROLES).includes(role as UserRole));
-      RBACBridge.setRoles(typedRoles);
-      setRoles(typedRoles);
+    } else if (authUser) {
+      // If no roles on state, default to guest
+      const defaultRoles: UserRole[] = ['guest'];
+      RBACBridge.setRoles(defaultRoles);
+      setRoles(defaultRoles);
     }
   }, [authUser, userRoles]);
   
@@ -57,12 +64,12 @@ export function useRbac() {
   
   // Map of role constants
   const ROLE_CONSTANTS = {
-    user: ROLES.user,
+    guest: ROLES.guest,
     admin: ROLES.admin,
     super_admin: ROLES.super_admin,
-    moderator: ROLES.moderator,
-    builder: ROLES.builder,
-    guest: ROLES.guest,
+    mod: ROLES.mod,
+    maker: ROLES.maker,
+    follower: ROLES.follower,
   };
   
   return {

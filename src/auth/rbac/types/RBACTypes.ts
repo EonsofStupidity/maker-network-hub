@@ -1,5 +1,5 @@
 
-import { UserRole, ROLES } from '@/shared/types/core/auth.types';
+import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
 
 // Re-export shared types
 export type { UserRole };
@@ -12,9 +12,9 @@ export type AdminSection = 'dashboard' | 'users' | 'content' | 'settings' | 'sys
 export const ROLE_LABELS: Record<UserRole, string> = {
   [ROLES.super_admin]: 'Super Admin',
   [ROLES.admin]: 'Admin',
-  [ROLES.moderator]: 'Moderator',
-  [ROLES.builder]: 'Builder',
-  [ROLES.user]: 'User',
+  [ROLES.mod]: 'Moderator',
+  [ROLES.maker]: 'Maker',
+  [ROLES.follower]: 'Follower',
   [ROLES.guest]: 'Guest',
 };
 
@@ -22,7 +22,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 export const SECTION_PERMISSIONS: Record<AdminSection, UserRole[]> = {
   dashboard: [ROLES.admin, ROLES.super_admin],
   users: [ROLES.admin, ROLES.super_admin],
-  content: [ROLES.admin, ROLES.super_admin, ROLES.moderator],
+  content: [ROLES.admin, ROLES.super_admin, ROLES.mod],
   settings: [ROLES.super_admin],
   system: [ROLES.super_admin]
 };

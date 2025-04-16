@@ -1,6 +1,14 @@
 
 export type AuthStatus = 'loading' | 'authenticated' | 'guest' | 'error';
 
+// Create a const enum for consistent usage
+export const AuthStatus = {
+  LOADING: 'loading',
+  AUTHENTICATED: 'authenticated',
+  GUEST: 'guest',
+  ERROR: 'error'
+} as const;
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -14,5 +22,6 @@ export interface UserProfile {
   app_metadata?: Record<string, unknown>;
 }
 
-// Re-export these from rbac.types.ts for backwards compatibility
-export { UserRole, ROLES, Permission, RolePermissions } from './rbac.types';
+// Remove the re-export and create a forward reference instead
+// This avoids circular dependencies
+export { type UserRole, type Permission } from './rbac.types';

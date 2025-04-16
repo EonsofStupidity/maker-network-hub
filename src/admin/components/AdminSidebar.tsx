@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ROLES } from '@/shared/types/core/auth.types';
+import { ROLES } from '@/shared/types/core/rbac.types';
 import { RBACBridge } from '@/rbac/bridge';
 
 interface SidebarItemProps {

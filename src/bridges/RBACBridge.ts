@@ -1,5 +1,5 @@
 
-import { UserRole, Permission } from '@/shared/types/core/auth.types';
+import { UserRole, Permission } from '@/shared/types/core/rbac.types';
 
 export interface IRBACBridge {
   hasRole: (role: UserRole | UserRole[]) => boolean;
@@ -18,7 +18,15 @@ class RBACBridgeClass implements IRBACBridge {
   private roles: UserRole[] = [];
 
   setRoles(roles: UserRole[]): void {
-    this.roles = [...roles];
+    // Only accept valid UserRole values
+    this.roles = roles.filter(role => 
+      role === 'guest' || 
+      role === 'follower' || 
+      role === 'maker' || 
+      role === 'mod' || 
+      role === 'admin' || 
+      role === 'super_admin'
+    ) as UserRole[];
   }
 
   clearRoles(): void {
@@ -44,11 +52,11 @@ class RBACBridgeClass implements IRBACBridge {
   }
 
   isModerator(): boolean {
-    return this.hasRole(['moderator', 'admin', 'super_admin']);
+    return this.hasRole(['mod', 'admin', 'super_admin']);
   }
 
   isBuilder(): boolean {
-    return this.hasRole(['builder', 'admin', 'super_admin']);
+    return this.hasRole(['maker', 'admin', 'super_admin']);
   }
 
   hasPermission(permission: Permission): boolean {

@@ -1,12 +1,11 @@
-
-import { UserProfile, ROLES, AUTH_STATUS, AuthStatus } from '@/shared/types/core/auth.types';
+import { UserProfile, AuthStatus } from '@/shared/types/core/auth.types';
 
 /**
  * Re-export the UserRole type for backward compatibility
  */
 export type { UserProfile };
-export { ROLES, AUTH_STATUS };
-export type { AuthStatus };
+export { AuthStatus };
+export type { AuthStatus as AuthStatusType };
 
 /**
  * Auth user type

@@ -1,22 +1,22 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { AUTH_STATUS } from '@/shared/types/core/auth.types';
+import { AuthStatus } from '@/shared/types/core/auth.types';
 import { UserProfile } from '@/shared/types/core/auth.types';
 import { createClient } from '@supabase/supabase-js';
 
 interface AuthContextProps {
   user: UserProfile | null;
   isAuthenticated: boolean;
-  status: typeof AUTH_STATUS[keyof typeof AUTH_STATUS];
+  status: typeof AuthStatus[keyof typeof AuthStatus];
   setUser: React.Dispatch<React.SetStateAction<UserProfile | null>>;
-  setStatus: React.Dispatch<React.SetStateAction<typeof AUTH_STATUS[keyof typeof AUTH_STATUS]>>;
+  setStatus: React.Dispatch<React.SetStateAction<typeof AuthStatus[keyof typeof AuthStatus]>>;
   supabase: any;
 }
 
 const AuthContext = createContext<AuthContextProps>({
   user: null,
   isAuthenticated: false,
-  status: AUTH_STATUS.IDLE,
+  status: AuthStatus.LOADING,
   setUser: () => {},
   setStatus: () => {},
   supabase: null,
@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthContextProps>({
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [status, setStatus] = useState<typeof AUTH_STATUS[keyof typeof AUTH_STATUS]>(AUTH_STATUS.LOADING);
+  const [status, setStatus] = useState<typeof AuthStatus[keyof typeof AuthStatus]>(AuthStatus.LOADING);
   const supabase = createClient(
     import.meta.env.VITE_SUPABASE_URL || 'https://example.supabase.co',
     import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key'
@@ -38,17 +38,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: session.user.id,
             email: session.user.email || '',
             name: session.user.user_metadata?.full_name,
-            avatar_url: session.user.user_metadata?.avatar_url,
+            avatarUrl: session.user.user_metadata?.avatar_url,
             created_at: session.user.created_at,
-            updated_at: session.user.updated_at || session.user.created_at, // Ensure updated_at is not undefined
+            updated_at: session.user.updated_at || session.user.created_at,
             user_metadata: session.user.user_metadata,
             app_metadata: session.user.app_metadata,
           };
           setUser(userProfile);
-          setStatus(AUTH_STATUS.AUTHENTICATED);
+          setStatus(AuthStatus.AUTHENTICATED);
         } else {
           setUser(null);
-          setStatus(AUTH_STATUS.UNAUTHENTICATED);
+          setStatus(AuthStatus.GUEST);
         }
       }
     );
@@ -60,16 +60,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: session.user.id,
           email: session.user.email || '',
           name: session.user.user_metadata?.full_name,
-          avatar_url: session.user.user_metadata?.avatar_url,
+          avatarUrl: session.user.user_metadata?.avatar_url,
           created_at: session.user.created_at,
-          updated_at: session.user.updated_at || session.user.created_at, // Ensure updated_at is not undefined
+          updated_at: session.user.updated_at || session.user.created_at,
           user_metadata: session.user.user_metadata,
           app_metadata: session.user.app_metadata,
         };
         setUser(userProfile);
-        setStatus(AUTH_STATUS.AUTHENTICATED);
+        setStatus(AuthStatus.AUTHENTICATED);
       } else {
-        setStatus(AUTH_STATUS.UNAUTHENTICATED);
+        setStatus(AuthStatus.GUEST);
       }
     });
 
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value = {
     user,
-    isAuthenticated: status === AUTH_STATUS.AUTHENTICATED,
+    isAuthenticated: status === AuthStatus.AUTHENTICATED,
     status,
     setUser,
     setStatus,

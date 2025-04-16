@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '@/auth/hooks/useAuth';
-import { UserRole, ROLES } from '@/shared/types/core/auth.types';
+import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
 
 interface RoleGateProps {
   children: React.ReactNode;

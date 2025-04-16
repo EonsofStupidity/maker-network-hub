@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
@@ -8,7 +9,7 @@ import { Badge } from "@/shared/ui/badge";
 import { Search, UserPlus, Filter, MoreHorizontal, Trash2, UserCog, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/shared/ui/use-toast";
-import { UserRole, ROLES } from "@/shared/types/core/auth.types";
+import { UserRole, ROLES } from "@/shared/types/core/rbac.types";
 
 interface UserData {
   id: string;
@@ -34,7 +35,7 @@ const mockUsers: UserData[] = [
     id: "2", 
     email: "jane@example.com",
     name: "Jane Smith",
-    role: ROLES.builder,
+    role: ROLES.maker,
     status: "active",
     createdAt: "2023-03-22T14:20:00Z",
     lastLogin: "2023-05-09T16:30:00Z"
@@ -52,7 +53,7 @@ const mockUsers: UserData[] = [
     id: "4",
     email: "alex@example.com",
     name: "Alex Johnson", 
-    role: ROLES.builder,
+    role: ROLES.maker,
     status: "pending",
     createdAt: "2023-05-05T16:45:00Z",
     lastLogin: null
@@ -61,7 +62,7 @@ const mockUsers: UserData[] = [
     id: "5",
     email: "taylor@example.com",
     name: "Taylor Brown",
-    role: ROLES.builder,
+    role: ROLES.maker,
     status: "suspended",
     createdAt: "2023-01-18T13:10:00Z",
     lastLogin: "2023-04-28T10:05:00Z"

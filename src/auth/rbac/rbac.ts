@@ -1,5 +1,5 @@
 
-import { UserRole, ROLES } from '@/shared/types/core/auth.types';
+import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
 
 /**
  * Core RBAC functionality
@@ -52,7 +52,7 @@ export function isSuperAdmin(userRoles: UserRole[]): boolean {
  * @returns Boolean indicating if user is a moderator or higher
  */
 export function isModerator(userRoles: UserRole[]): boolean {
-  return hasRole(userRoles, [ROLES.moderator, ROLES.admin, ROLES.super_admin]);
+  return hasRole(userRoles, [ROLES.mod, ROLES.admin, ROLES.super_admin]);
 }
 
 /**
@@ -61,7 +61,7 @@ export function isModerator(userRoles: UserRole[]): boolean {
  * @returns Boolean indicating if user is a builder or higher
  */
 export function isBuilder(userRoles: UserRole[]): boolean {
-  return hasRole(userRoles, [ROLES.builder, ROLES.admin, ROLES.super_admin]);
+  return hasRole(userRoles, [ROLES.maker, ROLES.admin, ROLES.super_admin]);
 }
 
 /**
@@ -72,9 +72,9 @@ export function isBuilder(userRoles: UserRole[]): boolean {
 export function getHighestRole(userRoles: UserRole[]): UserRole {
   if (hasRole(userRoles, ROLES.super_admin)) return ROLES.super_admin;
   if (hasRole(userRoles, ROLES.admin)) return ROLES.admin;
-  if (hasRole(userRoles, ROLES.moderator)) return ROLES.moderator;
-  if (hasRole(userRoles, ROLES.builder)) return ROLES.builder;
-  if (hasRole(userRoles, ROLES.user)) return ROLES.user;
+  if (hasRole(userRoles, ROLES.mod)) return ROLES.mod;
+  if (hasRole(userRoles, ROLES.maker)) return ROLES.maker;
+  if (hasRole(userRoles, ROLES.follower)) return ROLES.follower;
   return ROLES.guest;
 }
 
@@ -101,7 +101,7 @@ export function canAccessAdminSection(userRoles: UserRole[], section: string): b
   const sectionPermissions: Record<string, UserRole[]> = {
     dashboard: [ROLES.admin, ROLES.super_admin],
     users: [ROLES.admin, ROLES.super_admin],
-    content: [ROLES.admin, ROLES.super_admin, ROLES.moderator],
+    content: [ROLES.admin, ROLES.super_admin, ROLES.mod],
     settings: [ROLES.super_admin],
     system: [ROLES.super_admin]
   };
@@ -118,11 +118,11 @@ export function canAccessAdminSection(userRoles: UserRole[], section: string): b
  */
 export function getRoleLabels(): Record<UserRole, string> {
   return {
-    [ROLES.user]: 'User',
+    [ROLES.guest]: 'Guest',
+    [ROLES.follower]: 'Follower',
+    [ROLES.maker]: 'Maker',
+    [ROLES.mod]: 'Moderator',
     [ROLES.admin]: 'Admin',
-    [ROLES.super_admin]: 'Super Admin',
-    [ROLES.moderator]: 'Moderator',
-    [ROLES.builder]: 'Builder',
-    [ROLES.guest]: 'Guest'
+    [ROLES.super_admin]: 'Super Admin'
   };
 }

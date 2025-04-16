@@ -1,6 +1,13 @@
 
 export type ThemeEffectType = 'pulse' | 'hover-glow' | 'float';
 
+// Constants for theme effects for use in code
+export const ThemeEffectTypes = {
+  PULSE: 'pulse',
+  HOVER_GLOW: 'hover-glow',
+  FLOAT: 'float'
+} as const;
+
 export interface ThemeComponent {
   id: string;
   name: string;

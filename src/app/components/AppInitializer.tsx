@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { RBACBridge } from '@/rbac/bridge';
 import { useLogger } from '@/hooks/use-logger';
 import { LogCategory } from '@/shared/types/shared.types';
+import { UserRole } from '@/shared/types/core/rbac.types';
 import { AccountLinkingModal } from '@/auth/components/AccountLinkingModal';
 import { LinkedAccountAlert } from '@/auth/components/LinkedAccountAlert';
 
@@ -17,7 +17,7 @@ interface AppInitializerProps {
  */
 export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
   const { initialize, isAuthenticated, status, user } = useAuthStore();
-  const roles = useAuthStore(state => state.roles || []);
+  const roles = useAuthStore(state => state.roles || []) as UserRole[];
   const logger = useLogger('AppInitializer', LogCategory.APP);
   const [isLinkingModalOpen, setIsLinkingModalOpen] = useState(false);
   
@@ -49,11 +49,21 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
   // Update RBAC when auth state changes
   useEffect(() => {
     if (isAuthenticated && roles && roles.length > 0) {
+      // Only set valid roles
+      const validRoles = roles.filter(role => 
+        role === 'guest' || 
+        role === 'follower' || 
+        role === 'maker' || 
+        role === 'mod' || 
+        role === 'admin' || 
+        role === 'super_admin'
+      ) as UserRole[];
+      
       // Set roles in RBAC system
-      RBACBridge.setRoles(roles);
+      RBACBridge.setRoles(validRoles);
       
       logger.info('User roles set in RBAC', {
-        details: { roles }
+        details: { roles: validRoles }
       });
     } else if (!isAuthenticated) {
       // Clear roles when logged out
@@ -68,8 +78,6 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
     setIsLinkingModalOpen(true);
   };
   
-  // AccountLinkingModal and LinkedAccountAlert are placeholders,
-  // we'll define them if needed or create mock components
   return (
     <>
       {children}
