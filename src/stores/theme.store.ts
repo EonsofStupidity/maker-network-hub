@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ThemeState, Theme, ComponentTokens, DesignTokens, ThemeEffect } from '@/shared/types/theme.types';
+import type { ThemeState, Theme, ComponentTokens, DesignTokens } from '@/shared/types/theme.types';
 
 const defaultTheme: Theme = {
   id: 'default',
@@ -74,7 +74,6 @@ const defaultTheme: Theme = {
 };
 
 export const useThemeStore = create<ThemeState>((set) => ({
-  themes: [defaultTheme],
   activeThemeId: defaultTheme.id,
   isDark: defaultTheme.isDark || false,
   primaryColor: defaultTheme.variables?.primary || '',
@@ -91,21 +90,13 @@ export const useThemeStore = create<ThemeState>((set) => ({
   animations: {},
   effects: [],
 
-  setThemes: (themes) => set({ themes }),
-  setActiveTheme: (themeId) => set((state) => {
-    const theme = state.themes.find(t => t.id === themeId);
-    if (!theme) return state;
-    return {
-      activeThemeId: themeId,
-      isDark: theme.isDark || false,
-      theme,
-      designTokens: theme.designTokens || {},
-      componentTokens: theme.componentTokens || {},
-      variables: theme.variables || {}
-    };
-  }),
-  setDesignTokens: (tokens) => set({ designTokens: tokens }),
-  setComponentTokens: (tokens) => set({ componentTokens: tokens }),
+  setThemes: (themes: Theme[]) => set({ theme: themes[0] || null }),
+  setActiveTheme: (themeId: string) => set((state) => ({
+    activeThemeId: themeId,
+    theme: state.theme?.id === themeId ? state.theme : null
+  })),
+  setDesignTokens: (tokens: DesignTokens) => set({ designTokens: tokens }),
+  setComponentTokens: (tokens: ComponentTokens) => set({ componentTokens: tokens }),
   setEffects: (effects) => set({ effects }),
   setVariables: (vars) => set({ variables: vars })
 }));

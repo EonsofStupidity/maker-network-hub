@@ -1,4 +1,8 @@
 
+import type { Theme, ThemeEffect, ThemeEffectType } from './core/theme.types';
+
+export type { Theme, ThemeEffect, ThemeEffectType };
+
 export interface DesignTokens {
   colors?: Record<string, string>;
   typography?: any;
@@ -17,9 +21,6 @@ export interface ComponentTokens {
   [componentName: string]: Record<string, string>;
 }
 
-export { Theme } from './core/theme.types';
-export type { ThemeEffect, ThemeEffectType } from './core/theme.types';
-
 export interface ThemeState {
   activeThemeId: string | null;
   isDark: boolean;
@@ -29,17 +30,17 @@ export interface ThemeState {
   designTokens: DesignTokens;
   componentTokens: ComponentTokens;
   isLoading: boolean;
-  error: null | string;
+  error: string | null;
   theme: Theme | null;
   isLoaded: boolean;
   variables: Record<string, string>;
   componentStyles: Record<string, Record<string, string>>;
   animations: Record<string, any>;
   effects: ThemeEffect[];
-  setThemes: (themes: Theme[]) => void;
-  setActiveTheme: (themeId: string) => void;
-  setDesignTokens: (tokens: DesignTokens) => void;
-  setComponentTokens: (tokens: ComponentTokens) => void;
-  setEffects: (effects: ThemeEffect[]) => void;
-  setVariables: (variables: Record<string, string>) => void;
+  setThemes?: (themes: Theme[]) => void;
+  setActiveTheme?: (themeId: string) => void;
+  setDesignTokens?: (tokens: DesignTokens) => void;
+  setComponentTokens?: (tokens: ComponentTokens) => void;
+  setEffects?: (effects: ThemeEffect[]) => void;
+  setVariables?: (variables: Record<string, string>) => void;
 }

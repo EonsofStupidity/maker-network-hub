@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,9 +20,20 @@ interface KeyboardNavigationProps {
 
 export const KeyboardNavigation = ({ options = {} }: KeyboardNavigationProps) => {
   const { toast } = useToast();
+  const mergedOptions = {
+    enabled: options.enabled ?? true,
+    showToasts: options.showToasts ?? false,
+    scrollConfig: {
+      scrollAmount: options.scrollConfig?.scrollAmount ?? 100,
+      smooth: options.scrollConfig?.smooth ?? true,
+      acceleration: options.scrollConfig?.acceleration ?? true,
+      maxAcceleration: options.scrollConfig?.maxAcceleration ?? 500,
+      accelerationRate: options.scrollConfig?.accelerationRate ?? 1.1
+    }
+  };
 
   useEffect(() => {
-    if (!options.enabled) return;
+    if (!mergedOptions.enabled) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName)) {
@@ -47,15 +59,14 @@ export const KeyboardNavigation = ({ options = {} }: KeyboardNavigationProps) =>
       if (direction && mergedOptions.showToasts) {
         toast({
           title: `Scrolling ${direction}`,
-          description: "Use W/S or arrow keys to scroll",
-          variant: "default"
+          description: "Use W/S or arrow keys to scroll"
         });
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [options, toast]);
+  }, [mergedOptions, toast]);
   
   return null;
 };
