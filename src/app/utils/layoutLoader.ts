@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Layout, LayoutSchema } from '@/shared/types/layout.types';
+import { Layout } from '@/shared/types/layout.types';
 import { toast } from '@/shared/ui';
 import { getErrorMessage } from '@/utils/errors';
 
@@ -32,7 +32,7 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
         scope,
         layout: [],
         meta: {},
-        components: {},
+        components: {}
       };
     }
     
@@ -42,15 +42,17 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
     console.log('Layout loaded successfully:', data);
     
     // Transform the data to match the Layout type
-    return {
+    const transformedLayout: Layout = {
       id: data.id,
       name: data.name,
       type: data.type,
       scope: data.scope,
-      components: layoutData.components || {},
       layout: layoutData.layout || [],
+      components: layoutData.components || {},
       meta: data.meta || {}
     };
+    
+    return transformedLayout;
   } catch (error) {
     console.error('Error loading layout:', error);
     toast({
@@ -65,8 +67,8 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
       name: 'Default Layout',
       type,
       scope,
-      components: {},
       layout: [],
+      components: {},
       meta: {}
     };
   }

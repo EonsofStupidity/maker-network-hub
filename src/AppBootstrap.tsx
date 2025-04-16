@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { AuthBridge } from './bridges/AuthBridge';
 import { RBACBridge } from './shared/bridges/RBACBridge';
@@ -43,10 +44,13 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
             if (session.user.app_metadata?.roles) {
               const appRoles = session.user.app_metadata.roles;
               if (Array.isArray(appRoles) && appRoles.length > 0) {
-                // Map and validate roles with proper type casting
-                roles = appRoles.filter(role => 
-                  Object.values(ROLES).includes(role as UserRole)
-                ) as UserRole[];
+                // Properly validate and cast roles to UserRole type
+                roles = appRoles
+                  .filter(role => 
+                    typeof role === 'string' && 
+                    Object.values(ROLES).includes(role as UserRole)
+                  )
+                  .map(role => role as UserRole);
                 
                 // Always include at least GUEST role
                 if (roles.length === 0) {
@@ -89,10 +93,13 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
             if (sessionUser.app_metadata?.roles) {
               const appRoles = sessionUser.app_metadata.roles;
               if (Array.isArray(appRoles) && appRoles.length > 0) {
-                // Map and validate roles with proper type casting
-                roles = appRoles.filter(role => 
-                  Object.values(ROLES).includes(role as UserRole)
-                ) as UserRole[];
+                // Properly validate and cast roles to UserRole type
+                roles = appRoles
+                  .filter(role => 
+                    typeof role === 'string' && 
+                    Object.values(ROLES).includes(role as UserRole)
+                  )
+                  .map(role => role as UserRole);
                 
                 // Always include at least GUEST role
                 if (roles.length === 0) {

@@ -5,6 +5,7 @@ import path from "path"
 import { componentTagger } from "lovable-tagger"
 import AutoImport from "unplugin-auto-import/vite"
 
+// Use path.resolve with __dirname for proper path resolution in Vite
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -182,4 +183,8 @@ export default defineConfig(({ mode }) => ({
     ],
     exclude: [],
   },
+  define: {
+    // Provide a replacement for __dirname
+    __dirname: JSON.stringify(process.cwd())
+  }
 }))
