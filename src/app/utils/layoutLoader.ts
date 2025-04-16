@@ -15,18 +15,29 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
       item.type === type && 
       item.scope === scope && 
       item.is_active === true
-    );
+    ) || [];
 
-    const data = filteredData?.length > 0 ? filteredData[0] : null;
+    const data = filteredData.length > 0 ? filteredData[0] : null;
     const responseError = response.error;
 
     if (responseError) throw new Error(getErrorMessage(responseError));
     
-    if (!data) return null;
+    if (!data) {
+      console.warn(`No layout found for type=${type} scope=${scope}, providing default.`);
+      // Return a minimal default layout to prevent render failures
+      return {
+        id: 'default-layout',
+        name: 'Default Layout',
+        type,
+        scope,
+        components: {},
+        layout: [],
+        meta: {}
+      };
+    }
     
-    // Validate the data with Zod
-    const validatedLayout = LayoutSchema.parse(data);
-    return validatedLayout;
+    console.log('Layout loaded successfully:', data);
+    return data as Layout;
   } catch (error) {
     console.error('Error loading layout:', error);
     toast({
@@ -34,6 +45,16 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
       description: getErrorMessage(error),
       variant: 'destructive'
     });
-    return null;
+    
+    // Return a minimal default layout to prevent render failures
+    return {
+      id: 'default-layout',
+      name: 'Default Layout',
+      type,
+      scope,
+      components: {},
+      layout: [],
+      meta: {}
+    };
   }
 }

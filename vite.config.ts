@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react-swc"
 import path from "path"
@@ -14,9 +15,11 @@ export default defineConfig(({ mode }) => ({
       interval: 100,
     },
     hmr: {
+      // Use standard hmr in development to avoid WebSocket issues
       overlay: true,
-      clientPort: 443,
-      protocol: 'wss',
+      // Only use wss for production
+      clientPort: mode === 'production' ? 443 : undefined,
+      protocol: mode === 'production' ? 'wss' : 'ws',
     },
   },
   plugins: [

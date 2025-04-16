@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/shared/ui/toaster";
 import { Toaster as Sonner } from "@/shared/ui/sonner";
 import { TooltipProvider } from "@/shared/ui/tooltip";
@@ -7,7 +8,16 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import DevChatPage from "./pages/DevChatPage";
 
-const queryClient = new QueryClient();
+// Create a new QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30 * 1000, // 30 seconds
+      refetchOnWindowFocus: false
+    }
+  }
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -20,7 +30,6 @@ const App = () => (
           <Route path="/chat" element={<DevChatPage mode="normal" />} />
           <Route path="/chat/dev" element={<DevChatPage mode="dev" />} />
           <Route path="/chat/debug" element={<DevChatPage mode="debug" />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -1,6 +1,5 @@
 
 import { useEffect, useState } from 'react';
-import { initializeLogging } from './logging/bootstrap';
 import { AuthBridge } from './bridges/AuthBridge';
 import { RBACBridge } from './shared/bridges/RBACBridge';
 import { ROLES } from './shared/types/core/rbac.types';
@@ -27,106 +26,131 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
       try {
         console.log('Starting application bootstrap process');
         
-        // Step 1: Initialize logging (before anything else)
-        initializeLogging();
-        logBridge.info(LogCategory.SYSTEM, 'AppBootstrap started');
-        
-        // Step 2: Initialize Auth - but don't block on auth for public access
-        try {
-          const { data } = await supabase.auth.getSession();
-          
-          if (data?.session?.user) {
-            const sessionUser = data.session.user;
-            if (sessionUser) {
-              logBridge.info(LogCategory.AUTH, 'User session found', { 
-                userId: sessionUser.id || 'unknown',
-                email: sessionUser.email || 'unknown'
-              });
-              
-              // Map Supabase roles to our app roles
-              let roles = [ROLES.GUEST];
-              
-              if (sessionUser.app_metadata?.roles) {
-                const appRoles = sessionUser.app_metadata.roles;
-                if (Array.isArray(appRoles) && appRoles.length > 0) {
-                  // Map and validate roles
-                  roles = appRoles.filter(role => 
-                    Object.values(ROLES).includes(role as any)
-                  ) as any[];
-                  
-                  // Always include at least GUEST role
-                  if (roles.length === 0) {
-                    roles = [ROLES.GUEST];
-                  }
+        // Set up auth state listener first to avoid race conditions
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+          console.log('Auth state changed:', event, session?.user?.id);
+          if (session?.user) {
+            AuthBridge.setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              displayName: session.user.user_metadata?.display_name || session.user.email,
+              createdAt: session.user.created_at,
+              roles: session.user.app_metadata?.roles || [ROLES.GUEST],
+            });
+            
+            // Map Supabase roles to our app roles
+            let roles = [ROLES.GUEST];
+            
+            if (session.user.app_metadata?.roles) {
+              const appRoles = session.user.app_metadata.roles;
+              if (Array.isArray(appRoles) && appRoles.length > 0) {
+                // Map and validate roles
+                roles = appRoles.filter(role => 
+                  Object.values(ROLES).includes(role as any)
+                ) as any[];
+                
+                // Always include at least GUEST role
+                if (roles.length === 0) {
+                  roles = [ROLES.GUEST];
                 }
               }
-              
-              // Set roles in RBAC bridge
-              RBACBridge.setRoles(roles);
-              
-              logBridge.info(LogCategory.RBAC, 'User roles set', { 
-                roles 
-              });
             }
-          } else {
-            logBridge.info(LogCategory.AUTH, 'No user session found, setting guest role');
-            RBACBridge.setRoles([ROLES.GUEST]);
+            
+            // Set roles in RBAC bridge
+            RBACBridge.setRoles(roles);
+            
+            logBridge.info(LogCategory.RBAC, 'User roles set', { 
+              roles 
+            });
           }
-        } catch (authError) {
-          // Don't fail the entire bootstrap just because auth failed
-          // This allows public pages to load even if auth is broken
-          console.warn('Auth initialization error:', authError);
-          logBridge.warn(LogCategory.AUTH, 'Auth initialization error, continuing as guest', {
-            error: authError instanceof Error ? authError.message : String(authError)
-          });
+        });
+        
+        // Get session
+        const { data } = await supabase.auth.getSession();
+        
+        if (data?.session?.user) {
+          const sessionUser = data.session.user;
+          if (sessionUser) {
+            logBridge.info(LogCategory.AUTH, 'User session found', { 
+              userId: sessionUser.id || 'unknown',
+              email: sessionUser.email || 'unknown'
+            });
+            
+            AuthBridge.setUser({
+              id: sessionUser.id,
+              email: sessionUser.email || '',
+              displayName: sessionUser.user_metadata?.display_name || sessionUser.email,
+              createdAt: sessionUser.created_at,
+              roles: sessionUser.app_metadata?.roles || [ROLES.GUEST],
+            });
+            
+            // Map Supabase roles to our app roles
+            let roles = [ROLES.GUEST];
+            
+            if (sessionUser.app_metadata?.roles) {
+              const appRoles = sessionUser.app_metadata.roles;
+              if (Array.isArray(appRoles) && appRoles.length > 0) {
+                // Map and validate roles
+                roles = appRoles.filter(role => 
+                  Object.values(ROLES).includes(role as any)
+                ) as any[];
+                
+                // Always include at least GUEST role
+                if (roles.length === 0) {
+                  roles = [ROLES.GUEST];
+                }
+              }
+            }
+            
+            // Set roles in RBAC bridge
+            RBACBridge.setRoles(roles);
+            
+            logBridge.info(LogCategory.RBAC, 'User roles set', { 
+              roles 
+            });
+          }
+        } else {
+          logBridge.info(LogCategory.AUTH, 'No user session found, setting guest role');
           RBACBridge.setRoles([ROLES.GUEST]);
+          AuthBridge.setUser(null);
         }
 
-        // Step 3: Initialize Theme (critical for UI)
-        try {
-          // Setup default theme (public pages need this)
-          const defaultTheme = {
-            id: 'cyberpunk',
-            name: 'Cyberpunk',
-            isDark: true,
-            status: 'active',
-            context: 'site',
-            variables: {
-              primary: '#00f0ff',
-              secondary: '#ff2d6e',
-              background: '#080F1E',
-              foreground: '#f9fafb'
-            }
-          };
-          
-          const defaultEffects: ThemeEffect[] = [
-            { 
-              type: ThemeEffectType.CYBER, 
-              intensity: 0.7, 
-              enabled: true,
-              color: '#00f0ff'
-            },
-            {
-              type: ThemeEffectType.GRAIN,
-              intensity: 0.3,
-              enabled: true
-            }
-          ];
-          
-          setThemes([defaultTheme]);
-          setActiveTheme('cyberpunk');
-          setEffects(defaultEffects);
-          
-          logBridge.info(LogCategory.THEME, 'Default theme initialized', {
-            details: { theme: 'cyberpunk' }
-          });
-        } catch (themeError) {
-          console.warn('Theme initialization error:', themeError);
-          logBridge.warn(LogCategory.THEME, 'Theme initialization error', {
-            error: themeError instanceof Error ? themeError.message : String(themeError)
-          });
-          // Continue anyway with default theme in store
-        }
+        // Setup default theme (public pages need this)
+        const defaultTheme = {
+          id: 'cyberpunk',
+          name: 'Cyberpunk',
+          isDark: true,
+          status: 'active',
+          context: 'site',
+          variables: {
+            primary: '#00f0ff',
+            secondary: '#ff2d6e',
+            background: '#080F1E',
+            foreground: '#f9fafb'
+          }
+        };
+        
+        const defaultEffects: ThemeEffect[] = [
+          { 
+            type: ThemeEffectType.CYBER, 
+            intensity: 0.7, 
+            enabled: true,
+            color: '#00f0ff'
+          },
+          {
+            type: ThemeEffectType.GRAIN,
+            intensity: 0.3,
+            enabled: true
+          }
+        ];
+        
+        setThemes([defaultTheme]);
+        setActiveTheme('cyberpunk');
+        setEffects(defaultEffects);
+        
+        logBridge.info(LogCategory.THEME, 'Default theme initialized', {
+          details: { theme: 'cyberpunk' }
+        });
         
         // Log successful bootstrap
         logBridge.info(LogCategory.SYSTEM, 'Application bootstrap complete');

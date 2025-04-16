@@ -1,6 +1,7 @@
 
 /**
  * Supabase client wrapper
+ * Centralized mock client for development and testing
  */
 
 // Define base types for responses
@@ -13,17 +14,34 @@ export interface SupabaseResponse<T = any> {
 export const supabase = {
   from: (table: string) => ({
     select: (columns: string = '*') => {
-      const response: SupabaseResponse = { data: null, error: null };
+      // Create a mock response
+      const mockResponse: SupabaseResponse = { 
+        data: table === 'layout_skeletons' ? [{
+          id: 'mock-layout-id',
+          name: 'Default Layout',
+          description: 'Default layout for application',
+          type: 'page',
+          scope: 'site',
+          is_locked: false,
+          version: 1,
+          is_active: true,
+          layout_json: {},
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }] : [],
+        error: null 
+      };
+      
       return {
-        ...response,
+        ...mockResponse,
         eq: (column: string, value: any) => ({
-          ...response,
-          single: () => Promise.resolve<SupabaseResponse>(response),
-          maybeSingle: () => Promise.resolve<SupabaseResponse>(response),
+          ...mockResponse,
+          single: () => Promise.resolve<SupabaseResponse>(mockResponse),
+          maybeSingle: () => Promise.resolve<SupabaseResponse>(mockResponse),
           limit: (limit: number) => ({
-            ...response,
-            maybeSingle: () => Promise.resolve<SupabaseResponse>(response),
-            single: () => Promise.resolve<SupabaseResponse>(response),
+            ...mockResponse,
+            maybeSingle: () => Promise.resolve<SupabaseResponse>(mockResponse),
+            single: () => Promise.resolve<SupabaseResponse>(mockResponse),
             order: (column: string, { ascending }: { ascending: boolean }) => 
               Promise.resolve<SupabaseResponse>({ data: [], error: null }),
           }),
@@ -31,7 +49,7 @@ export const supabase = {
             Promise.resolve<SupabaseResponse>({ data: [], error: null }),
         }),
         order: (column: string, { ascending }: { ascending: boolean }) => ({
-          ...response,
+          ...mockResponse,
           limit: (limit: number) => 
             Promise.resolve<SupabaseResponse>({ data: [], error: null }),
         }),
@@ -80,7 +98,20 @@ export const supabase = {
       }; 
       error: { message: string } | null 
     }>({ 
-      data: { session: { user: null } }, 
+      data: { 
+        session: { 
+          user: { 
+            id: 'system-user-id', 
+            email: 'system@internal.app', 
+            app_metadata: { 
+              roles: ['SUPER_ADMIN'] 
+            }, 
+            user_metadata: {},
+            aud: 'authenticated',
+            created_at: new Date().toISOString()
+          } 
+        }
+      }, 
       error: null 
     }),
     getUser: () => Promise.resolve<{ 
@@ -96,17 +127,44 @@ export const supabase = {
       }; 
       error: { message: string } | null 
     }>({ 
-      data: { user: null }, 
+      data: { 
+        user: { 
+          id: 'system-user-id', 
+          email: 'system@internal.app', 
+          app_metadata: { 
+            roles: ['SUPER_ADMIN'] 
+          }, 
+          user_metadata: {},
+          aud: 'authenticated',
+          created_at: new Date().toISOString()
+        } 
+      }, 
       error: null 
     }),
     signOut: () => Promise.resolve<{ error: { message: string } | null }>({ error: null }),
-    onAuthStateChange: (callback: any) => ({
-      data: {
-        subscription: {
-          unsubscribe: () => {},
+    onAuthStateChange: (callback: any) => {
+      // Immediately call the callback with authenticated session to simulate already logged in
+      setTimeout(() => {
+        callback('SIGNED_IN', {
+          user: {
+            id: 'system-user-id',
+            email: 'system@internal.app',
+            app_metadata: { roles: ['SUPER_ADMIN'] },
+            user_metadata: {},
+            aud: 'authenticated',
+            created_at: new Date().toISOString()
+          }
+        });
+      }, 0);
+      
+      return {
+        data: {
+          subscription: {
+            unsubscribe: () => {},
+          },
         },
-      },
-    }),
+      };
+    },
     signInWithPassword: ({ email, password }: { email: string, password: string }) => 
       Promise.resolve<{ 
         data: { 
@@ -133,18 +191,18 @@ export const supabase = {
       }>({ 
         data: { 
           user: { 
-            id: 'mock-user-id', 
-            email: email, 
-            app_metadata: { roles: [] }, 
+            id: 'system-user-id', 
+            email: 'system@internal.app', 
+            app_metadata: { roles: ['SUPER_ADMIN'] }, 
             user_metadata: {},
             aud: 'authenticated',
             created_at: new Date().toISOString()
           }, 
           session: { 
             user: { 
-              id: 'mock-user-id', 
-              email: email, 
-              app_metadata: { roles: [] }, 
+              id: 'system-user-id', 
+              email: 'system@internal.app', 
+              app_metadata: { roles: ['SUPER_ADMIN'] }, 
               user_metadata: {},
               aud: 'authenticated',
               created_at: new Date().toISOString()
@@ -179,18 +237,18 @@ export const supabase = {
       }>({
         data: { 
           user: { 
-            id: 'mock-user-id', 
-            email: email, 
-            app_metadata: { roles: [] }, 
+            id: 'system-user-id', 
+            email: 'system@internal.app', 
+            app_metadata: { roles: ['SUPER_ADMIN'] }, 
             user_metadata: {},
             aud: 'authenticated',
             created_at: new Date().toISOString()
           }, 
           session: { 
             user: { 
-              id: 'mock-user-id', 
-              email: email, 
-              app_metadata: { roles: [] }, 
+              id: 'system-user-id', 
+              email: 'system@internal.app', 
+              app_metadata: { roles: ['SUPER_ADMIN'] }, 
               user_metadata: {},
               aud: 'authenticated',
               created_at: new Date().toISOString()
@@ -217,9 +275,9 @@ export const supabase = {
       }>({ 
         data: { 
           user: { 
-            id: 'mock-user-id', 
-            email: 'user@example.com', 
-            app_metadata: { roles: [] }, 
+            id: 'system-user-id', 
+            email: 'system@internal.app', 
+            app_metadata: { roles: ['SUPER_ADMIN'] }, 
             user_metadata: {},
             aud: 'authenticated',
             created_at: new Date().toISOString()

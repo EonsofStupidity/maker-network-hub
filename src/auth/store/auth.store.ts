@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { UserProfile, AUTH_STATUS, AuthStatus } from '@/shared/types/core/auth.types';
 import { mapUserToProfile } from '@/auth/utils/userMapper';
 import { supabase } from '@/integrations/supabase/client';
+import { ROLES, UserRole } from '@/shared/types/core/rbac.types';
 
 export interface AuthState {
   user: UserProfile | null;
@@ -24,14 +25,22 @@ export interface AuthState {
   updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
 }
 
-// Mock user for Supabase client testing purpose
-const createMockUser = (id: string) => ({
+// Default system user for development/testing
+const systemUser: UserProfile = {
+  id: 'system-user-id',
+  email: 'system@internal.app',
+  displayName: 'System User',
+  createdAt: new Date().toISOString(),
+  roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+};
+
+// Create mock user for development
+const createMockUser = (id: string): UserProfile => ({
   id,
   email: `user-${id}@example.com`,
-  app_metadata: { roles: [] },
-  user_metadata: {},
-  aud: 'authenticated',
-  created_at: new Date().toISOString()
+  displayName: `User ${id}`,
+  createdAt: new Date().toISOString(),
+  roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
 });
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -57,6 +66,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ status: AUTH_STATUS.LOADING });
       
+      // In development, always succeed with system user
+      if (process.env.NODE_ENV === 'development') {
+        set({ 
+          user: systemUser,
+          profile: systemUser,
+          isAuthenticated: true,
+          status: AUTH_STATUS.AUTHENTICATED
+        });
+        return;
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -65,9 +85,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) throw error;
       
       if (data?.user) {
-        // Create a full mock user if we're using the mock client
-        const fullUser = createMockUser(data.user.id);
-        const userProfile = mapUserToProfile(fullUser);
+        const userProfile = mapUserToProfile(data.user);
         set({ 
           user: userProfile,
           profile: userProfile,
@@ -88,6 +106,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ status: AUTH_STATUS.LOADING });
       
+      // In development, always succeed with system user
+      if (process.env.NODE_ENV === 'development') {
+        set({ 
+          user: systemUser,
+          profile: systemUser,
+          isAuthenticated: true,
+          status: AUTH_STATUS.AUTHENTICATED
+        });
+        return;
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password
@@ -96,9 +125,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) throw error;
       
       if (data?.user) {
-        // Create a full mock user if we're using the mock client
-        const fullUser = createMockUser(data.user.id);
-        const userProfile = mapUserToProfile(fullUser);
+        const userProfile = mapUserToProfile(data.user);
         set({ 
           user: userProfile,
           profile: userProfile,
@@ -119,11 +146,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ status: AUTH_STATUS.LOADING });
       
-      // Use the safer alternative
-      const { error } = await supabase.auth.signUp({
-        email,
-        password: Math.random().toString(36).slice(-8)
-      });
+      // In development mode, just simulate success
+      if (process.env.NODE_ENV === 'development') {
+        set({ status: AUTH_STATUS.IDLE });
+        return;
+      }
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
       
       if (error) throw error;
       
@@ -140,6 +169,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     try {
       set({ status: AUTH_STATUS.LOADING });
+      
+      // In development, just reset the state
+      if (process.env.NODE_ENV === 'development') {
+        set({ 
+          user: null, 
+          profile: null,
+          isAuthenticated: false,
+          status: AUTH_STATUS.GUEST
+        });
+        return;
+      }
       
       const { error } = await supabase.auth.signOut();
       
@@ -164,24 +204,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ status: AUTH_STATUS.LOADING });
       
+      // In development, always use the system user
+      if (process.env.NODE_ENV === 'development') {
+        console.info('Development mode: Using system user');
+        set({ 
+          user: systemUser,
+          profile: systemUser,
+          isAuthenticated: true,
+          status: AUTH_STATUS.AUTHENTICATED,
+          initialized: true
+        });
+        return;
+      }
+      
       const { data, error } = await supabase.auth.getSession();
       
       if (error) throw error;
       
       if (data?.session?.user) {
-        // Create a full mock user if we're using the mock client
-        const sessionUser = data.session.user;
-        if (sessionUser) {
-          const fullUser = createMockUser(sessionUser.id);
-          const userProfile = mapUserToProfile(fullUser);
-          set({ 
-            user: userProfile,
-            profile: userProfile,
-            isAuthenticated: true,
-            status: AUTH_STATUS.AUTHENTICATED,
-            initialized: true
-          });
-        }
+        const userProfile = mapUserToProfile(data.session.user);
+        set({ 
+          user: userProfile,
+          profile: userProfile,
+          isAuthenticated: true,
+          status: AUTH_STATUS.AUTHENTICATED,
+          initialized: true
+        });
       } else {
         set({
           user: null,
@@ -192,9 +240,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
       }
     } catch (error) {
+      console.error('Auth initialization error:', error);
+      
+      // In case of an error in production, set guest mode
       set({ 
+        user: null,
+        profile: null,
+        isAuthenticated: false,
         error: error instanceof Error ? error : new Error('Unknown error during initialization'),
-        status: AUTH_STATUS.ERROR,
+        status: AUTH_STATUS.GUEST,
         initialized: true
       });
     }
@@ -208,9 +262,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw new Error('No user logged in');
       }
       
-      // Fix for mock Supabase client
-      if (!('updateUser' in supabase.auth)) {
-        // Mock update logic
+      // In development, just update the state
+      if (process.env.NODE_ENV === 'development') {
         set(state => ({
           user: state.user ? { ...state.user, ...profileData } : null,
           profile: state.profile ? { ...state.profile, ...profileData } : null
@@ -218,7 +271,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return;
       }
       
-      const { error } = await (supabase.auth as any).updateUser({
+      const { error } = await supabase.auth.updateUser({
         data: {
           ...user.userMetadata,
           ...profileData.userMetadata
