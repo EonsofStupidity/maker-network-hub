@@ -59,6 +59,7 @@ interface ThemeStoreState extends ThemeState {
   setThemes: (themes: Theme[]) => void;
   setThemeVariables: (variables: Record<string, string>) => void;
   toggleDarkMode: () => void;
+  setEffects: (effects: ThemeEffect[]) => void;
 }
 
 export const useThemeStore = create<ThemeStoreState>((set) => ({
@@ -75,6 +76,7 @@ export const useThemeStore = create<ThemeStoreState>((set) => ({
   error: null,
   themes: [],
   theme: null,
+  effects: [], // Add missing effects array
   
   // Actions
   setActiveTheme: (themeId: string) => set({ activeThemeId: themeId }),
@@ -98,5 +100,7 @@ export const useThemeStore = create<ThemeStoreState>((set) => ({
       backgroundColor: isDark ? '#0f172a' : '#ffffff',
       textColor: isDark ? '#f8fafc' : '#0f172a',
     };
-  })
+  }),
+  
+  setEffects: (effects: ThemeEffect[]) => set({ effects })
 }));

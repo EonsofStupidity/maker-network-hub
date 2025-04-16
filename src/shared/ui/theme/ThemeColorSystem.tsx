@@ -14,7 +14,7 @@ export function ThemeColorSystem({ children }: ThemeColorSystemProps) {
   }
   
   // Extract all CSS variables and apply them
-  const cssVariables: React.CSSProperties = {
+  const cssVariables = {
     // Convert theme variables to CSS variables
     '--color-primary': variables['primary'] || '#3b82f6',
     '--color-secondary': variables['secondary'] || '#8b5cf6',
@@ -28,9 +28,7 @@ export function ThemeColorSystem({ children }: ThemeColorSystemProps) {
     
     // Other CSS variables
     '--font-family': variables['fontFamily'] || 'Inter, system-ui, sans-serif',
-    
-    // Here you could add other variables
-  };
+  } as React.CSSProperties;
   
   return (
     <div style={cssVariables} className="theme-container">

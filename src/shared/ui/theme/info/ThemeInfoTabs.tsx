@@ -3,7 +3,7 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { Theme } from '@/shared/types/theme.types';
 import { BaseThemeEffect } from '@/shared/types/theme/effects.types';
-import ThemeColorSystem from '../ThemeColorSystem';
+import { ThemeColorSystem } from '../ThemeColorSystem';
 import EffectsPreview from '../EffectsPreview';
 
 interface ThemeInfoTabsProps {
@@ -22,7 +22,9 @@ export const ThemeInfoTabs: React.FC<ThemeInfoTabsProps> = ({ theme, effects, cl
       </TabsList>
       
       <TabsContent value="colors" className="mt-4">
-        <ThemeColorSystem theme={theme} />
+        <ThemeColorSystem>
+          {/* Theme color content */}
+        </ThemeColorSystem>
       </TabsContent>
       
       <TabsContent value="effects" className="mt-4">

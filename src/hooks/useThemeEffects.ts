@@ -1,11 +1,13 @@
+
 import { useCallback } from 'react';
 import { useThemeStore } from '@/stores/theme.store';
 import { ThemeEffect, ThemeEffectType } from '@/shared/types/core/theme.types';
 
 export function useThemeEffects() {
   const themeEffects = useThemeStore(state => state.effects || []);
+  
   const setThemeEffects = useCallback((effects: ThemeEffect[]) => {
-    useThemeStore.setState({ effects });
+    useThemeStore.getState().setEffects(effects);
   }, []);
   
   const getEffects = useCallback(() => {

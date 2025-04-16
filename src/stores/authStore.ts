@@ -202,8 +202,8 @@ export const useAuthStore = create<AuthState>()(
               id: '1',
               email,
               name: 'Test User',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
             };
             
             // Validate response

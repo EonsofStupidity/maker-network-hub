@@ -7,12 +7,12 @@ export { ROLES };
 
 // Role labels for UI display with proper Record typing
 export const ROLE_LABELS: Record<UserRole, string> = {
-  [ROLES.SUPER_ADMIN]: 'Super Admin',
-  [ROLES.ADMIN]: 'Admin',
-  [ROLES.MOD]: 'Moderator',
-  [ROLES.MAKER]: 'Maker',
+  [ROLES.GUEST]: 'Guest',
   [ROLES.FOLLOWER]: 'Follower',
-  [ROLES.GUEST]: 'Guest'
+  [ROLES.MAKER]: 'Maker',
+  [ROLES.MOD]: 'Moderator',
+  [ROLES.ADMIN]: 'Admin',
+  [ROLES.SUPER_ADMIN]: 'Super Admin'
 };
 
 // Section permissions with proper Record typing
