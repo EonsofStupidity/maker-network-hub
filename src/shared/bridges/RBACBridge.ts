@@ -51,8 +51,13 @@ class RBACBridgeImpl implements IRBACBridge {
    * @param roles Array of roles to assign
    */
   public setRoles(roles: UserRole[]): void {
+    // Validate incoming roles to ensure they match our enum
+    const validRoles = roles.filter(role => 
+      Object.values(ROLES).includes(role)
+    );
+    
     // Ensure we always have at least GUEST role
-    const safeRoles = roles.length > 0 ? roles : [ROLES.GUEST];
+    const safeRoles = validRoles.length > 0 ? validRoles : [ROLES.GUEST];
     
     useRBACStore.getState().setRoles(safeRoles);
     
@@ -103,29 +108,34 @@ class RBACBridgeImpl implements IRBACBridge {
   }
   
   /**
-   * Check if the user has a specific permission
+   * Check if user has a specific permission
    * @param permission The permission to check
-   * @returns True if the user has the permission, false otherwise
+   * @returns True if the user has the permission
    */
   public hasPermission(permission: string): boolean {
+    // Super admin has all permissions
+    if (this.hasRole(ROLES.SUPER_ADMIN)) return true;
+    
+    // Check if any role has this permission through the store
     return useRBACStore.getState().hasPermission(permission);
   }
   
   /**
-   * Check if the user can access a specific admin section
+   * Check if user can access an admin section
    * @param section The admin section to check
-   * @returns True if the user can access the section, false otherwise
+   * @returns True if the user has access to the section
    */
   public canAccessAdminSection(section: AdminSection): boolean {
-    const userRoles = this.getRoles();
+    // Get the allowed roles for this section
     const allowedRoles = SECTION_PERMISSIONS[section] || [];
     
-    return userRoles.some(role => allowedRoles.includes(role));
+    // Check if user has any of the allowed roles
+    return this.hasRole(allowedRoles);
   }
   
   /**
-   * Get role display labels for UI
-   * @returns Record with role keys and display labels
+   * Get role labels for UI display
+   * @returns Record mapping roles to their display labels
    */
   public getRoleLabels(): Record<UserRole, string> {
     return ROLE_LABELS;

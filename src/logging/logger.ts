@@ -16,12 +16,12 @@ export async function logToDatabase(level: LogLevel, category: LogCategory, mess
       .select('id');
       
     if (response.error) {
-      console.error('Failed to log to database:', response.error.message);
+      console.error('Failed to log to database:', response.error.message || 'Unknown error');
     }
     
     return true;
   } catch (err) {
-    console.error('Logging error:', err);
+    console.error('Logging error:', err instanceof Error ? err.message : String(err));
     return false;
   }
 }

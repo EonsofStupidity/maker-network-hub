@@ -6,25 +6,44 @@
 // Create a reusable Supabase client
 export const supabase = {
   from: (table: string) => ({
-    select: (columns: string) => ({
-      eq: (column: string, value: any) => ({
-        single: () => Promise.resolve(null),
+    select: (columns: string = '*') => {
+      return {
         data: null,
         error: null,
-      }),
-      order: (column: string, { ascending }: { ascending: boolean }) => ({
-        data: [],
-        error: null,
-      }),
-    }),
+        eq: (column: string, value: any) => ({
+          single: () => Promise.resolve({ data: {}, error: null }),
+          maybeSingle: () => Promise.resolve({ data: {}, error: null }),
+          limit: (limit: number) => ({
+            data: [],
+            error: null,
+          }),
+          order: (column: string, { ascending }: { ascending: boolean }) => ({
+            data: [],
+            error: null,
+          }),
+        }),
+        order: (column: string, { ascending }: { ascending: boolean }) => ({
+          data: [],
+          error: null,
+        }),
+        limit: (limit: number) => ({
+          data: [],
+          error: null,
+        }),
+      };
+    },
     insert: (data: any) => ({
-      select: (columns: string) => ({
+      select: (columns: string = '*') => ({
+        data: {},
+        error: null,
         single: () => Promise.resolve({ data: {}, error: null }),
       }),
     }),
     update: (data: any) => ({
       eq: (column: string, value: any) => ({
-        select: (columns: string) => ({
+        select: (columns: string = '*') => ({
+          data: {},
+          error: null,
           single: () => Promise.resolve({ data: {}, error: null }),
         }),
       }),
@@ -37,6 +56,13 @@ export const supabase = {
     getSession: () => Promise.resolve({ data: { session: null }, error: null }),
     getUser: () => Promise.resolve({ data: { user: null }, error: null }),
     signOut: () => Promise.resolve({ error: null }),
+    onAuthStateChange: (callback: Function) => ({
+      data: {
+        subscription: {
+          unsubscribe: () => {}
+        }
+      }
+    }),
   },
   storage: {
     from: (bucket: string) => ({
