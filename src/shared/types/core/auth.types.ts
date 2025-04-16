@@ -1,17 +1,18 @@
 
-export type AuthStatus = 'loading' | 'authenticated' | 'guest' | 'error';
-
-export const AuthStatusEnum = {
-  LOADING: 'loading' as AuthStatus,
-  AUTHENTICATED: 'authenticated' as AuthStatus,
-  GUEST: 'guest' as AuthStatus,
-  ERROR: 'error' as AuthStatus
+export const AUTH_STATUS = {
+  LOADING: 'LOADING',
+  AUTHENTICATED: 'AUTHENTICATED',
+  GUEST: 'GUEST',
+  ERROR: 'ERROR',
+  IDLE: 'IDLE'
 } as const;
+
+export type AuthStatus = typeof AUTH_STATUS[keyof typeof AUTH_STATUS];
 
 export interface UserProfile {
   id: string;
   email: string;
-  displayName: string;
+  displayName?: string;
   avatarUrl?: string;
   createdAt: string;
   updatedAt?: string;
@@ -23,3 +24,5 @@ export interface UserProfile {
   roles?: string[];
 }
 
+// Re-export RBAC types
+export { type UserRole, ROLES } from './rbac.types';

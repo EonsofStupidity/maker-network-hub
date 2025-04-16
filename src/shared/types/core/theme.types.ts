@@ -1,3 +1,38 @@
+export enum ThemeEffectType {
+  NONE = 'none',
+  CYBER = 'cyber',
+  NEON = 'neon',
+  ELECTRIC = 'electric',
+  GLITCH = 'glitch',
+  SYNTHWAVE = 'synthwave',
+  HOLOGRAM = 'hologram',
+  BLUR = 'blur',
+  MORPH = 'morph',
+  NOISE = 'noise',
+  GRADIENT = 'gradient',
+  PULSE = 'pulse',
+  PARTICLE = 'particle',
+  GRAIN = 'grain',
+  GLOW = 'glow'
+}
+
+export const THEME_EFFECTS = {
+  NONE: ThemeEffectType.NONE,
+  CYBER: ThemeEffectType.CYBER,
+  NEON: ThemeEffectType.NEON,
+  ELECTRIC: ThemeEffectType.ELECTRIC,
+  GLITCH: ThemeEffectType.GLITCH,
+  SYNTHWAVE: ThemeEffectType.SYNTHWAVE,
+  HOLOGRAM: ThemeEffectType.HOLOGRAM,
+  BLUR: ThemeEffectType.BLUR,
+  MORPH: ThemeEffectType.MORPH,
+  NOISE: ThemeEffectType.NOISE,
+  GRADIENT: ThemeEffectType.GRADIENT,
+  PULSE: ThemeEffectType.PULSE,
+  PARTICLE: ThemeEffectType.PARTICLE,
+  GRAIN: ThemeEffectType.GRAIN,
+  GLOW: ThemeEffectType.GLOW
+} as const;
 
 export interface Theme {
   id: string;
@@ -38,23 +73,3 @@ export interface ThemeComponent {
   styles?: Record<string, string>;
   tokens?: Record<string, string>;
 }
-
-export enum ThemeEffectType {
-  NONE = 'none',
-  CYBER = 'cyber',
-  NEON = 'neon',
-  ELECTRIC = 'electric',
-  GLITCH = 'glitch',
-  SYNTHWAVE = 'synthwave',
-  HOLOGRAM = 'hologram',
-  BLUR = 'blur',
-  MORPH = 'morph',
-  NOISE = 'noise',
-  GRADIENT = 'gradient',
-  PULSE = 'pulse',
-  PARTICLE = 'particle',
-  GRAIN = 'grain',
-  GLOW = 'glow',
-  SHADOW = 'shadow'
-}
-
