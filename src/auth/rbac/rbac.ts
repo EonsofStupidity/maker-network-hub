@@ -34,11 +34,11 @@ export function isBuilder(userRoles: UserRole[]): boolean {
 
 export function getRoleLabels(): Record<UserRole, string> {
   return {
-    [ROLES.SUPER_ADMIN]: 'Super Admin',
-    [ROLES.ADMIN]: 'Admin',
-    [ROLES.MOD]: 'Moderator', 
-    [ROLES.MAKER]: 'Maker',
-    [ROLES.FOLLOWER]: 'Follower',
-    [ROLES.GUEST]: 'Guest'
+    'GUEST': 'Guest',
+    'FOLLOWER': 'Follower',
+    'MAKER': 'Maker',
+    'MOD': 'Moderator', 
+    'ADMIN': 'Admin',
+    'SUPER_ADMIN': 'Super Admin'
   };
 }

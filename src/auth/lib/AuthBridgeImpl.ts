@@ -1,4 +1,5 @@
-import { UserProfile, UserRole, ROLES } from '@/shared/types/core/rbac.types';
+
+import { UserProfile, UserRole, ROLES, AUTH_STATUS, AuthStatus } from '@/shared/types/core/auth.types';
 
 /**
  * Auth bridge implementation
@@ -6,6 +7,8 @@ import { UserProfile, UserRole, ROLES } from '@/shared/types/core/rbac.types';
 class AuthBridgeClass {
   private _isAuthenticated = false;
   private _user: UserProfile | null = null;
+  private _status: AuthStatus = AUTH_STATUS.GUEST;
+  private _error: Error | null = null;
   
   // For simplicity, we'll return true (no auth checks)
   get isAuthenticated(): boolean {

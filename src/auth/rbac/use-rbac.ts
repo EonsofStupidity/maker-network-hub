@@ -20,18 +20,18 @@ export function useRbac() {
     if (userRoles && userRoles.length > 0) {
       // Only accept valid roles
       const typedRoles = userRoles.filter((role): role is UserRole => 
-        role === 'guest' || 
-        role === 'follower' || 
-        role === 'maker' || 
-        role === 'mod' || 
-        role === 'admin' || 
-        role === 'super_admin');
+        role === ROLES.GUEST || 
+        role === ROLES.FOLLOWER || 
+        role === ROLES.MAKER || 
+        role === ROLES.MOD || 
+        role === ROLES.ADMIN || 
+        role === ROLES.SUPER_ADMIN);
       
       RBACBridge.setRoles(typedRoles);
       setRoles(typedRoles);
     } else if (authUser) {
       // If no roles on state, default to guest
-      const defaultRoles: UserRole[] = ['guest'];
+      const defaultRoles: UserRole[] = [ROLES.GUEST];
       RBACBridge.setRoles(defaultRoles);
       setRoles(defaultRoles);
     }
@@ -64,12 +64,12 @@ export function useRbac() {
   
   // Map of role constants
   const ROLE_CONSTANTS = {
-    guest: ROLES.guest,
-    admin: ROLES.admin,
-    super_admin: ROLES.super_admin,
-    mod: ROLES.mod,
-    maker: ROLES.maker,
-    follower: ROLES.follower,
+    GUEST: ROLES.GUEST,
+    ADMIN: ROLES.ADMIN,
+    SUPER_ADMIN: ROLES.SUPER_ADMIN,
+    MOD: ROLES.MOD,
+    MAKER: ROLES.MAKER,
+    FOLLOWER: ROLES.FOLLOWER,
   };
   
   return {

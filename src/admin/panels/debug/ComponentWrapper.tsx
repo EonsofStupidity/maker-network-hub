@@ -1,7 +1,8 @@
+
 import React, { forwardRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { RBACBridge } from '@/rbac/bridge';
-import { ROLES } from '@/shared/types/core/auth.types';
+import { ROLES } from '@/shared/types/core/rbac.types';
 
 interface ComponentWrapperProps {
   children: React.ReactNode;
@@ -13,7 +14,7 @@ interface ComponentWrapperProps {
 
 export const ComponentWrapper = forwardRef<HTMLDivElement, ComponentWrapperProps>(
   ({ children, componentName, className, id, onClick, ...props }, ref) => {
-    const isSuperAdmin = RBACBridge.hasRole(ROLES.super_admin);
+    const isSuperAdmin = RBACBridge.hasRole(ROLES.SUPER_ADMIN);
     
     const stableId = useMemo(() => {
       return id || `${componentName}-${Math.random().toString(36).substring(2, 9)}`;

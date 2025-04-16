@@ -1,5 +1,45 @@
+
 import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
 import { AUTH_PERMISSIONS } from '../constants/permissions';
+
+/**
+ * Map roles to permissions
+ * @param userRoles Array of user roles
+ * @returns Array of permissions granted to the user
+ */
+export function mapRolesToPermissions(userRoles: UserRole[] = []): string[] {
+  const permissions: string[] = [];
+  
+  if (userRoles.includes(ROLES.SUPER_ADMIN)) {
+    // Super admin has all permissions
+    return Object.values(AUTH_PERMISSIONS);
+  }
+  
+  if (userRoles.includes(ROLES.ADMIN)) {
+    permissions.push(
+      AUTH_PERMISSIONS.ADMIN_ACCESS,
+      AUTH_PERMISSIONS.VIEW_CONTENT,
+      AUTH_PERMISSIONS.CREATE_CONTENT,
+      AUTH_PERMISSIONS.EDIT_CONTENT
+    );
+  }
+  
+  if (userRoles.includes(ROLES.MOD)) {
+    permissions.push(
+      AUTH_PERMISSIONS.VIEW_CONTENT,
+      AUTH_PERMISSIONS.EDIT_CONTENT
+    );
+  }
+  
+  if (userRoles.includes(ROLES.MAKER)) {
+    permissions.push(
+      AUTH_PERMISSIONS.VIEW_CONTENT,
+      AUTH_PERMISSIONS.CREATE_CONTENT
+    );
+  }
+  
+  return [...new Set(permissions)];
+}
 
 /**
  * Check if a user has the required permission based on their roles

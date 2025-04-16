@@ -32,7 +32,7 @@ const AdminSidebar: React.FC = () => {
   const location = useLocation();
   
   const hasAdminAccess = RBACBridge.hasAdminAccess();
-  const isSuperAdmin = RBACBridge.hasRole(ROLES.super_admin);
+  const isSuperAdmin = RBACBridge.hasRole(ROLES.SUPER_ADMIN);
   
   if (!hasAdminAccess) return null;
   
