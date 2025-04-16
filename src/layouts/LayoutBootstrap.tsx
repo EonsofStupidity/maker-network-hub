@@ -32,7 +32,7 @@ export function LayoutBootstrap({
         setIsLoading(true);
         
         // Fetch active layout for the given type and scope
-        const { data, error } = await supabase
+        const { data, error: responseError } = await supabase
           .from('layout_skeletons')
           .select('*')
           .eq('type', type)
@@ -40,8 +40,8 @@ export function LayoutBootstrap({
           .eq('is_active', true)
           .maybeSingle();
         
-        if (error) {
-          throw new Error(`Failed to load layout: ${error.message || 'Unknown error'}`);
+        if (responseError) {
+          throw new Error(`Failed to load layout: ${responseError.message || 'Unknown error'}`);
         }
         
         if (data) {

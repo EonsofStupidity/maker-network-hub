@@ -29,14 +29,14 @@ export function useLayoutSkeleton(layoutId?: string) {
       try {
         setIsLoading(true);
         
-        const { data, error } = await supabase
+        const { data, error: responseError } = await supabase
           .from('layout_skeletons')
           .select('*')
           .eq('id', layoutId)
           .maybeSingle();
         
-        if (error) {
-          throw new Error(error.message || 'Failed to load layout');
+        if (responseError) {
+          throw new Error(responseError.message || 'Failed to load layout');
         }
         
         if (data) {

@@ -5,15 +5,15 @@ import { toast } from '@/shared/ui';
 
 export async function loadLayout(type: string, scope: string): Promise<Layout | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error: responseError } = await supabase
       .from('layout_skeletons')
       .select('*')
       .eq('type', type)
       .eq('scope', scope)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
-    if (error) throw error;
+    if (responseError) throw responseError;
     
     // Validate the data with Zod
     const validatedLayout = LayoutSchema.parse(data);
@@ -28,4 +28,3 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
     return null;
   }
 }
-

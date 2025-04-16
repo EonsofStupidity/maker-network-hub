@@ -41,9 +41,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(true);
         
         // Check for existing session
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data } = await supabase.auth.getSession();
+        const session = data?.session;
         
-        if (session) {
+        if (session && session.user) {
           setIsAuthenticated(true);
           setUser(session.user);
           logBridge.info(LogCategory.AUTH, 'User session restored', {
@@ -81,11 +82,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session.user);
         
         logBridge.info(LogCategory.AUTH, 'User signed in', {
-          details: { userId: session.user.id, event }
+          details: { userId: session.user?.id ?? 'unknown', event }
         });
         
         // Set user roles from session metadata
-        if (session.user.app_metadata?.roles) {
+        if (session.user?.app_metadata?.roles) {
           RBACBridge.setRoles(session.user.app_metadata.roles);
         } else {
           // For new users that might not have roles yet
@@ -121,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       logBridge.info(LogCategory.AUTH, 'User login successful', {
-        details: { userId: data.user?.id, email }
+        details: { userId: data.user?.id ?? 'unknown', email }
       });
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Login failed';
@@ -150,7 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       logBridge.info(LogCategory.AUTH, 'User registration successful', {
-        details: { userId: data.user?.id, email }
+        details: { userId: data.user?.id ?? 'unknown', email }
       });
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Registration failed';

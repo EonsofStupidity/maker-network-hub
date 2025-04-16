@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { initializeLogging } from './logging/bootstrap';
 import { AuthBridge } from './bridges/AuthBridge';
@@ -35,7 +34,7 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
         try {
           const { data } = await supabase.auth.getSession();
           
-          if (data?.session) {
+          if (data?.session?.user) {
             const sessionUser = data.session.user;
             logBridge.info(LogCategory.AUTH, 'User session found', { 
               userId: sessionUser?.id || 'unknown',
