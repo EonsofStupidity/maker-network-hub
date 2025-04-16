@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
@@ -26,7 +25,7 @@ const mockUsers: UserData[] = [
     id: "1",
     email: "john@example.com", 
     name: "John Doe",
-    role: ROLES.admin,
+    role: ROLES.ADMIN,
     status: "active",
     createdAt: "2023-04-15T10:30:00Z",
     lastLogin: "2023-05-10T08:45:00Z"
@@ -35,7 +34,7 @@ const mockUsers: UserData[] = [
     id: "2", 
     email: "jane@example.com",
     name: "Jane Smith",
-    role: ROLES.maker,
+    role: ROLES.MAKER,
     status: "active",
     createdAt: "2023-03-22T14:20:00Z",
     lastLogin: "2023-05-09T16:30:00Z"
@@ -44,7 +43,7 @@ const mockUsers: UserData[] = [
     id: "3",
     email: "sam@example.com", 
     name: "Sam Wilson",
-    role: ROLES.super_admin,
+    role: ROLES.SUPER_ADMIN,
     status: "active",
     createdAt: "2023-02-10T09:15:00Z",
     lastLogin: "2023-05-11T11:20:00Z"
@@ -53,7 +52,7 @@ const mockUsers: UserData[] = [
     id: "4",
     email: "alex@example.com",
     name: "Alex Johnson", 
-    role: ROLES.maker,
+    role: ROLES.MAKER,
     status: "pending",
     createdAt: "2023-05-05T16:45:00Z",
     lastLogin: null
@@ -62,7 +61,7 @@ const mockUsers: UserData[] = [
     id: "5",
     email: "taylor@example.com",
     name: "Taylor Brown",
-    role: ROLES.maker,
+    role: ROLES.MAKER,
     status: "suspended",
     createdAt: "2023-01-18T13:10:00Z",
     lastLogin: "2023-04-28T10:05:00Z"
@@ -71,9 +70,9 @@ const mockUsers: UserData[] = [
 
 const getRoleBadgeStyle = (role: UserRole) => {
   switch (role) {
-    case ROLES.super_admin:
+    case ROLES.SUPER_ADMIN:
       return "bg-red-500/20 text-red-500 hover:bg-red-500/30";
-    case ROLES.admin:  
+    case ROLES.ADMIN:  
       return "bg-purple-500/20 text-purple-500 hover:bg-purple-500/30";
     default:
       return "bg-blue-500/20 text-blue-500 hover:bg-blue-500/30";
@@ -237,7 +236,7 @@ export default function UsersManagement() {
                             </td>
                             <td className="p-4">
                               <Badge variant="outline" className={getRoleBadgeStyle(user.role)}>
-                                {user.role === ROLES.super_admin && <Shield className="mr-1 h-3 w-3" />}
+                                {user.role === ROLES.SUPER_ADMIN && <Shield className="mr-1 h-3 w-3" />}
                                 {user.role.replace('_', ' ')}
                               </Badge>
                             </td>

@@ -1,11 +1,10 @@
 
 import { atom } from 'jotai';
-import { AuthStatus, AuthStatusEnum } from '@/shared/types/core/auth.types';
+import { AuthStatus, AUTH_STATUS } from '@/shared/types/core/auth.types';
 
-// We need to reference the enum values directly, not use the type as a value
-const authStatusAtom = atom<AuthStatus>(AuthStatusEnum.IDLE);
+const authStatusAtom = atom<AuthStatus>(AUTH_STATUS.IDLE);
 const isAuthenticatedAtom = atom<boolean>(false);
-const isAuthLoadingAtom = atom<boolean>(get => get(authStatusAtom) === AuthStatusEnum.LOADING);
+const isAuthLoadingAtom = atom<boolean>(get => get(authStatusAtom) === AUTH_STATUS.LOADING);
 
 export {
   authStatusAtom,

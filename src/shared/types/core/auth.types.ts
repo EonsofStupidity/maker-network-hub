@@ -1,7 +1,7 @@
 
 export const AUTH_STATUS = {
   LOADING: 'LOADING',
-  AUTHENTICATED: 'AUTHENTICATED',
+  AUTHENTICATED: 'AUTHENTICATED', 
   GUEST: 'GUEST',
   ERROR: 'ERROR',
   IDLE: 'IDLE'
@@ -21,8 +21,8 @@ export interface UserProfile {
   name?: string;
   userMetadata?: Record<string, unknown>;
   appMetadata?: Record<string, unknown>;
-  roles?: string[];
+  roles?: UserRole[];
 }
 
 // Re-export RBAC types
-export { type UserRole, ROLES } from './rbac.types';
+export { UserRole, ROLES } from './rbac.types';
