@@ -22,7 +22,7 @@ export type Permission =
 
 export type AdminSection = 'dashboard' | 'users' | 'content' | 'settings' | 'system';
 
-// Section permissions mapping
+// Section permissions mapping with proper typing
 export const SECTION_PERMISSIONS: Record<AdminSection, UserRole[]> = {
   dashboard: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
   users: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
@@ -31,17 +31,17 @@ export const SECTION_PERMISSIONS: Record<AdminSection, UserRole[]> = {
   system: [ROLES.SUPER_ADMIN]
 };
 
-// Role labels for UI display
+// Role labels with proper Record typing
 export const ROLE_LABELS: Record<UserRole, string> = {
-  [ROLES.SUPER_ADMIN]: 'Super Admin',
-  [ROLES.ADMIN]: 'Admin',
-  [ROLES.MOD]: 'Moderator',
-  [ROLES.MAKER]: 'Maker',
+  [ROLES.GUEST]: 'Guest',
   [ROLES.FOLLOWER]: 'Follower',
-  [ROLES.GUEST]: 'Guest'
+  [ROLES.MAKER]: 'Maker',
+  [ROLES.MOD]: 'Moderator',
+  [ROLES.ADMIN]: 'Admin',
+  [ROLES.SUPER_ADMIN]: 'Super Admin'
 };
 
-// Default permissions for each role
+// Default permissions with proper Record typing
 export const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
   [ROLES.GUEST]: [
     'view:public:content',

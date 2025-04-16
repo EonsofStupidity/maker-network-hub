@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { UserProfile, AUTH_STATUS } from '@/shared/types/core/auth.types';
@@ -283,7 +282,7 @@ export const useAuthStore = create<AuthState>()(
             const isValid = validateSession();
             
             set({ 
-              status: isValid ? AUTH_STATUS.AUTHENTICATED : AUTH_STATUS.UNAUTHENTICATED,
+              status: isValid ? AUTH_STATUS.AUTHENTICATED : AUTH_STATUS.GUEST,
               initialized: true 
             });
             logger.info('Auth state initialized', { details: { isValid } });
