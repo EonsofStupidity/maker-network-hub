@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { useThemeStore } from '@/stores/theme.store';
-import { ThemeEffect, ThemeEffectType } from '@/shared/types/theme.types';
+import { ThemeEffect, THEME_EFFECTS, ThemeEffectType } from '@/shared/types/core/theme.types';
 
 /**
  * Hook for managing theme effects
@@ -56,6 +56,6 @@ export const useThemeEffects = () => {
     removeEffect,
     toggleEffect,
     clearEffects,
-    ThemeEffectType: ThemeEffectType // Use the imported enum rather than the type
+    THEME_EFFECTS
   };
 };

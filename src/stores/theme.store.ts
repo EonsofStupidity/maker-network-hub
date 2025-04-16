@@ -1,5 +1,6 @@
+
 import { create } from 'zustand';
-import type { ThemeState, Theme, ComponentTokens, DesignTokens } from '@/shared/types/core/theme.types';
+import type { ThemeState, Theme, ComponentTokens, DesignTokens, ThemeEffect } from '@/shared/types/core/theme.types';
 
 const defaultTheme: Theme = {
   id: 'default',
@@ -96,6 +97,6 @@ export const useThemeStore = create<ThemeState>((set) => ({
   })),
   setDesignTokens: (tokens: DesignTokens) => set({ designTokens: tokens }),
   setComponentTokens: (tokens: ComponentTokens) => set({ componentTokens: tokens }),
-  setEffects: (effects) => set({ effects }),
-  setVariables: (vars) => set({ variables: vars })
+  setEffects: (effects: ThemeEffect[]) => set({ effects }),
+  setVariables: (vars: Record<string, string>) => set({ variables: vars })
 }));

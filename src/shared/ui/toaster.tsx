@@ -8,7 +8,7 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/shared/ui/toast";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/shared/hooks/use-toast";
 
 export function Toaster() {
   const { toasts } = useToast();
@@ -23,7 +23,7 @@ export function Toaster() {
               <ToastDescription>{description}</ToastDescription>
             )}
           </div>
-          {action}
+          {action && <div className="mt-2">{action}</div>}
           <ToastClose />
         </Toast>
       ))}

@@ -1,5 +1,5 @@
 
-import { ThemeEffectType } from '@/shared/types/theme.types';
+import { ThemeEffectType } from '@/shared/types/core/theme.types';
 
 export interface BaseThemeEffect {
   type: ThemeEffectType;
@@ -10,39 +10,39 @@ export interface BaseThemeEffect {
 }
 
 export interface GlitchEffect extends BaseThemeEffect {
-  type: ThemeEffectType.GLITCH;
+  type: ThemeEffectType;
   frequency?: number;
   amplitude?: number;
 }
 
 export interface GradientEffect extends BaseThemeEffect {
-  type: ThemeEffectType.GRADIENT;
+  type: ThemeEffectType;
   colors?: string[];
   speed?: number;
 }
 
 export interface CyberEffect extends BaseThemeEffect {
-  type: ThemeEffectType.CYBER;
+  type: ThemeEffectType;
   glowColor?: string;
   scanLines?: boolean;
 }
 
 export interface PulseEffect extends BaseThemeEffect {
-  type: ThemeEffectType.PULSE;
+  type: ThemeEffectType;
   minOpacity?: number;
   maxOpacity?: number;
   duration?: number;
 }
 
 export interface ParticleEffect extends BaseThemeEffect {
-  type: ThemeEffectType.PARTICLE;
+  type: ThemeEffectType;
   count?: number;
   size?: number;
   speed?: number;
 }
 
 export interface MorphEffect extends BaseThemeEffect {
-  type: ThemeEffectType.MORPH;
+  type: ThemeEffectType;
   speed?: number;
   amplitude?: number;
   shape?: 'wave' | 'blob' | 'zigzag';

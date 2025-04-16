@@ -1,4 +1,6 @@
 
+import { UserRole } from './auth.types';
+
 export const ROLES = {
   super_admin: 'super_admin',
   admin: 'admin',
@@ -8,12 +10,10 @@ export const ROLES = {
   guest: 'guest'
 } as const;
 
-export type UserRole = typeof ROLES[keyof typeof ROLES];
-
 export type PermissionKey = 'canUseGus' | 'canEditParts' | 'canAccessVisualEditor';
 
 export interface RolePermissions {
-  [key in UserRole]: PermissionKey[];
+  [key: string]: PermissionKey[];
 }
 
 export interface RBACState {
@@ -23,4 +23,3 @@ export interface RBACState {
   error: string | null;
   isInitialized: boolean;
 }
-

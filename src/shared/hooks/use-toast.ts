@@ -1,26 +1,28 @@
+
 import * as React from "react";
 
 export type ToastVariant = "default" | "destructive" | "success" | "warning" | "info";
-
-export interface ToastProps {
-  id: string;
-  title?: string;
-  description?: React.ReactNode;
-  action?: ToastActionElement;
-  variant?: ToastVariant;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}
 
 export interface ToastActionElement {
   altText: string;
   onClick: () => void;
 }
 
+export interface ToastProps {
+  id: string;
+  title?: string;
+  description?: React.ReactNode;
+  action?: React.ReactNode;
+  variant?: ToastVariant;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  duration?: number;
+}
+
 type ToasterToast = ToastProps;
 
 const TOAST_LIMIT = 10;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_REMOVE_DELAY = 5000;
 
 let count = 0;
 function genId() {
@@ -36,10 +38,22 @@ type ActionType = {
 };
 
 type Action =
-  | { type: ActionType["ADD_TOAST"]; toast: ToasterToast }
-  | { type: ActionType["UPDATE_TOAST"]; toast: Partial<ToasterToast> }
-  | { type: ActionType["DISMISS_TOAST"]; toastId?: string }
-  | { type: ActionType["REMOVE_TOAST"]; toastId?: string };
+  | {
+      type: ActionType["ADD_TOAST"];
+      toast: ToasterToast;
+    }
+  | {
+      type: ActionType["UPDATE_TOAST"];
+      toast: Partial<ToasterToast>;
+    }
+  | {
+      type: ActionType["DISMISS_TOAST"];
+      toastId?: string;
+    }
+  | {
+      type: ActionType["REMOVE_TOAST"];
+      toastId?: string;
+    };
 
 interface State {
   toasts: ToasterToast[];
@@ -144,8 +158,13 @@ export function useToast() {
     ...state,
     toast: (props: Omit<ToasterToast, "id">) => {
       const id = genId();
+
       const update = (props: ToasterToast) =>
-        dispatch({ type: "UPDATE_TOAST", toast: { ...props, id } });
+        dispatch({
+          type: "UPDATE_TOAST",
+          toast: { ...props, id },
+        });
+        
       const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
 
       dispatch({
@@ -154,19 +173,50 @@ export function useToast() {
           ...props,
           id,
           open: true,
+          duration: props.duration || 5000,
           onOpenChange: (open) => {
             if (!open) dismiss();
           },
         },
       });
 
-      return { id, dismiss, update };
+      return {
+        id,
+        dismiss,
+        update,
+      };
     },
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   };
 }
 
+// Export the toast function for convenience
 export const toast = (props: Omit<ToastProps, "id">) => {
-  const { toast } = useToast();
-  return toast(props);
+  const id = genId();
+  const update = (props: ToasterToast) =>
+    dispatch({
+      type: "UPDATE_TOAST",
+      toast: { ...props, id },
+    });
+    
+  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
+
+  dispatch({
+    type: "ADD_TOAST",
+    toast: {
+      ...props,
+      id,
+      open: true,
+      duration: props.duration || 5000,
+      onOpenChange: (open) => {
+        if (!open) dismiss();
+      },
+    },
+  });
+
+  return {
+    id,
+    dismiss,
+    update,
+  };
 };

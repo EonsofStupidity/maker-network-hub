@@ -11,11 +11,15 @@ export const THEME_EFFECTS = {
 
 export type ThemeEffectType = typeof THEME_EFFECTS[keyof typeof THEME_EFFECTS];
 
-export interface ThemeEffect {
+export interface BaseThemeEffect {
   type: ThemeEffectType;
   intensity: number;
   color?: string;
   enabled?: boolean;
+}
+
+export interface ThemeEffect extends BaseThemeEffect {
+  [key: string]: any;
 }
 
 export interface ThemeComponent {
@@ -66,13 +70,17 @@ export interface ThemeState {
   textColor: string;
   designTokens: DesignTokens;
   componentTokens: ComponentTokens;
-  isLoading?: boolean;
-  error?: string | null;
-  theme?: Theme | null;
-  isLoaded?: boolean;
-  variables?: Record<string, string>;
-  componentStyles?: Record<string, Record<string, string>>;
-  animations?: Record<string, any>;
+  isLoading: boolean;
+  error: string | null;
+  theme: Theme | null;
+  isLoaded: boolean;
+  variables: Record<string, string>;
+  componentStyles: Record<string, Record<string, string>>;
+  animations: Record<string, any>;
   effects: ThemeEffect[];
+  setActiveTheme: (themeId: string) => void;
+  setDesignTokens: (tokens: DesignTokens) => void;
+  setComponentTokens: (tokens: ComponentTokens) => void;
+  setEffects: (effects: ThemeEffect[]) => void;
+  setVariables: (variables: Record<string, string>) => void;
 }
-

@@ -1,4 +1,23 @@
 
+export const ROLES = {
+  super_admin: 'super_admin',
+  admin: 'admin',
+  moderator: 'moderator',
+  builder: 'builder',
+  user: 'user',
+  guest: 'guest'
+} as const;
+
+export type UserRole = typeof ROLES[keyof typeof ROLES];
+
+export type PermissionKey = 'canUseGus' | 'canEditParts' | 'canAccessVisualEditor';
+
+export interface RolePermissions {
+  [key in UserRole]: PermissionKey[];
+}
+
+export type Permission = string;
+
 export const AUTH_STATUS = {
   LOADING: 'LOADING',
   AUTHENTICATED: 'AUTHENTICATED',
@@ -7,7 +26,7 @@ export const AUTH_STATUS = {
   ERROR: 'ERROR'
 } as const;
 
-export type AuthStatus = keyof typeof AUTH_STATUS;
+export type AuthStatus = typeof AUTH_STATUS[keyof typeof AUTH_STATUS];
 
 export interface UserProfile {
   id: string;
@@ -19,6 +38,7 @@ export interface UserProfile {
   last_sign_in_at?: string;
   user_metadata?: Record<string, unknown>;
   app_metadata?: Record<string, unknown>;
+  roles?: UserRole[];
 }
 
 export interface AuthSession {
@@ -29,3 +49,10 @@ export interface AuthSession {
   profile?: UserProfile;
 }
 
+export interface RBACState {
+  roles: UserRole[];
+  permissions: string[];
+  isLoading: boolean;
+  error: string | null;
+  isInitialized: boolean;
+}

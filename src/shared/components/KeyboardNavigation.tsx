@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useToast } from '../hooks/use-toast';
 
@@ -59,7 +60,8 @@ export const KeyboardNavigation: React.FC<KeyboardNavigationProps> = ({ options 
         toast({
           title: `Scrolling ${direction}`,
           description: "Use W/S or arrow keys to scroll",
-          variant: "info"
+          variant: "info",
+          duration: 2000 // Added duration to fix type issue
         });
       }
     };
