@@ -45,17 +45,15 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
               const appRoles = session.user.app_metadata.roles;
               if (Array.isArray(appRoles) && appRoles.length > 0) {
                 // Properly validate and cast roles to UserRole type
-                roles = appRoles
-                  .filter(role => 
-                    typeof role === 'string' && 
-                    Object.values(ROLES).includes(role as UserRole)
-                  )
-                  .map(role => role as UserRole);
-                
-                // Always include at least GUEST role
-                if (roles.length === 0) {
-                  roles = [ROLES.GUEST];
+                const validRoles: UserRole[] = [];
+                for (const role of appRoles) {
+                  if (typeof role === 'string' && Object.values(ROLES).includes(role as UserRole)) {
+                    validRoles.push(role as UserRole);
+                  }
                 }
+                
+                // Use the validated roles array
+                roles = validRoles.length > 0 ? validRoles : [ROLES.GUEST];
               }
             }
             
@@ -94,17 +92,15 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
               const appRoles = sessionUser.app_metadata.roles;
               if (Array.isArray(appRoles) && appRoles.length > 0) {
                 // Properly validate and cast roles to UserRole type
-                roles = appRoles
-                  .filter(role => 
-                    typeof role === 'string' && 
-                    Object.values(ROLES).includes(role as UserRole)
-                  )
-                  .map(role => role as UserRole);
-                
-                // Always include at least GUEST role
-                if (roles.length === 0) {
-                  roles = [ROLES.GUEST];
+                const validRoles: UserRole[] = [];
+                for (const role of appRoles) {
+                  if (typeof role === 'string' && Object.values(ROLES).includes(role as UserRole)) {
+                    validRoles.push(role as UserRole);
+                  }
                 }
+                
+                // Use the validated roles array
+                roles = validRoles.length > 0 ? validRoles : [ROLES.GUEST];
               }
             }
             

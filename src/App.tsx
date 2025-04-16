@@ -8,11 +8,19 @@ import { TooltipProvider } from "./shared/ui/tooltip";
 import { Toaster as Sonner } from "./shared/ui/sonner";
 import { AuthProvider } from "./auth/context/AuthContext";
 import Routes from "./router/Routes";
+import { GlobalErrorBoundary } from "./shared/components/GlobalErrorBoundary";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors
+        if (error instanceof Error && 'status' in error && (error as any).status >= 400 && (error as any).status < 500) {
+          return false;
+        }
+        // Retry up to 2 times on other errors
+        return failureCount < 2;
+      },
       staleTime: 30000,
     },
   },
@@ -20,19 +28,21 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <AppBootstrap>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes />
-            </BrowserRouter>
-          </AppBootstrap>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <GlobalErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthProvider>
+            <AppBootstrap>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes />
+              </BrowserRouter>
+            </AppBootstrap>
+          </AuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </GlobalErrorBoundary>
   );
 }
 
