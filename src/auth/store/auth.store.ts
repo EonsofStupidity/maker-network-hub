@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { UserProfile, AuthStatusEnum, AuthStatus } from '@/shared/types/core/auth.types';
 import { mapUserToProfile } from '@/auth/utils/userMapper';
 import { supabase } from '@/integrations/supabase/client';
+import { AUTH_STATUS } from '@/shared/types/core/auth.types';
 
 export interface AuthState {
   user: UserProfile | null;

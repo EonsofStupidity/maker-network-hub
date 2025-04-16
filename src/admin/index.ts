@@ -11,7 +11,7 @@ export * from './panels/auth/RequirePermission';
 
 // Export admin hooks
 export * from './hooks/useAdminAuth';
-export * from './hooks/useAdminRoles';
+export * from './panels/auth/useAdminRoles'; // Fixed import path
 export * from './hooks/useAdminAccess';
 export * from './hooks/useAdminNavigation';
 export * from './hooks/useAdminPermissions';

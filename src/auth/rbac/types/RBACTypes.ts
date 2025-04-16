@@ -10,21 +10,21 @@ export type AdminSection = 'dashboard' | 'users' | 'content' | 'settings' | 'sys
 
 // Role labels for UI display
 export const ROLE_LABELS: Record<UserRole, string> = {
-  [ROLES.super_admin]: 'Super Admin',
-  [ROLES.admin]: 'Admin',
-  [ROLES.mod]: 'Moderator',
-  [ROLES.maker]: 'Maker',
-  [ROLES.follower]: 'Follower',
-  [ROLES.guest]: 'Guest',
+  [ROLES.SUPER_ADMIN]: 'Super Admin',
+  [ROLES.ADMIN]: 'Admin',
+  [ROLES.MOD]: 'Moderator',
+  [ROLES.MAKER]: 'Maker',
+  [ROLES.FOLLOWER]: 'Follower',
+  [ROLES.GUEST]: 'Guest',
 };
 
 // Section permissions
 export const SECTION_PERMISSIONS: Record<AdminSection, UserRole[]> = {
-  dashboard: [ROLES.admin, ROLES.super_admin],
-  users: [ROLES.admin, ROLES.super_admin],
-  content: [ROLES.admin, ROLES.super_admin, ROLES.mod],
-  settings: [ROLES.super_admin],
-  system: [ROLES.super_admin]
+  dashboard: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
+  users: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
+  content: [ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.MOD],
+  settings: [ROLES.SUPER_ADMIN],
+  system: [ROLES.SUPER_ADMIN]
 };
 
 // RBAC Hook return type

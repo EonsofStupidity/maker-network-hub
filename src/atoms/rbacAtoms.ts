@@ -1,7 +1,7 @@
 
 import { atom } from 'jotai';
 import { UserRole } from '@/shared/types/core/rbac.types';
-import { RBACBridge } from '@/bridges/RBACBridge';
+import { RBACBridge } from '@/shared/bridges/RBACBridge';
 
 // Ensure we're using the functions correctly
 const rolesAtom = atom<UserRole[]>([]);
@@ -19,7 +19,7 @@ const isSuperAdminAtom = atom(
 );
 
 const isModeratorAtom = atom(
-  (get) => () => RBACBridge.isModerator && RBACBridge.isModerator()
+  (get) => () => RBACBridge.isModerator()
 );
 
 const isBuilderAtom = atom(

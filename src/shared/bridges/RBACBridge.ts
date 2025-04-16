@@ -1,6 +1,6 @@
 
-import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
-import type { Permission } from '@/shared/types/core/rbac.types';
+import { UserRole, ROLES, Permission } from '@/shared/types/core/rbac.types';
+import type { AdminSection, SECTION_PERMISSIONS } from '@/shared/types/core/rbac.types';
 
 export interface IRBACBridge {
   hasRole: (role: UserRole | UserRole[]) => boolean;
@@ -20,12 +20,12 @@ class RBACBridgeClass implements IRBACBridge {
 
   setRoles(roles: UserRole[]): void {
     this.roles = roles.filter(role => 
-      role === ROLES.guest || 
-      role === ROLES.follower || 
-      role === ROLES.maker || 
-      role === ROLES.mod || 
-      role === ROLES.admin || 
-      role === ROLES.super_admin
+      role === ROLES.GUEST || 
+      role === ROLES.FOLLOWER || 
+      role === ROLES.MAKER || 
+      role === ROLES.MOD || 
+      role === ROLES.ADMIN || 
+      role === ROLES.SUPER_ADMIN
     );
   }
 
@@ -44,19 +44,19 @@ class RBACBridgeClass implements IRBACBridge {
   }
 
   hasAdminAccess(): boolean {
-    return this.hasRole([ROLES.admin, ROLES.super_admin]);
+    return this.hasRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]);
   }
 
   isSuperAdmin(): boolean {
-    return this.hasRole(ROLES.super_admin);
+    return this.hasRole(ROLES.SUPER_ADMIN);
   }
 
   isModerator(): boolean {
-    return this.hasRole([ROLES.mod, ROLES.admin, ROLES.super_admin]);
+    return this.hasRole([ROLES.MOD, ROLES.ADMIN, ROLES.SUPER_ADMIN]);
   }
 
   isBuilder(): boolean {
-    return this.hasRole([ROLES.maker, ROLES.admin, ROLES.super_admin]);
+    return this.hasRole([ROLES.MAKER, ROLES.ADMIN, ROLES.SUPER_ADMIN]);
   }
 
   hasPermission(permission: Permission): boolean {

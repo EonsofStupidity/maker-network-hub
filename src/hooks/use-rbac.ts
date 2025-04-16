@@ -1,12 +1,13 @@
 
 import { useCallback } from 'react';
 import { RBACBridge } from '@/rbac/bridge';
-import { UserRole } from '@/shared/types/core/auth.types';
+import { UserRole } from '@/shared/types/core/rbac.types';
+import { Permission } from '@/shared/types/core/rbac.types';
 
 export interface IRBACHook {
   roles: UserRole[];
   hasRole: (role: UserRole | UserRole[]) => boolean;
-  can: (permission: string) => boolean;
+  can: (permission: Permission) => boolean;
   hasAdminAccess: () => boolean;
   isSuperAdmin: () => boolean;
   isModerator: () => boolean;
@@ -26,7 +27,7 @@ export const useRbac = (): IRBACHook => {
   }, []);
   
   // Check if user has a specific permission
-  const can = useCallback((permission: string): boolean => {
+  const can = useCallback((permission: Permission): boolean => {
     return RBACBridge.hasPermission(permission);
   }, []);
   

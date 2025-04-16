@@ -1,7 +1,8 @@
+
 import { useState, memo, useCallback } from "react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useLogger } from "@/logging/hooks/use-logger";
-import { LogCategory, LogLevel } from "@/shared/types/shared.types";
+import { LogCategory, LogLevel } from "@/shared/types/core/logging.types";
 import { AuthBridge, authBridge } from "@/bridges/AuthBridge";
 import { RBACBridge } from "@/rbac/bridge";
 import { Button } from "@/shared/ui/button";
