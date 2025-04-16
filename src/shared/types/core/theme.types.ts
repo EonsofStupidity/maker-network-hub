@@ -87,6 +87,7 @@ export interface ThemeState {
   variables?: Record<string, string>;
   componentStyles?: Record<string, Record<string, string>>;
   animations?: Record<string, any>;
+  effects: ThemeEffect[]; // Ensure effects is required and included in the interface
 }
 
 export interface ThemeEffect {
