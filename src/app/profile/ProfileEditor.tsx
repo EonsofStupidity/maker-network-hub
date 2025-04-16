@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { LogCategory, LogLevel } from '@/shared/types';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, Button, Input, Label, Textarea } from '@/shared/ui';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, Button, Input, Label } from '@/shared/ui';
 import { logger } from '@/logging/logger.service';
 
 interface ProfileEditorProps {
@@ -17,39 +16,24 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({
   const { user, updateProfile } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Initialize form state with user data
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    displayName: user?.displayName || '',
     email: user?.email || '',
-    bio: user?.bio || '',
-    avatar_url: user?.avatar_url || ''
+    avatarUrl: user?.avatarUrl || ''
   });
   
-  // Handle input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-  
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!user) return;
     
     try {
       setIsSubmitting(true);
-      
-      // Update user profile
       await updateProfile({
-        name: formData.name,
-        avatar_url: formData.avatar_url,
-        bio: formData.bio
+        displayName: formData.displayName,
+        avatarUrl: formData.avatarUrl
       });
       
-      logger.log(LogLevel.INFO, LogCategory.UI, 'Profile updated', {
-        userId: user.id
-      });
+      logger.log(LogLevel.INFO, LogCategory.UI, 'Profile updated');
       
       if (onSave) {
         onSave();
@@ -85,12 +69,12 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="displayName">Name</Label>
             <Input 
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
+              id="displayName"
+              name="displayName"
+              value={formData.displayName}
+              onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
               placeholder="Your name"
             />
           </div>
@@ -101,7 +85,6 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({
               id="email"
               name="email"
               value={formData.email}
-              onChange={handleChange}
               placeholder="Your email"
               disabled
             />
@@ -109,25 +92,13 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="avatar_url">Avatar URL</Label>
+            <Label htmlFor="avatarUrl">Avatar URL</Label>
             <Input 
-              id="avatar_url"
-              name="avatar_url"
-              value={formData.avatar_url}
-              onChange={handleChange}
+              id="avatarUrl"
+              name="avatarUrl"
+              value={formData.avatarUrl}
+              onChange={(e) => setFormData({ ...formData, avatarUrl: e.target.value })}
               placeholder="https://example.com/avatar.jpg"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea 
-              id="bio"
-              name="bio"
-              value={formData.bio}
-              onChange={handleChange}
-              placeholder="Tell us about yourself"
-              rows={4}
             />
           </div>
         </CardContent>

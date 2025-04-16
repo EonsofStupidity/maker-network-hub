@@ -1,7 +1,9 @@
+
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { useRBACStore } from '@/rbac/rbac.store';
-import { ROLES } from '@/shared/types/shared.types';
+import { AuthStatusEnum } from '@/shared/types/core/auth.types';
+import { ROLES } from '@/shared/types/core/rbac.types';
 
 interface AppInitializerProps {
   children: React.ReactNode;
@@ -13,15 +15,15 @@ export function AppInitializer({ children }: AppInitializerProps) {
   const { setUserRoles } = useRBACStore();
   
   useEffect(() => {
-    if (status !== 'LOADING') {
+    if (status !== AuthStatusEnum.LOADING) {
       if (isAuthenticated) {
-        setUserRoles([ROLES.user]);
+        setUserRoles([ROLES.guest]);
       }
       
       setIsInitialized(true);
     }
   }, [status, isAuthenticated, setUserRoles]);
-  
+
   if (!isInitialized) {
     return (
       <div className="flex items-center justify-center h-screen">

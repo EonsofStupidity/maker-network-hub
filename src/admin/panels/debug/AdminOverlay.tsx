@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState } from 'react';
 import { RBACBridge } from '@/bridges/RBACBridge';
 import { useAuthStore } from '@/auth/store/auth.store';
-import { ROLES } from '@/shared/types/core/auth.types';
+import { ROLES } from '@/shared/types/core/rbac.types';
 
 interface AdminOverlayProps {
   enabled?: boolean;
