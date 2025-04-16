@@ -15,7 +15,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   [ROLES.MOD]: 'Moderator',
   [ROLES.MAKER]: 'Maker',
   [ROLES.FOLLOWER]: 'Follower',
-  [ROLES.GUEST]: 'Guest',
+  [ROLES.GUEST]: 'Guest'
 };
 
 // Section permissions

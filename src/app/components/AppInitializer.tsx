@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { RBACBridge } from '@/rbac/bridge';
 import { useLogger } from '@/hooks/use-logger';
-import { LogCategory } from '@/shared/types/shared.types';
+import { LogCategory } from '@/shared/types/core/logging.types';
 import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
 import { AUTH_STATUS } from '@/shared/types/core/auth.types';
 
@@ -15,6 +15,15 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const { initialize, isAuthenticated, status, user } = useAuthStore();
   const logger = useLogger('AppInitializer', LogCategory.APP);
+  
+  // Initialize auth
+  useEffect(() => {
+    if (!isInitialized) {
+      initialize().finally(() => {
+        setIsInitialized(true);
+      });
+    }
+  }, [initialize, isInitialized]);
   
   // Update RBAC when auth state changes
   useEffect(() => {
@@ -44,7 +53,7 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
     }
   }, [isAuthenticated, user, logger]);
 
-  if (!isInitialized) {
+  if (!isInitialized || status === AUTH_STATUS.LOADING) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>

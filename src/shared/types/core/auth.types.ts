@@ -30,4 +30,5 @@ export interface UserProfile {
 }
 
 // Re-export RBAC types for auth components
-export { UserRole, ROLES };
+export type { UserRole };
+export { ROLES };

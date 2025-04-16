@@ -94,6 +94,7 @@ export function UserMenu() {
   );
 }
 
+// Define the props for UserMenuSheet
 interface UserMenuSheetProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;

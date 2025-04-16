@@ -1,12 +1,13 @@
 
-import { UserRole as CoreUserRole, ROLES as CoreROLES } from './core/rbac.types';
-import { AuthStatus, AuthStatusEnum } from './core/auth.types';
+import type { UserRole } from './core/rbac.types';
+import { ROLES } from './core/rbac.types';
+import { AUTH_STATUS, AuthStatus } from './core/auth.types';
 
 // Legacy AUTH_STATUS constant for compatibility
-export const AUTH_STATUS = AuthStatusEnum;
+export { AUTH_STATUS };
 
 // Legacy ROLES mapping for compatibility
-export const ROLES = CoreROLES;
+export { ROLES };
 
 // Re-export types for compatibility
-export type UserRole = CoreUserRole;
+export type { UserRole, AuthStatus };

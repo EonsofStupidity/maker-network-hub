@@ -42,7 +42,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     user, 
     profile: user,
     isAuthenticated: !!user,
-    status: user ? AUTH_STATUS.AUTHENTICATED : AUTH_STATUS.UNAUTHENTICATED
+    status: user ? AUTH_STATUS.AUTHENTICATED : AUTH_STATUS.GUEST
   }),
   
   setAuthStatus: (status) => set({ status }),
@@ -141,7 +141,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: null, 
         profile: null,
         isAuthenticated: false,
-        status: AUTH_STATUS.UNAUTHENTICATED,
+        status: AUTH_STATUS.GUEST,
         roles: []
       });
     } catch (error) {
@@ -181,7 +181,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user: null,
           profile: null,
           isAuthenticated: false,
-          status: AUTH_STATUS.UNAUTHENTICATED,
+          status: AUTH_STATUS.GUEST,
           initialized: true
         });
       }
@@ -204,8 +204,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       const { error } = await supabase.auth.updateUser({
         data: {
-          ...user.user_metadata,
-          ...profileData.user_metadata
+          ...user.userMetadata,
+          ...profileData.userMetadata
         }
       });
       
