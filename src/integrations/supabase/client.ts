@@ -4,7 +4,7 @@
  */
 
 // Define base types for responses
-interface SupabaseResponse<T = any> {
+export interface SupabaseResponse<T = any> {
   data: T | null;
   error: { message: string } | null;
 }
@@ -12,36 +12,43 @@ interface SupabaseResponse<T = any> {
 // Create a reusable Supabase client
 export const supabase = {
   from: (table: string) => ({
-    select: (columns: string = '*') => ({
-      eq: (column: string, value: any) => ({
-        single: () => Promise.resolve<SupabaseResponse>({ data: null, error: null }),
-        maybeSingle: () => Promise.resolve<SupabaseResponse>({ data: null, error: null }),
-        limit: (limit: number) => ({
-          maybeSingle: () => Promise.resolve<SupabaseResponse>({ data: null, error: null }),
-          single: () => Promise.resolve<SupabaseResponse>({ data: null, error: null }),
+    select: (columns: string = '*') => {
+      const response: SupabaseResponse = { data: null, error: null };
+      return {
+        ...response,
+        eq: (column: string, value: any) => ({
+          ...response,
+          single: () => Promise.resolve<SupabaseResponse>(response),
+          maybeSingle: () => Promise.resolve<SupabaseResponse>(response),
+          limit: (limit: number) => ({
+            ...response,
+            maybeSingle: () => Promise.resolve<SupabaseResponse>(response),
+            single: () => Promise.resolve<SupabaseResponse>(response),
+            order: (column: string, { ascending }: { ascending: boolean }) => 
+              Promise.resolve<SupabaseResponse>({ data: [], error: null }),
+          }),
           order: (column: string, { ascending }: { ascending: boolean }) => 
             Promise.resolve<SupabaseResponse>({ data: [], error: null }),
         }),
-        order: (column: string, { ascending }: { ascending: boolean }) => 
-          Promise.resolve<SupabaseResponse>({ data: [], error: null }),
-      }),
-      order: (column: string, { ascending }: { ascending: boolean }) => ({
+        order: (column: string, { ascending }: { ascending: boolean }) => ({
+          ...response,
+          limit: (limit: number) => 
+            Promise.resolve<SupabaseResponse>({ data: [], error: null }),
+        }),
         limit: (limit: number) => 
           Promise.resolve<SupabaseResponse>({ data: [], error: null }),
-        data: [],
-        error: null,
-      }),
-      limit: (limit: number) => 
-        Promise.resolve<SupabaseResponse>({ data: [], error: null }),
-    }),
+      };
+    },
     insert: (data: any) => ({
       select: (columns: string) => ({
+        ...{ data: {}, error: null },
         single: () => Promise.resolve<SupabaseResponse>({ data: {}, error: null }),
       }),
     }),
     update: (data: any) => ({
       eq: (column: string, value: any) => ({
         select: (columns: string) => ({
+          ...{ data: {}, error: null },
           single: () => Promise.resolve<SupabaseResponse>({ data: {}, error: null }),
         }),
       }),
@@ -52,6 +59,7 @@ export const supabase = {
     }),
     upsert: (data: any) => ({
       select: (columns: string) => ({
+        ...{ data: {}, error: null },
         single: () => Promise.resolve<SupabaseResponse>({ data: {}, error: null }),
       }),
     }),

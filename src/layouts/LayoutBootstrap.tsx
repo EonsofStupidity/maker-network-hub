@@ -37,13 +37,13 @@ export function LayoutBootstrap({
           .select('*');
         
         // Since we can't chain eq with the mock, we'll filter manually
-        const data = response?.data?.find(item => 
+        const data = response.data?.find(item => 
           item.type === type && 
           item.scope === scope && 
           item.is_active === true
         );
         
-        const responseError = response?.error;
+        const responseError = response.error;
         
         if (responseError) {
           throw new Error(`Failed to load layout: ${responseError.message || 'Unknown error'}`);

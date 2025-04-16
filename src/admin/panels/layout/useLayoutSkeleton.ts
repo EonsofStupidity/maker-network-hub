@@ -34,8 +34,8 @@ export function useLayoutSkeleton(layoutId?: string) {
           .select('*');
         
         // Since we can't chain eq with the mock, we'll filter manually
-        const data = response?.data?.find(item => item.id === layoutId);
-        const responseError = response?.error;
+        const data = response.data?.find(item => item.id === layoutId);
+        const responseError = response.error;
         
         if (responseError) {
           throw new Error(responseError.message || 'Failed to load layout');

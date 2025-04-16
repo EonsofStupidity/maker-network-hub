@@ -10,14 +10,14 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
       .select('*');
 
     // Then apply filters manually since the mock doesn't support chaining
-    const filteredData = response?.data?.filter(item => 
+    const filteredData = response.data?.filter(item => 
       item.type === type && 
       item.scope === scope && 
       item.is_active === true
     );
 
     const data = filteredData?.length > 0 ? filteredData[0] : null;
-    const responseError = response?.error;
+    const responseError = response.error;
 
     if (responseError) throw new Error(responseError.message);
     

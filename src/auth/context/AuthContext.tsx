@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { logBridge } from '@/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
 import { RBACBridge } from '@/shared/bridges/RBACBridge';
-import { ROLES } from '@/shared/types/core/rbac.types';
+import { ROLES, UserRole } from '@/shared/types/core/rbac.types';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -53,8 +53,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // Set user roles from session metadata
           if (session.user.app_metadata?.roles) {
-            const appRoles = session.user.app_metadata.roles;
-            RBACBridge.setRoles(appRoles);
+            const appRoles = session.user.app_metadata.roles as string[];
+            // Convert string array to UserRole array with validation
+            const validRoles = appRoles
+              .filter(role => 
+                Object.values(ROLES).includes(role as UserRole)
+              ) as UserRole[];
+            
+            RBACBridge.setRoles(validRoles.length ? validRoles : [ROLES.GUEST]);
           } else {
             // Default to GUEST if no roles found
             RBACBridge.setRoles([ROLES.GUEST]);
@@ -87,7 +93,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Set user roles from session metadata
         if (session.user?.app_metadata?.roles) {
-          RBACBridge.setRoles(session.user.app_metadata.roles);
+          const appRoles = session.user.app_metadata.roles as string[];
+          // Convert string array to UserRole array with validation
+          const validRoles = appRoles
+            .filter(role => 
+              Object.values(ROLES).includes(role as UserRole)
+            ) as UserRole[];
+          
+          RBACBridge.setRoles(validRoles.length ? validRoles : [ROLES.GUEST]);
         } else {
           // For new users that might not have roles yet
           RBACBridge.setRoles([ROLES.GUEST, ROLES.FOLLOWER]);

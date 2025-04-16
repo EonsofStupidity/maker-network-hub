@@ -10,8 +10,8 @@ export async function loadHomeLayout(): Promise<HomeLayout | null> {
       .select('*');
       
     // Since we can't use maybeSingle with the mock, we'll handle it manually
-    const data = response?.data?.[0];
-    const responseError = response?.error;
+    const data = response.data?.[0];
+    const responseError = response.error;
 
     if (responseError) {
       throw new Error(responseError.message || 'Failed to load home layout');
@@ -35,7 +35,7 @@ export async function saveHomeLayout(layout: Partial<HomeLayout>) {
       .insert(layout)
       .select();
 
-    const responseError = response?.error;
+    const responseError = response.error;
     if (responseError) {
       throw new Error(responseError.message);
     }

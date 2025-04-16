@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { 
   LogLevel, 
   LogCategory, 
-  LogCategoryType, 
   LogEntry, 
   LogFilter, 
   LogEvent, 
@@ -69,7 +68,7 @@ export class LogBridge {
   /**
    * Log a message
    */
-  public log(level: LogLevel, category: LogCategoryType, message: string, details?: LogDetails): void {
+  public log(level: LogLevel, category: LogCategory, message: string, details?: LogDetails): void {
     const entry: LogEntry = {
       id: uuidv4(),
       level,
@@ -90,28 +89,28 @@ export class LogBridge {
   /**
    * Convenience method for debug logs
    */
-  public debug(category: LogCategoryType, message: string, details?: LogDetails): void {
+  public debug(category: LogCategory, message: string, details?: LogDetails): void {
     this.log(LogLevel.DEBUG, category, message, details);
   }
   
   /**
    * Convenience method for info logs
    */
-  public info(category: LogCategoryType, message: string, details?: LogDetails): void {
+  public info(category: LogCategory, message: string, details?: LogDetails): void {
     this.log(LogLevel.INFO, category, message, details);
   }
   
   /**
    * Convenience method for warning logs
    */
-  public warn(category: LogCategoryType, message: string, details?: LogDetails): void {
+  public warn(category: LogCategory, message: string, details?: LogDetails): void {
     this.log(LogLevel.WARN, category, message, details);
   }
   
   /**
    * Convenience method for error logs
    */
-  public error(category: LogCategoryType, message: string, details?: LogDetails): void {
+  public error(category: LogCategory, message: string, details?: LogDetails): void {
     this.log(LogLevel.ERROR, category, message, details);
   }
   

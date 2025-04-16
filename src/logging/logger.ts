@@ -5,7 +5,7 @@ import { LogCategory, LogLevel } from '@/shared/types/core/logging.types';
 // Example function with the error
 export async function logToDatabase(level: LogLevel, category: LogCategory, message: string, details?: any) {
   try {
-    const { error: responseError } = await supabase
+    const response = await supabase
       .from('application_logs')
       .insert({
         level,
@@ -15,8 +15,8 @@ export async function logToDatabase(level: LogLevel, category: LogCategory, mess
       })
       .select('id');
       
-    if (responseError) {
-      console.error('Failed to log to database:', responseError.message);
+    if (response.error) {
+      console.error('Failed to log to database:', response.error.message);
     }
     
     return true;
