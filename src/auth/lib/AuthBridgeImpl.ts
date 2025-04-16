@@ -1,4 +1,4 @@
-import { UserProfile, AuthStatus, AUTH_STATUS, UserRole, ROLES } from '@/shared/types/core/auth.types';
+import { UserProfile, UserRole, ROLES } from '@/shared/types/core/rbac.types';
 
 /**
  * Auth bridge implementation
@@ -18,14 +18,14 @@ class AuthBridgeClass {
       id: '1',
       email: 'user@example.com',
       name: 'Demo User',
-      avatar_url: 'https://ui-avatars.com/api/?name=Demo+User',
-      roles: [ROLES.user],
-      user_metadata: {
+      avatarUrl: 'https://ui-avatars.com/api/?name=Demo+User',
+      roles: [ROLES.GUEST],
+      userMetadata: {
         full_name: 'Demo User',
-        avatar_url: 'https://ui-avatars.com/api/?name=Demo+User'
+        avatarUrl: 'https://ui-avatars.com/api/?name=Demo+User'
       },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
   }
   

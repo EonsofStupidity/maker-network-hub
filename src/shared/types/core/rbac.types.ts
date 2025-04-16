@@ -19,3 +19,4 @@ export type Permission =
   | 'manage_api_keys'
   | 'manage_users'
   | 'settings:edit';
+
