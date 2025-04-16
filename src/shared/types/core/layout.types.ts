@@ -11,28 +11,35 @@ export interface LayoutComponentProps {
   requiredRole?: string;
 }
 
-export type LayoutComponent = React.ComponentType<LayoutComponentProps>;
+export interface LayoutComponent {
+  id: string;
+  type: string;
+  props: Record<string, any>;
+}
+
+export interface LayoutItem {
+  id: string;
+  parentId?: string;
+  position: number;
+  componentId: string;
+}
 
 export interface Layout {
   id: string;
   name: string;
   description?: string;
-  components: {
-    [key: string]: {
-      id: string;
-      type: 'page' | 'section' | 'widget';
-      props: Record<string, any>;
-    }
+  type: string;
+  components: Record<string, LayoutComponent>;
+  layout: LayoutItem[];
+  scope: string;
+  meta?: {
+    version: number;
+    isLocked: boolean;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+    createdBy?: string;
   };
-  layout: Array<{
-    id: string;
-    parentId?: string;
-    position: number;
-    componentId: string;
-  }>;
-  meta?: Record<string, any>;
-  type: 'page' | 'section' | 'widget';
-  scope: 'site' | 'admin' | 'feature';
 }
 
 export interface LayoutSkeleton {
@@ -41,7 +48,10 @@ export interface LayoutSkeleton {
   description?: string;
   type: string;
   scope: string;
-  layout_json: any;
+  layout_json: {
+    layout: LayoutItem[];
+    components: Record<string, LayoutComponent>;
+  };
   is_locked: boolean;
   version: number;
   is_active: boolean;
