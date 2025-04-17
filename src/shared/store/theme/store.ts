@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { Theme, ThemeState, ComponentTokens, DesignTokens, ThemeStoreActions } from '@/shared/types/shared.types';
+import { Theme, ThemeState, ComponentTokens, DesignTokens, ThemeStoreActions, ThemeEffect } from '@/shared/types/shared.types';
 import { devtools, persist } from 'zustand/middleware';
 import { logger } from '@/logging/logger.service';
 import { LogLevel, LogCategory } from '@/shared/types/shared.types';
@@ -9,11 +9,21 @@ import { LogLevel, LogCategory } from '@/shared/types/shared.types';
 const defaultTheme: Theme = {
   id: 'default',
   name: 'Default Theme',
+  active: false,
+  dark: false,
+  isDark: false,
   label: 'Default',
   description: 'Default theme',
-  isDark: false,
   status: 'active',
   context: 'site',
+  colors: {
+    primary: '#3b82f6',
+    secondary: '#f3f4f6',
+    background: '#ffffff',
+    foreground: '#000000',
+  },
+  effects: [],
+  tokens: [],
   variables: {
     background: '#ffffff',
     foreground: '#000000',
@@ -122,6 +132,7 @@ export const useThemeStore = create<ThemeState & ThemeStoreActions>()(
         componentTokens: defaultComponentTokens,
         isLoading: false,
         error: null,
+        effects: [],
         
         // Set all themes
         setThemes: (themes) => {
@@ -168,6 +179,16 @@ export const useThemeStore = create<ThemeState & ThemeStoreActions>()(
         // Set component tokens
         setComponentTokens: (tokens) => {
           set({ componentTokens: tokens });
+        },
+        
+        // Set effects
+        setEffects: (effects) => {
+          set({ effects });
+        },
+        
+        // Set variables
+        setVariables: (variables) => {
+          set({ variables });
         }
       }),
       {

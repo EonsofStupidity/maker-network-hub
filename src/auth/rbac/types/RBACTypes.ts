@@ -1,4 +1,6 @@
 
+import { UserRole, ROLES, AdminSection, SECTION_PERMISSIONS, Permission, ROLE_LABELS, DEFAULT_PERMISSIONS } from '@/shared/types/core/rbac.types';
+
 // Re-export the core RBAC types from the shared directory
 export type { 
   UserRole, 

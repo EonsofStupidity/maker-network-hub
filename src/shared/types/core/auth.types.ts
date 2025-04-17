@@ -1,5 +1,5 @@
 
-import { UserRole } from './rbac.types';
+import type { UserRole } from './rbac.types';
 
 // Auth status enum
 export const AUTH_STATUS = {
@@ -52,4 +52,5 @@ export interface AuthError extends Error {
 }
 
 // Export UserRole for easier access
-export { UserRole, ROLES } from './rbac.types';
+export type { UserRole } from './rbac.types';
+export { ROLES } from './rbac.types';

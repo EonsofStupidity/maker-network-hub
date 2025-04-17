@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from 'react';
 import { useLogger } from '@/logging/hooks/use-logger';
 import { LogCategory } from '@/shared/types/shared.types';

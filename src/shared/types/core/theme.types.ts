@@ -49,6 +49,30 @@ export interface ThemeToken {
 }
 
 /**
+ * Design tokens interface
+ */
+export interface DesignTokens {
+  colors?: Record<string, string>;
+  typography?: any;
+  spacing?: Record<string, string>;
+  borders?: Record<string, string>;
+  shadows?: Record<string, string>;
+  radii?: Record<string, string>;
+  zIndices?: Record<string, string | number>;
+  breakpoints?: Record<string, string>;
+  transitions?: Record<string, string>;
+  animations?: Record<string, any>;
+  [key: string]: any;
+}
+
+/**
+ * Component tokens interface
+ */
+export interface ComponentTokens {
+  [componentName: string]: Record<string, string>;
+}
+
+/**
  * Complete theme definition
  */
 export interface Theme {
@@ -65,33 +89,9 @@ export interface Theme {
   effects: ThemeEffect[];
   tokens: ThemeToken[];
   variables?: Record<string, string>;
-  designTokens?: Record<string, any>;
-  componentTokens?: Record<string, any>;
+  designTokens?: DesignTokens;
+  componentTokens?: ComponentTokens;
   metadata?: Record<string, any>;
-}
-
-/**
- * Design tokens interface
- */
-export interface DesignTokens {
-  colors?: Record<string, string>;
-  typography?: any;
-  spacing?: Record<string, string | number>;
-  borders?: Record<string, string>;
-  shadows?: Record<string, string>;
-  radii?: Record<string, string>;
-  zIndices?: Record<string, string | number>;
-  breakpoints?: Record<string, string>;
-  transitions?: Record<string, string>;
-  animations?: Record<string, any>;
-  [key: string]: any;
-}
-
-/**
- * Component tokens interface
- */
-export interface ComponentTokens {
-  [componentName: string]: Record<string, string | number | boolean>;
 }
 
 /**
@@ -118,14 +118,7 @@ export interface ThemeState {
   componentStyles?: Record<string, Record<string, string>>;
   animations?: Record<string, any>;
   effects?: ThemeEffect[];
-  
-  // Method signatures for the Theme store
-  setThemes?: (themes: Theme[]) => void;
-  setActiveTheme?: (themeId: string) => void;
-  setDesignTokens?: (tokens: DesignTokens) => void;
-  setComponentTokens?: (tokens: ComponentTokens) => void;
-  setEffects?: (effects: ThemeEffect[]) => void;
-  setVariables?: (variables: Record<string, string>) => void;
+  isLoading?: boolean;
 }
 
 // Separate action interface for theme store
@@ -134,6 +127,6 @@ export interface ThemeStoreActions {
   setActiveTheme: (themeId: string) => void;
   setDesignTokens: (tokens: DesignTokens) => void;
   setComponentTokens: (tokens: ComponentTokens) => void;
-  setEffects?: (effects: ThemeEffect[]) => void;
-  setVariables?: (variables: Record<string, string>) => void;
+  setEffects: (effects: ThemeEffect[]) => void;
+  setVariables: (variables: Record<string, string>) => void;
 }

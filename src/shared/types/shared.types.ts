@@ -11,8 +11,14 @@ export { AUTH_STATUS } from './core/auth.types';
 export type { AuthStatus, UserProfile } from './core/auth.types';
 
 // Export logging types
-export { LogCategory, LogLevel } from './core/logging.types';
-export type { LogDetails, LogEntry } from './core/logging.types';
+export { LogCategory, LogLevel, LOG_LEVEL_VALUES } from './core/logging.types';
+export type { 
+  LogDetails, 
+  LogEntry, 
+  LogFilter, 
+  LogEvent,
+  LogCategoryType
+} from './core/logging.types';
 
 // Export theme types
 export { ThemeEffectType } from './core/theme.types';
@@ -20,12 +26,8 @@ export type {
   ThemeEffect, 
   ThemeToken, 
   Theme, 
-  ThemeState 
-} from './core/theme.types';
-
-// Export from features
-export type {
+  ThemeState,
   DesignTokens,
   ComponentTokens,
   ThemeStoreActions
-} from './features/theme.types';
+} from './core/theme.types';

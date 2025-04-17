@@ -1,22 +1,34 @@
 
-import { User as SupabaseUser } from '@supabase/supabase-js';
-import { User, UserProfile } from './shared.types';
+import { UserRole } from './shared.types';
+import { BaseEntity, User } from './base.types';
 
-// Type mapper function to convert Supabase User to App User
-export function mapSupabaseUserToAppUser(supabaseUser: SupabaseUser | null): User | null {
-  if (!supabaseUser) return null;
-  
-  return {
-    id: supabaseUser.id,
-    email: supabaseUser.email || '', // Handle potential undefined
-    created_at: supabaseUser.created_at || new Date().toISOString(),
-    updated_at: supabaseUser.updated_at || new Date().toISOString(),
-    user_metadata: supabaseUser.user_metadata || {},
-    // Profile will be fetched separately
+// Extended user profile 
+export interface UserProfile extends User {
+  full_name?: string;
+  bio?: string;
+  theme_preference?: string;
+  notifications_enabled?: boolean;
+  email_verified?: boolean;
+  last_active?: string;
+  roles?: UserRole[];
+  social_links?: {
+    twitter?: string;
+    github?: string;
+    linkedin?: string;
+    website?: string;
+  };
+  preferences?: {
+    dark_mode?: boolean;
+    email_notifications?: boolean;
+    display_language?: string;
   };
 }
 
-// Define expected profile structure
-export interface AppUserProfile extends UserProfile {
-  // Additional fields specific to your app
+export interface UserActivity extends BaseEntity {
+  user_id: string;
+  type: 'login' | 'logout' | 'create' | 'update' | 'delete' | 'view';
+  target_type?: string;
+  target_id?: string;
+  metadata?: Record<string, any>;
+  created_at: string;
 }

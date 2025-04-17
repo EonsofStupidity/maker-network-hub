@@ -1,5 +1,5 @@
 
-import { LogCategory, LogLevel, LogDetails, LogEntry } from '@/shared/types/core/logging.types';
+import { LogCategory, LogLevel, LogDetails, LogEntry, LogFilter, LogEvent } from '@/shared/types/core/logging.types';
 
 /**
  * LogBridge - Logging Bridge
@@ -15,11 +15,17 @@ export interface ILogBridge {
   critical: (category: LogCategory, message: string, details?: LogDetails) => void;
   log: (level: LogLevel, category: LogCategory, message: string, details?: LogDetails) => void;
   isInitialized: boolean;
+  subscribe: (callback: (event: LogEvent) => void) => () => void;
+  getFilter: () => LogFilter;
+  setFilter: (filter: LogFilter) => void;
+  clearLogs: () => void;
 }
 
 class LogBridgeClass implements ILogBridge {
   private logs: LogEntry[] = [];
   isInitialized = false;
+  private subscribers: Array<(event: LogEvent) => void> = [];
+  private currentFilter: LogFilter = {};
 
   /**
    * Initialize the logging system
@@ -101,6 +107,35 @@ class LogBridgeClass implements ILogBridge {
         console.error(`[${category}] ${message}`, details || '');
         break;
     }
+
+    // Notify subscribers
+    this.notifySubscribers({
+      entry,
+      type: 'new'
+    });
+  }
+
+  /**
+   * Subscribe to log events
+   */
+  public subscribe(callback: (event: LogEvent) => void): () => void {
+    this.subscribers.push(callback);
+    return () => {
+      this.subscribers = this.subscribers.filter(cb => cb !== callback);
+    };
+  }
+
+  /**
+   * Notify subscribers of log events
+   */
+  private notifySubscribers(event: LogEvent): void {
+    this.subscribers.forEach(callback => {
+      try {
+        callback(event);
+      } catch (error) {
+        console.error('Error in log subscriber callback', error);
+      }
+    });
   }
 
   /**
@@ -115,6 +150,28 @@ class LogBridgeClass implements ILogBridge {
    */
   public clearLogs(): void {
     this.logs = [];
+    this.notifySubscribers({
+      type: 'clear',
+      entry: {} as LogEntry
+    });
+  }
+
+  /**
+   * Get current filter
+   */
+  public getFilter(): LogFilter {
+    return { ...this.currentFilter };
+  }
+
+  /**
+   * Set filter
+   */
+  public setFilter(filter: LogFilter): void {
+    this.currentFilter = { ...filter };
+    this.notifySubscribers({
+      type: 'filter',
+      entry: {} as LogEntry
+    });
   }
 }
 
@@ -122,4 +179,4 @@ class LogBridgeClass implements ILogBridge {
 export const logBridge = new LogBridgeClass();
 
 // Re-export LogCategory for convenience
-export { LogCategory, LogLevel } from '@/shared/types/core/logging.types';
+export { LogCategory, LogLevel } from '@/shared/types/shared.types';

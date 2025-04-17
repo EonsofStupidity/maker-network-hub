@@ -1,43 +1,25 @@
 
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "@/auth/hooks/useAuth";
-import { MainLayout } from "@/layouts/MainLayout";
-import { PublicHome } from "@/pages/public/Home";
-import { LoginPage } from "@/pages/auth/LoginPage";
-import { RegisterPage } from "@/pages/auth/RegisterPage";
-import { AdminLayout } from "@/admin/panels/layout/AdminLayout";
-import { AdminDashboard } from "@/admin/panels/AdminDashboard";
-import { WithRoleProtection } from "@/auth/components/WithRoleProtection";
-import { ROLES } from "@/shared/types/core/rbac.types";
+import React, { Suspense } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { MainLayout } from '@/layouts/MainLayout';
 
-export const PublicRoutes = () => {
-  const { isAuthenticated } = useAuth();
+// Lazy-loaded routes
+const Auth = React.lazy(() => import('@/pages/Auth'));
+const About = React.lazy(() => import('@/pages/About'));
+const Contact = React.lazy(() => import('@/pages/Contact'));
+const Privacy = React.lazy(() => import('@/pages/Privacy'));
+const Terms = React.lazy(() => import('@/pages/Terms'));
 
+export function PublicRoutes() {
   return (
     <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<PublicHome />} />
-        <Route path="/parts" element={<div>Parts Database</div>} />
-        <Route path="/builds" element={<div>Community Builds</div>} />
-      </Route>
-
-      {/* Auth routes */}
-      <Route path="/auth" element={
-        isAuthenticated ? <Navigate to="/" /> : <LoginPage />
-      } />
-      <Route path="/register" element={
-        isAuthenticated ? <Navigate to="/" /> : <RegisterPage />
-      } />
-
-      {/* Protected admin routes */}
-      <Route path="/admin" element={
-        <WithRoleProtection allowedRoles={[ROLES.ADMIN, ROLES.SUPER_ADMIN]}>
-          <AdminLayout><AdminDashboard /></AdminLayout>
-        </WithRoleProtection>
-      } />
-
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/auth" element={<MainLayout children={<Auth />} />} />
+      <Route path="/about" element={<MainLayout children={<About />} />} />
+      <Route path="/contact" element={<MainLayout children={<Contact />} />} />
+      <Route path="/privacy" element={<MainLayout children={<Privacy />} />} />
+      <Route path="/terms" element={<MainLayout children={<Terms />} />} />
     </Routes>
   );
-};
+}
+
+export default PublicRoutes;
