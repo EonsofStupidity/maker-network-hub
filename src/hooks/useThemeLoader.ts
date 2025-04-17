@@ -44,9 +44,17 @@ export function useThemeLoader(): ThemeLoaderResult {
       const hardcodedTheme: Theme = {
         id: 'hardcoded-fallback',
         name: 'Fallback Theme',
-        label: 'Fallback',
+        active: true,
+        dark: true,
         description: 'Emergency fallback theme',
-        isDark: true, 
+        colors: {
+          primary: '#00F0FF',
+          secondary: '#FF2D6E',
+          background: '#080F1E',
+          foreground: '#F9FAFB'
+        },
+        effects: [],
+        tokens: [],
         status: 'published',
         variables: {
           primary: '#00F0FF',
@@ -137,8 +145,13 @@ export function useThemeLoader(): ThemeLoaderResult {
         details: { source, themeName: theme.name, loadTimeMs: Date.now() - loadStartTime }
       });
       
-      setThemes([theme]);
-      setActiveTheme(theme.id);
+      if (setThemes) {
+        setThemes([theme]);
+      }
+      
+      if (setActiveTheme) {
+        setActiveTheme(theme.id);
+      }
       
       // Try to save to localStorage for future visits
       try {
@@ -165,10 +178,17 @@ export function useThemeLoader(): ThemeLoaderResult {
       const minimalTheme: Theme = {
         id: 'minimal-fallback',
         name: 'Minimal Fallback',
-        label: 'Minimal',
+        active: true,
+        dark: true,
         description: 'Bare minimum theme',
-        isDark: true,
-        status: 'published',
+        colors: {
+          primary: '#00F0FF',
+          secondary: '#FF2D6E',
+          background: '#080F1E',
+          foreground: '#F9FAFB'
+        },
+        effects: [],
+        tokens: [],
         variables: {
           primary: '#00F0FF',
           secondary: '#FF2D6E',
@@ -186,8 +206,14 @@ export function useThemeLoader(): ThemeLoaderResult {
         componentTokens: {}
       };
       
-      setThemes([minimalTheme]);
-      setActiveTheme(minimalTheme.id);
+      if (setThemes) {
+        setThemes([minimalTheme]);
+      }
+      
+      if (setActiveTheme) {
+        setActiveTheme(minimalTheme.id);
+      }
+      
       logBridge.warn(LogCategory.THEME, 'Applied minimal fallback theme', {
         details: { reason: 'Critical loading failure' }
       });

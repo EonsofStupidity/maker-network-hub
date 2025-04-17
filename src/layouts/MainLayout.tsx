@@ -1,40 +1,38 @@
 
-import React, { useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { logBridge } from "@/logging/bridge";
-import { LogCategory } from "@/shared/types/core/logging.types";
-import { useAuth } from "@/auth/hooks/useAuth";
-import { MainNav } from "@/app/components/MainNav";
-import { Footer } from "@/app/components/Footer";
-import { useThemeStore } from "@/stores/theme.store";
+import React from 'react';
+import { useThemeStore } from '@/stores/theme.store';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
 
-export const MainLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
-  const location = useLocation();
-  const { user } = useAuth();
-  const { isDark, primaryColor } = useThemeStore();
+interface MainLayoutProps {
+  children: React.ReactNode;
+  header?: boolean;
+  footer?: boolean;
+}
+
+export const MainLayout: React.FC<MainLayoutProps> = ({
+  children,
+  header = true,
+  footer = true
+}) => {
+  // Use theme properties with fallbacks
+  const currentTheme = useThemeStore(state => state);
+  const isDark = currentTheme?.isDark || false;
+  const primaryColor = currentTheme?.primaryColor || '#3b82f6';
   
-  useEffect(() => {
-    // Log page navigation
-    logBridge.info(LogCategory.UI, "Page navigation", {
-      details: {
-        path: location.pathname,
-        userId: user?.id || "anonymous",
-        theme: {
-          isDark,
-          primaryColor
-        },
-        timestamp: new Date().toISOString()
-      }
-    });
-  }, [location.pathname, user, isDark, primaryColor]);
-
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <MainNav />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        {children || <Outlet />}
+    <div className={`min-h-screen flex flex-col ${isDark ? 'dark bg-gray-900 text-white' : 'bg-white text-gray-900'}`}
+      style={{
+        '--primary-color': primaryColor,
+      } as React.CSSProperties}
+    >
+      {header && <Header />}
+      
+      <main className="flex-grow">
+        {children}
       </main>
-      <Footer />
+      
+      {footer && <Footer />}
     </div>
   );
 };

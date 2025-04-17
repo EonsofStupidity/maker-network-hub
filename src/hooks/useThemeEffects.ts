@@ -4,11 +4,14 @@ import { useThemeStore } from '@/stores/theme.store';
 import { ThemeEffect, ThemeEffectType } from '@/shared/types/core/theme.types';
 
 export function useThemeEffects() {
-  // Access effects from the store with proper array access
-  const themeEffects = useThemeStore(state => state.effects) || [];
+  const themeStore = useThemeStore();
+  // Access effects from the store with fallback to empty array
+  const themeEffects = themeStore.effects || [];
   
   const setThemeEffects = useCallback((effects: ThemeEffect[]) => {
-    useThemeStore.getState().setEffects(effects);
+    if (useThemeStore.getState().setEffects) {
+      useThemeStore.getState().setEffects(effects);
+    }
   }, []);
   
   const getEffects = useCallback(() => {

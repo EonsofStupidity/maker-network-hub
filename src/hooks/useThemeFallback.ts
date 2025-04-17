@@ -54,11 +54,20 @@ export function useThemeFallback(): ThemeFallbackResult {
       const mappedTheme: Theme = {
         id: data.theme.id,
         name: data.theme.name,
-        label: data.theme.name,
-        description: data.theme.description || '',
+        active: true,
+        dark: true,
         isDark: true, // Assume Impulsivity is dark by default
+        description: data.theme.description || '',
         status: data.theme.status,
         context: data.theme.context,
+        colors: data.theme.design_tokens?.colors || {
+          primary: '#00F0FF',
+          secondary: '#FF2D6E',
+          background: '#080F1E',
+          foreground: '#F9FAFB'  
+        },
+        effects: [],
+        tokens: [],
         variables: {
           primary: data.theme.design_tokens?.colors?.primary || '#00F0FF',
           secondary: data.theme.design_tokens?.colors?.secondary || '#FF2D6E',

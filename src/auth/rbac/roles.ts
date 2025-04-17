@@ -1,3 +1,4 @@
+
 /**
  * auth/rbac/roles.ts
  * 
@@ -10,8 +11,8 @@ import { AuthPermissionValue, AUTH_PERMISSIONS } from '@/auth/constants/permissi
 
 // Map roles to their allowed permissions
 const rolePermissionsMap = {
-  [ROLES.super_admin]: Object.values(AUTH_PERMISSIONS),
-  [ROLES.admin]: [
+  [ROLES.SUPER_ADMIN]: Object.values(AUTH_PERMISSIONS),
+  [ROLES.ADMIN]: [
     AUTH_PERMISSIONS.ADMIN_ACCESS,
     AUTH_PERMISSIONS.VIEW_CONTENT,
     AUTH_PERMISSIONS.CREATE_CONTENT,
@@ -21,19 +22,19 @@ const rolePermissionsMap = {
     AUTH_PERMISSIONS.EDIT_USERS,
     AUTH_PERMISSIONS.SYSTEM_VIEW,
   ],
-  [ROLES.moderator]: [
+  [ROLES.MOD]: [
     AUTH_PERMISSIONS.VIEW_CONTENT,
     AUTH_PERMISSIONS.EDIT_CONTENT,
     AUTH_PERMISSIONS.VIEW_USERS,
   ],
-  [ROLES.builder]: [
+  [ROLES.MAKER]: [
     AUTH_PERMISSIONS.VIEW_CONTENT,
     AUTH_PERMISSIONS.CREATE_CONTENT,
   ],
-  [ROLES.user]: [
+  [ROLES.FOLLOWER]: [
     AUTH_PERMISSIONS.VIEW_CONTENT,
   ],
-  [ROLES.guest]: []
+  [ROLES.GUEST]: []
 };
 
 /**
@@ -62,7 +63,7 @@ export function mapRolesToPermissions(roles: UserRole[]): AuthPermissionValue[] 
  * @returns Boolean indicating if the user has admin access
  */
 export function hasAdminAccess(roles: UserRole[]): boolean {
-  return roles.some(role => role === ROLES.admin || role === ROLES.super_admin);
+  return roles.some(role => role === ROLES.ADMIN || role === ROLES.SUPER_ADMIN);
 }
 
 /**
@@ -71,5 +72,5 @@ export function hasAdminAccess(roles: UserRole[]): boolean {
  * @returns Boolean indicating if the user is a super admin
  */
 export function isSuperAdmin(roles: UserRole[]): boolean {
-  return roles.includes(ROLES.super_admin);
+  return roles.includes(ROLES.SUPER_ADMIN);
 }

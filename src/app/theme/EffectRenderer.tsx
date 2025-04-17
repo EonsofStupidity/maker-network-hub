@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ThemeEffectType } from '@/shared/types/shared.types';
+import { ThemeEffectType } from '@/shared/types/core/theme.types';
 
 /**
  * Component to render various theme effects
@@ -142,6 +142,7 @@ export const EffectRenderer: React.FC<{
       );
       
     case ThemeEffectType.PARTICLE:
+    case ThemeEffectType.PARTICLES:
       return (
         <div 
           className={`particle-container relative overflow-hidden ${className}`}

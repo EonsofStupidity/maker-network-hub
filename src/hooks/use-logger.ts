@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { LogLevel, LogCategory, LogDetails, LogCategoryType } from '@/shared/types/shared.types';
+import { LogLevel, LogCategory, LogDetails } from '@/shared/types/core/logging.types';
 import { logger } from '@/logging/logger.service';
 
 /**
@@ -9,7 +9,7 @@ import { logger } from '@/logging/logger.service';
  * @param defaultCategory The default category for logs
  * @returns Object with log methods
  */
-export function useLogger(source: string, defaultCategory: LogCategoryType = LogCategory.UI) {
+export function useLogger(source: string, defaultCategory: LogCategory = LogCategory.UI) {
   const logWithSource = useCallback((level: LogLevel, message: string, options?: Partial<LogDetails>) => {
     const details: LogDetails = options ? { ...options, source } : { source };
     logger.log(level, defaultCategory, message, details);
@@ -36,7 +36,7 @@ export function useLogger(source: string, defaultCategory: LogCategoryType = Log
       logWithSource(level, message, options);
     }, [logWithSource]),
     
-    withCategory: useCallback((category: LogCategoryType) => {
+    withCategory: useCallback((category: LogCategory) => {
       return useLogger(source, category);
     }, [source])
   };

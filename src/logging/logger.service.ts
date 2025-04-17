@@ -1,211 +1,111 @@
 
-import { LogLevel, LogCategory, LogCategoryType, LogDetails, LogEntry, LogFilter } from '@/shared/types/shared.types';
-import { getErrorMessage } from '@/utils/errors';
+import { 
+  LogLevel, 
+  LogCategory, 
+  LogDetails, 
+  LogEntry 
+} from '@/shared/types/core/logging.types';
+import { ConsoleTransport } from './transports/console-transport';
 
-/**
- * Logger service for application-wide logging
- */
-class LoggerService {
-  private static instance: LoggerService;
-  private logLevel: LogLevel = LogLevel.INFO;
-  private enabledCategories: Set<LogCategoryType> = new Set(
-    Object.keys(LogCategory) as Array<LogCategoryType>
-  );
-  private listeners: ((level: LogLevel, category: LogCategoryType, message: string, details?: LogDetails) => void)[] = [];
-  private logEntries: LogEntry[] = [];
+type LogTransport = {
+  log: (entry: LogEntry) => void;
+};
+
+type LogSubscriber = {
+  callback: (entry: LogEntry) => void;
+  filter?: { level?: LogLevel; category?: LogCategory };
+};
+
+export interface LoggerConfig {
+  minLevel?: LogLevel;
+  transports?: LogTransport[];
+  defaultSource?: string;
+}
+
+class Logger {
+  private transports: LogTransport[] = [];
+  private subscribers: LogSubscriber[] = [];
+  private minLevel: LogLevel = LogLevel.DEBUG;
+  private defaultSource: string = 'app';
   
-  /**
-   * Get singleton instance
-   */
-  public static getInstance(): LoggerService {
-    if (!LoggerService.instance) {
-      LoggerService.instance = new LoggerService();
-    }
-    return LoggerService.instance;
+  constructor(config?: LoggerConfig) {
+    this.minLevel = config?.minLevel ?? LogLevel.DEBUG;
+    this.transports = config?.transports ?? [new ConsoleTransport()];
+    this.defaultSource = config?.defaultSource ?? 'app';
   }
-  
-  /**
-   * Set minimum log level
-   */
-  public setLevel(level: LogLevel): void {
-    this.logLevel = level;
-  }
-  
-  /**
-   * Enable specific log categories
-   */
-  public enableCategories(categories: Array<LogCategoryType>): void {
-    categories.forEach(category => this.enabledCategories.add(category));
-  }
-  
-  /**
-   * Disable specific log categories
-   */
-  public disableCategories(categories: Array<LogCategoryType>): void {
-    categories.forEach(category => this.enabledCategories.delete(category));
-  }
-  
-  /**
-   * Add log listener
-   */
-  public addListener(listener: (level: LogLevel, category: LogCategoryType, message: string, details?: LogDetails) => void): void {
-    this.listeners.push(listener);
-  }
-  
-  /**
-   * Remove log listener
-   */
-  public removeListener(listener: (level: LogLevel, category: LogCategoryType, message: string, details?: LogDetails) => void): void {
-    this.listeners = this.listeners.filter(l => l !== listener);
-  }
-  
-  /**
-   * Subscribe to log events
-   */
-  public subscribe(callback: (entry: LogEntry) => void): () => void {
-    const handler = (level: LogLevel, category: LogCategoryType, message: string, details?: LogDetails) => {
-      const entry: LogEntry = {
-        id: crypto.randomUUID(),
-        level,
-        category,
-        message,
-        timestamp: Date.now(),
-        details,
-        source: details?.source
-      };
-      callback(entry);
-    };
+
+  public subscribe(callback: (entry: LogEntry) => void, filter?: { level?: LogLevel; category?: LogCategory }): () => void {
+    const subscriber: LogSubscriber = { callback, filter };
+    this.subscribers.push(subscriber);
     
-    this.addListener(handler);
-    
+    // Return unsubscribe function
     return () => {
-      this.removeListener(handler);
+      this.subscribers = this.subscribers.filter(sub => sub !== subscriber);
     };
   }
   
-  /**
-   * Log a message
-   */
-  public log(level: LogLevel, category: LogCategoryType, message: string, details?: LogDetails): void {
-    // Check if this log should be processed
-    if (!this.shouldLog(level, category)) {
-      return;
-    }
+  public log(level: LogLevel, category: LogCategory, message: string, details?: LogDetails): void {
+    // Skip logs below minimum level
+    if (level < this.minLevel) return;
     
-    // Create log entry
     const entry: LogEntry = {
-      id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
       level,
       category,
       message,
-      timestamp: Date.now(),
       details,
-      source: details?.source
+      source: details?.source as string || this.defaultSource,
     };
     
-    // Store the log entry
-    this.logEntries.push(entry);
-    
-    // Format the log message
-    const timestamp = new Date().toISOString();
-    const formattedMsg = `[${timestamp}] [${LogLevel[level]}] [${category}] ${message}`;
-    
-    // Log to console
-    switch (level) {
-      case LogLevel.DEBUG:
-        console.debug(formattedMsg, details);
-        break;
-      case LogLevel.INFO:
-        console.info(formattedMsg, details);
-        break;
-      case LogLevel.WARN:
-        console.warn(formattedMsg, details);
-        break;
-      case LogLevel.ERROR:
-        console.error(formattedMsg, details);
-        break;
-      case LogLevel.CRITICAL:
-        console.error(formattedMsg, details);
-        break;
-      default:
-        console.log(formattedMsg, details);
-    }
-    
-    // Notify listeners
-    this.notifyListeners(level, category, message, details);
-  }
-  
-  /**
-   * Check if this log should be processed based on level and category
-   */
-  private shouldLog(level: LogLevel, category: LogCategoryType): boolean {
-    // Check log level
-    if (level < this.logLevel) {
-      return false;
-    }
-    
-    // Check category
-    if (!this.enabledCategories.has(category)) {
-      return false;
-    }
-    
-    return true;
-  }
-  
-  /**
-   * Notify all listeners
-   */
-  private notifyListeners(level: LogLevel, category: LogCategoryType, message: string, details?: LogDetails): void {
-    this.listeners.forEach(listener => {
+    // Send to transports
+    this.transports.forEach(transport => {
       try {
-        listener(level, category, message, details);
+        transport.log(entry);
       } catch (error) {
-        console.error('Error in log listener:', error);
+        console.error('Error in log transport:', error);
+      }
+    });
+    
+    // Notify subscribers
+    this.subscribers.forEach(subscriber => {
+      try {
+        // Apply filters
+        if (subscriber.filter) {
+          if (subscriber.filter.level !== undefined && level < subscriber.filter.level) {
+            return;
+          }
+          
+          if (subscriber.filter.category !== undefined && category !== subscriber.filter.category) {
+            return;
+          }
+        }
+        
+        subscriber.callback(entry);
+      } catch (error) {
+        console.error('Error in log subscriber:', error);
       }
     });
   }
-  
-  /**
-   * Get log entries with optional filtering
-   */
-  public getEntries(filter: Partial<LogFilter> = {}): LogEntry[] {
-    let filteredEntries = [...this.logEntries];
-    
-    if (filter.level !== undefined) {
-      filteredEntries = filteredEntries.filter(entry => entry.level === filter.level);
-    }
-    
-    if (filter.category) {
-      filteredEntries = filteredEntries.filter(entry => entry.category === filter.category);
-    }
-    
-    if (filter.from !== undefined) {
-      const fromTimestamp = filter.from instanceof Date ? filter.from.getTime() : filter.from;
-      filteredEntries = filteredEntries.filter(entry => entry.timestamp >= fromTimestamp);
-    }
-    
-    if (filter.to !== undefined) {
-      const toTimestamp = filter.to instanceof Date ? filter.to.getTime() : filter.to;
-      filteredEntries = filteredEntries.filter(entry => entry.timestamp <= toTimestamp);
-    }
-    
-    if (filter.search) {
-      const searchLower = filter.search.toLowerCase();
-      filteredEntries = filteredEntries.filter(entry => 
-        entry.message.toLowerCase().includes(searchLower) || 
-        JSON.stringify(entry.details).toLowerCase().includes(searchLower)
-      );
-    }
-    
-    return filteredEntries;
+
+  public debug(category: LogCategory, message: string, details?: LogDetails): void {
+    this.log(LogLevel.DEBUG, category, message, details);
   }
-  
-  /**
-   * Clear all log entries
-   */
-  public clearLogs(): void {
-    this.logEntries = [];
+
+  public info(category: LogCategory, message: string, details?: LogDetails): void {
+    this.log(LogLevel.INFO, category, message, details);
+  }
+
+  public warn(category: LogCategory, message: string, details?: LogDetails): void {
+    this.log(LogLevel.WARN, category, message, details);
+  }
+
+  public error(category: LogCategory, message: string, details?: LogDetails): void {
+    this.log(LogLevel.ERROR, category, message, details);
+  }
+
+  public critical(category: LogCategory, message: string, details?: LogDetails): void {
+    this.log(LogLevel.CRITICAL, category, message, details);
   }
 }
 
-export const logger = LoggerService.getInstance();
+export const logger = new Logger();

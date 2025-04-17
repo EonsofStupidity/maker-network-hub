@@ -1,111 +1,74 @@
 
 import React from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Badge } from "@/shared/ui/badge";
 import { useAuthStore } from '@/auth/store/auth.store';
-import { LogCategory, LogLevel } from '@/shared/types';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/shared/ui/card';
-import { Button } from '@/shared/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/shared/ui/avatar';
-import { logger } from '@/logging/logger.service';
+import { useRbac } from '@/hooks/use-rbac';
+import { ROLE_LABELS } from '@/shared/types/core/rbac.types';
 
 interface ProfileDisplayProps {
-  onEdit?: () => void;
+  className?: string;
 }
 
-export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({ onEdit }) => {
-  const { user } = useAuthStore();
+export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({ className = '' }) => {
+  const user = useAuthStore(state => state.user);
+  const { getHighestRole } = useRbac();
   
   if (!user) {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card className={`${className} w-full max-w-md mx-auto`}>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
+          <CardTitle>Not Logged In</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Please log in to view your profile.</p>
+          <p>Please log in to view your profile</p>
         </CardContent>
       </Card>
     );
   }
-
-  // Generate initials from name or email
-  const getInitials = (): string => {
-    if (user.name) {
-      return user.name
-        .split(' ')
-        .map(part => part[0])
-        .join('')
-        .toUpperCase();
-    }
-    
-    return user.email.substring(0, 2).toUpperCase();
-  };
   
-  // Handle edit button click
-  const handleEditClick = () => {
-    if (onEdit) {
-      logger.log(LogLevel.INFO, LogCategory.UI, 'User clicked edit profile', {
-        userId: user.id
-      });
-      onEdit();
-    }
-  };
-
-  // Format date string for display
-  const formatDate = (dateStr?: string): string => {
-    if (!dateStr) return 'Not available';
-    
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString();
-    } catch (error) {
-      return 'Invalid date';
-    }
-  };
-
+  const highestRole = getHighestRole();
+  const roleLabel = ROLE_LABELS[highestRole];
+  
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className={`${className} w-full max-w-md mx-auto`}>
       <CardHeader className="flex flex-row items-center gap-4">
-        <Avatar className="w-16 h-16">
-          {user.avatarUrl ? (
-            <AvatarImage src={user.avatarUrl} alt={user.name || 'User'} />
-          ) : (
-            <AvatarFallback>{getInitials()}</AvatarFallback>
-          )}
+        <Avatar className="h-14 w-14">
+          <AvatarImage src={user.avatarUrl || ''} alt={user.name || 'User'} />
+          <AvatarFallback>{(user.name || 'U').slice(0, 1)}</AvatarFallback>
         </Avatar>
-        <div className="flex flex-col">
+        <div>
           <CardTitle>{user.name || 'User'}</CardTitle>
-          <p className="text-sm text-muted-foreground">{user.email}</p>
+          <p className="text-sm text-gray-500">{user.email || 'No email provided'}</p>
         </div>
       </CardHeader>
-      
-      <CardContent className="space-y-4">
-        <div className="grid gap-2">
-          <h3 className="font-medium">About</h3>
-          <p className="text-sm text-muted-foreground">
-            {user.bio || 'No bio provided.'}
-          </p>
-        </div>
-        
-        <div className="grid gap-2">
-          <h3 className="font-medium">Account Information</h3>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">Member since:</span>
-            <span>{formatDate(user.createdAt)}</span>
-            
-            <span className="text-muted-foreground">Last updated:</span>
-            <span>{formatDate(user.updatedAt)}</span>
-            
-            <span className="text-muted-foreground">Last sign in:</span>
-            <span>{formatDate(user.lastSignInAt)}</span>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <h3 className="font-medium mb-1">Role</h3>
+            <Badge variant="outline" className="text-sm">{roleLabel}</Badge>
           </div>
+          
+          {user.lastSignIn && (
+            <div>
+              <h3 className="font-medium mb-1">Last Login</h3>
+              <p className="text-sm text-gray-500">
+                {new Date(user.lastSignIn).toLocaleString()}
+              </p>
+            </div>
+          )}
+          
+          {user.createdAt && (
+            <div>
+              <h3 className="font-medium mb-1">Member Since</h3>
+              <p className="text-sm text-gray-500">
+                {new Date(user.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+          )}
         </div>
       </CardContent>
-      
-      <CardFooter className="flex justify-end">
-        <Button onClick={handleEditClick}>Edit Profile</Button>
-      </CardFooter>
     </Card>
   );
 };
-
-export default ProfileDisplay;

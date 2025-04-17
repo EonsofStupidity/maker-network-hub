@@ -1,92 +1,122 @@
 
-import { LogEntry, LogLevel, LOG_LEVEL_VALUES } from '@/shared/types';
-import { LogTransport } from '@/logging/types';
+import { LogEntry, LogLevel, LogCategory } from '@/shared/types/core/logging.types';
 
-/**
- * Console transport for logging to browser console
- */
-export class ConsoleTransport implements LogTransport {
-  private minLevel: LogLevel;
+// Define log level css styles
+const LOG_LEVEL_STYLES = {
+  [LogLevel.DEBUG]: 'color: #6b7280;',
+  [LogLevel.INFO]: 'color: #60a5fa;',
+  [LogLevel.WARN]: 'color: #fbbf24; font-weight: bold;',
+  [LogLevel.ERROR]: 'color: #ef4444; font-weight: bold;',
+  [LogLevel.CRITICAL]: 'color: #dc2626; font-weight: bold; font-size: 1.1em;'
+};
 
-  constructor(minLevel: LogLevel = LogLevel.INFO) {
-    this.minLevel = minLevel;
-  }
+// Export the console transport
+export class ConsoleTransport {
+  constructor(private options = { collapsed: true }) {}
 
-  /**
-   * Set the minimum log level
-   */
-  setMinLevel(level: LogLevel): void {
-    this.minLevel = level;
-  }
-
-  /**
-   * Log an entry to the console
-   */
   log(entry: LogEntry): void {
-    if (!this.shouldLog(entry.level)) {
-      return;
-    }
-
-    const { level, message, category, details, timestamp } = entry;
-    const time = new Date(timestamp).toISOString();
-    const color = this.getColorForLevel(level);
+    const { timestamp, level, category, message, details, source } = entry;
     
-    const categoryDisplay = category ? `[${category.toUpperCase()}]` : '';
-    const formattedMessage = `${time} ${categoryDisplay} ${message}`;
-
+    // Format the timestamp
+    const time = new Date(timestamp).toLocaleTimeString();
+    
+    // Get the style for the log level
+    const levelStyle = LOG_LEVEL_STYLES[level] || '';
+    
+    // Convert level to label
+    const levelLabel = this.getLevelLabel(level);
+    
+    // Format the message
+    const formattedMessage = `%c${levelLabel}%c [${category}] ${message}`;
+    
+    // Create the console arguments
+    const consoleArgs = [
+      formattedMessage,
+      levelStyle,
+      'color: inherit;',
+    ];
+    
+    // Add source if available
+    const logDetails = { ...details };
+    if (source && (!details || !('source' in details))) {
+      logDetails.source = source;
+    }
+    
+    // Log to console with appropriate level
     switch (level) {
       case LogLevel.DEBUG:
-        console.debug(`%c${formattedMessage}`, `color: ${color}`, details);
+        if (this.options.collapsed && details) {
+          console.groupCollapsed(formattedMessage, levelStyle, 'color: inherit;');
+          console.log(`Time: ${time}`);
+          if (source) console.log(`Source: ${source}`);
+          if (details) console.dir(details);
+          console.groupEnd();
+        } else {
+          console.debug(...consoleArgs, details ? details : '');
+        }
         break;
       case LogLevel.INFO:
-      case LogLevel.SUCCESS:
-        console.info(`%c${formattedMessage}`, `color: ${color}`, details);
+        if (this.options.collapsed && details) {
+          console.groupCollapsed(formattedMessage, levelStyle, 'color: inherit;');
+          console.log(`Time: ${time}`);
+          if (source) console.log(`Source: ${source}`);
+          if (details) console.dir(details);
+          console.groupEnd();
+        } else {
+          console.info(...consoleArgs, details ? details : '');
+        }
         break;
       case LogLevel.WARN:
-        console.warn(`%c${formattedMessage}`, `color: ${color}`, details);
+        if (this.options.collapsed && details) {
+          console.groupCollapsed(formattedMessage, levelStyle, 'color: inherit;');
+          console.log(`Time: ${time}`);
+          if (source) console.log(`Source: ${source}`);
+          if (details) console.dir(details);
+          console.groupEnd();
+        } else {
+          console.warn(...consoleArgs, details ? details : '');
+        }
         break;
       case LogLevel.ERROR:
       case LogLevel.CRITICAL:
-      case LogLevel.FATAL:
-        console.error(`%c${formattedMessage}`, `color: ${color}`, details);
-        break;
-      case LogLevel.TRACE:
-        console.trace(`%c${formattedMessage}`, `color: ${color}`, details);
+        if (this.options.collapsed && details) {
+          console.groupCollapsed(formattedMessage, levelStyle, 'color: inherit;');
+          console.log(`Time: ${time}`);
+          if (source) console.log(`Source: ${source}`);
+          if (details) console.dir(details);
+          console.groupEnd();
+        } else {
+          console.error(...consoleArgs, details ? details : '');
+        }
         break;
       default:
-        console.log(`%c${formattedMessage}`, `color: ${color}`, details);
+        if (this.options.collapsed && details) {
+          console.groupCollapsed(formattedMessage, levelStyle, 'color: inherit;');
+          console.log(`Time: ${time}`);
+          if (source) console.log(`Source: ${source}`);
+          if (details) console.dir(details);
+          console.groupEnd();
+        } else {
+          console.log(...consoleArgs, details ? details : '');
+        }
     }
   }
-
-  /**
-   * Determine if an entry should be logged based on the minimum level
-   */
-  private shouldLog(level: LogLevel): boolean {
-    return LOG_LEVEL_VALUES[level] >= LOG_LEVEL_VALUES[this.minLevel];
-  }
-
-  /**
-   * Get an appropriate color for each log level
-   */
-  private getColorForLevel(level: LogLevel): string {
+  
+  // Helper to convert log level to human-readable label
+  private getLevelLabel(level: LogLevel): string {
     switch (level) {
       case LogLevel.DEBUG:
-        return '#8a8a8a'; // Gray
+        return 'DEBUG';
       case LogLevel.INFO:
-        return '#2980b9'; // Blue
-      case LogLevel.SUCCESS:
-        return '#27ae60'; // Green
+        return 'INFO';
       case LogLevel.WARN:
-        return '#f39c12'; // Orange
+        return 'WARN';
       case LogLevel.ERROR:
-        return '#e74c3c'; // Red
+        return 'ERROR';
       case LogLevel.CRITICAL:
-      case LogLevel.FATAL:
-        return '#c0392b'; // Dark Red
-      case LogLevel.TRACE:
-        return '#9b59b6'; // Purple
+        return 'CRITICAL';
       default:
-        return 'inherit';
+        return 'LOG';
     }
   }
 }

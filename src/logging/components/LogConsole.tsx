@@ -1,212 +1,194 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LogLevel, LogCategory, LogEntry, LogCategoryType } from '@/shared/types/shared.types';
-import { logger } from '@/logging/logger.service';
+import { LogLevel, LogCategory, LogEntry } from '@/shared/types/core/logging.types';
+import { logBridge } from '@/logging/bridge';
+import { cn } from '@/utils/cn';
 
 interface LogConsoleProps {
-  initialRows?: number;
-  showTimestamp?: boolean;
-  showLevel?: boolean;
-  showCategory?: boolean;
-  minLevel?: LogLevel;
-  categories?: LogCategoryType[];
-  maxLogs?: number;
-  autoScrollToBottom?: boolean;
-  width?: string;
-  height?: string;
+  className?: string;
+  maxHeight?: string;
+  initialMaxEntries?: number;
+  defaultCategory?: LogCategory;
 }
 
 export const LogConsole: React.FC<LogConsoleProps> = ({
-  initialRows = 10,
-  showTimestamp = true,
-  showLevel = true,
-  showCategory = true,
-  minLevel = LogLevel.INFO,
-  categories,
-  maxLogs = 100,
-  autoScrollToBottom = true,
-  width = '100%',
-  height = 'auto'
+  className = '',
+  maxHeight = '300px',
+  initialMaxEntries = 100,
+  defaultCategory = LogCategory.DEBUG
 }) => {
-  // State for logs and filters
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [selectedLevel, setSelectedLevel] = useState<LogLevel>(minLevel);
-  const [selectedCategory, setSelectedCategory] = useState<LogCategoryType | 'ALL'>('ALL');
-  const [search, setSearch] = useState('');
-  
-  // Refs for DOM elements
-  const consoleRef = useRef<HTMLDivElement>(null);
-  const isScrolledToBottom = useRef(true);
-  
-  // Effect to setup log listener
+  const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
+  const [visibleEntries, setVisibleEntries] = useState<LogEntry[]>([]);
+  const [maxEntries, setMaxEntries] = useState<number>(initialMaxEntries);
+  const [filter, setFilter] = useState<string>('');
+  const [levelFilter, setLevelFilter] = useState<LogLevel | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<LogCategory | null>(null);
+  const [autoScroll, setAutoScroll] = useState<boolean>(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Subscribe to logs
   useEffect(() => {
-    // Subscribe to log events
-    const unsubscribe = logger.subscribe((entry) => {
-      setLogs(currentLogs => {
-        const newLogs = [...currentLogs, entry];
-        // Limit the number of logs to avoid memory issues
-        return newLogs.slice(-maxLogs);
-      });
-    });
+    const unsubscribe = logBridge.subscribe(
+      (entry: LogEntry) => {
+        setLogEntries(prev => {
+          const newLogs = [...prev, {...entry, timestamp: entry.timestamp || new Date().toISOString()}];
+          return newLogs.slice(-maxEntries);
+        });
+      },
+      { level: LogLevel.DEBUG }
+    );
     
-    // Cleanup subscription on unmount
-    return unsubscribe;
-  }, [maxLogs]);
-  
-  // Effect for auto-scrolling
+    return () => {
+      unsubscribe();
+    };
+  }, [maxEntries]);
+
+  // Filter logs when filter changes
   useEffect(() => {
-    if (autoScrollToBottom && isScrolledToBottom.current && consoleRef.current) {
-      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
-    }
-  }, [logs, autoScrollToBottom]);
+    setVisibleEntries(
+      logEntries.filter(entry => {
+        const matchesText = filter === '' || 
+          entry.message.toLowerCase().includes(filter.toLowerCase()) ||
+          JSON.stringify(entry.details || {}).toLowerCase().includes(filter.toLowerCase());
+          
+        const matchesLevel = levelFilter === null || entry.level >= levelFilter;
+        const matchesCategory = categoryFilter === null || entry.category === categoryFilter;
+        
+        return matchesText && matchesLevel && matchesCategory;
+      })
+    );
+  }, [logEntries, filter, levelFilter, categoryFilter]);
   
-  // Handle scroll events
-  const handleScroll = () => {
-    if (consoleRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = consoleRef.current;
-      isScrolledToBottom.current = scrollHeight - scrollTop <= clientHeight + 50;
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (autoScroll && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  };
-  
-  // Clear logs
-  const clearLogs = () => {
-    setLogs([]);
-  };
-  
-  // Filter logs based on level, category, and search
-  const filteredLogs = logs.filter(log => {
-    // Filter by level
-    if (log.level < selectedLevel) {
-      return false;
-    }
-    
-    // Filter by category
-    if (selectedCategory !== 'ALL' && log.category !== selectedCategory) {
-      return false;
-    }
-    
-    // Filter by search
-    if (search && !log.message.toLowerCase().includes(search.toLowerCase())) {
-      return false;
-    }
-    
-    return true;
-  });
-  
-  // Get color for log level
-  const getLevelColor = (level: LogLevel) => {
+  }, [visibleEntries, autoScroll]);
+
+  // Get log level style
+  const getLevelStyle = (level: LogLevel) => {
     switch (level) {
       case LogLevel.DEBUG:
-        return 'text-gray-500';
+        return 'text-blue-400';
       case LogLevel.INFO:
-        return 'text-blue-500';
+        return 'text-green-400';
       case LogLevel.WARN:
-        return 'text-yellow-500';
+        return 'text-yellow-400';
       case LogLevel.ERROR:
-        return 'text-red-500';
+        return 'text-red-400';
       case LogLevel.CRITICAL:
-        return 'text-red-600 font-bold';
+        return 'font-bold text-red-600';
       default:
-        return 'text-gray-700';
+        return 'text-gray-400';
     }
   };
   
-  // Format timestamp
-  const formatTimestamp = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString();
+  // Get log level label
+  const getLevelLabel = (level: LogLevel) => {
+    switch (level) {
+      case LogLevel.DEBUG:
+        return 'DEBUG';
+      case LogLevel.INFO:
+        return 'INFO';
+      case LogLevel.WARN:
+        return 'WARN';
+      case LogLevel.ERROR:
+        return 'ERROR';
+      case LogLevel.CRITICAL:
+        return 'CRIT';
+      default:
+        return 'LOG';
+    }
   };
-  
-  // Format log level
-  const formatLevel = (level: LogLevel) => {
-    return LogLevel[level] || 'UNKNOWN';
-  };
-  
+
   return (
-    <div className="border rounded-lg bg-gray-50 dark:bg-gray-900" style={{ width, height }}>
-      {/* Log controls */}
-      <div className="p-2 border-b flex flex-col sm:flex-row gap-2 justify-between">
-        <div className="flex flex-wrap gap-2">
-          <select 
-            value={selectedLevel}
-            onChange={(e) => setSelectedLevel(Number(e.target.value) as LogLevel)}
-            className="px-2 py-1 border rounded text-sm"
+    <div className={cn('border border-gray-700 rounded bg-gray-900 text-gray-200 font-mono text-xs', className)}>
+      <div className="flex items-center justify-between p-2 border-b border-gray-700">
+        <div className="text-sm font-semibold">Log Console</div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="text"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filter logs..."
+            className="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs"
+          />
+          
+          <select
+            value={levelFilter === null ? '' : levelFilter}
+            onChange={(e) => setLevelFilter(e.target.value === '' ? null : Number(e.target.value) as LogLevel)}
+            className="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs"
           >
+            <option value="">All Levels</option>
             <option value={LogLevel.DEBUG}>Debug+</option>
             <option value={LogLevel.INFO}>Info+</option>
-            <option value={LogLevel.WARN}>Warning+</option>
+            <option value={LogLevel.WARN}>Warn+</option>
             <option value={LogLevel.ERROR}>Error+</option>
-            <option value={LogLevel.CRITICAL}>Critical+</option>
+            <option value={LogLevel.CRITICAL}>Critical</option>
           </select>
           
-          <select 
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value as LogCategoryType | 'ALL')}
-            className="px-2 py-1 border rounded text-sm"
+          <select
+            value={categoryFilter || ''}
+            onChange={(e) => setCategoryFilter(e.target.value === '' ? null : e.target.value as LogCategory)}
+            className="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs"
           >
-            <option value="ALL">All Categories</option>
-            {Object.keys(LogCategory).map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
+            <option value="">All Categories</option>
+            {Object.values(LogCategory).map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
           
-          <input 
-            type="text"
-            placeholder="Search logs..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-2 py-1 border rounded text-sm flex-grow"
-          />
+          <button
+            onClick={() => setLogEntries([])}
+            className="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs hover:bg-gray-700"
+          >
+            Clear
+          </button>
+          
+          <label className="flex items-center space-x-1">
+            <input
+              type="checkbox"
+              checked={autoScroll}
+              onChange={() => setAutoScroll(!autoScroll)}
+              className="form-checkbox h-3 w-3"
+            />
+            <span>Auto-scroll</span>
+          </label>
         </div>
-        
-        <button
-          onClick={clearLogs}
-          className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
-        >
-          Clear
-        </button>
       </div>
       
-      {/* Log output */}
-      <div
-        ref={consoleRef}
-        className="p-2 font-mono text-sm overflow-y-auto"
-        style={{ minHeight: `${initialRows * 1.5}rem`, maxHeight: '50vh' }}
-        onScroll={handleScroll}
+      <div 
+        ref={scrollRef}
+        className="overflow-y-auto p-2"
+        style={{ maxHeight }}
       >
-        {filteredLogs.length === 0 ? (
-          <div className="text-gray-400 p-4 text-center">No logs to display</div>
+        {visibleEntries.length === 0 ? (
+          <div className="text-gray-500 italic">No logs to display</div>
         ) : (
-          filteredLogs.map((log) => (
-            <div key={log.id} className="pb-1 border-b last:border-0">
-              <div className="flex flex-wrap">
-                {showTimestamp && (
-                  <span className="text-gray-500 mr-2">
-                    {formatTimestamp(log.timestamp)}
-                  </span>
-                )}
-                
-                {showLevel && (
-                  <span className={`mr-2 ${getLevelColor(log.level)}`}>
-                    [{formatLevel(log.level)}]
-                  </span>
-                )}
-                
-                {showCategory && (
-                  <span className="text-purple-500 mr-2">
-                    [{log.category}]
-                  </span>
-                )}
-                
-                <span>{log.message}</span>
+          visibleEntries.map((entry, index) => (
+            <div 
+              key={`${entry.timestamp}-${index}`} 
+              className="mb-1 border-b border-gray-800 pb-1 last:border-0"
+            >
+              <div className="flex">
+                <span className="text-gray-500 mr-2">
+                  {new Date(entry.timestamp).toLocaleTimeString()}
+                </span>
+                <span className={`w-12 ${getLevelStyle(entry.level)}`}>
+                  {getLevelLabel(entry.level)}
+                </span>
+                <span className="text-purple-400 w-20">
+                  {entry.category}
+                </span>
+                <span className="text-gray-100 flex-1">
+                  {entry.message}
+                </span>
               </div>
               
-              {log.details && Object.keys(log.details).length > 0 && (
-                <div className="pl-4 text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  <pre className="whitespace-pre-wrap">
-                    {JSON.stringify(log.details, null, 2)}
-                  </pre>
+              {entry.details && Object.keys(entry.details).length > 0 && (
+                <div className="pl-32 text-gray-400 whitespace-pre-wrap">
+                  {JSON.stringify(entry.details, null, 2)}
                 </div>
               )}
             </div>
