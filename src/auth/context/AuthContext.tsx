@@ -34,35 +34,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize auth state
+  // Set up auth state listener first to avoid race conditions
   useEffect(() => {
-    const initAuth = async () => {
+    let isMounted = true;
+    
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
+      
       try {
-        setLoading(true);
+        // Track the auth state changes
+        console.log('Auth state changed:', event);
         
-        // Check for existing session
-        const { data } = await supabase.auth.getSession();
-        const session = data?.session;
-        
+        // Update auth state based on session
         if (session?.user) {
           setIsAuthenticated(true);
           setUser(session.user);
-          logBridge.info(LogCategory.AUTH, 'User session restored', {
-            details: { userId: session.user.id }
-          });
           
           // Set user roles from session metadata
-          if (session.user.app_metadata?.roles) {
-            const appRoles = session.user.app_metadata.roles as string[];
-            // Convert string array to UserRole array with validation
-            const validRoles = appRoles
-              .filter(role => 
-                Object.values(ROLES).includes(role as UserRole)
-              ) as UserRole[];
+          if (session.user?.app_metadata?.roles) {
+            const appRoles = session.user.app_metadata.roles;
+            const validRoles = Array.isArray(appRoles) 
+              ? appRoles.filter(role => Object.values(ROLES).includes(role as UserRole)) as UserRole[]
+              : [];
             
             RBACBridge.setRoles(validRoles.length ? validRoles : [ROLES.GUEST]);
           } else {
-            // Default to GUEST if no roles found
+            RBACBridge.setRoles([ROLES.GUEST]);
+          }
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
+          RBACBridge.setRoles([ROLES.GUEST]);
+        }
+        
+        // If we have a session update, mark as no longer loading
+        if (event !== 'INITIAL_SESSION') {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Error in auth state change handler:', err);
+      }
+    });
+    
+    // Check for existing session
+    const checkSession = async () => {
+      if (!isMounted) return;
+      
+      try {
+        setLoading(true);
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data?.session?.user) {
+          setIsAuthenticated(true);
+          setUser(data.session.user);
+          
+          // Set user roles
+          if (data.session.user?.app_metadata?.roles) {
+            const appRoles = data.session.user.app_metadata.roles;
+            const validRoles = Array.isArray(appRoles) 
+              ? appRoles.filter(role => Object.values(ROLES).includes(role as UserRole)) as UserRole[]
+              : [];
+            
+            RBACBridge.setRoles(validRoles.length ? validRoles : [ROLES.GUEST]);
+          } else {
             RBACBridge.setRoles([ROLES.GUEST]);
           }
         } else {
@@ -71,55 +110,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           RBACBridge.setRoles([ROLES.GUEST]);
         }
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Failed to initialize auth';
-        logBridge.error(LogCategory.AUTH, 'Auth initialization error', {
-          details: { error: errorMsg }
-        });
-        setError(errorMsg);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        setIsAuthenticated(true);
-        setUser(session.user);
-        
-        logBridge.info(LogCategory.AUTH, 'User signed in', {
-          details: { userId: session.user?.id ?? 'unknown', event }
+        console.error('Error checking auth session:', err);
+        logBridge.error(LogCategory.AUTH, 'Failed to get session', {
+          details: { error: String(err) }
         });
         
-        // Set user roles from session metadata
-        if (session.user?.app_metadata?.roles) {
-          const appRoles = session.user.app_metadata.roles as string[];
-          // Convert string array to UserRole array with validation
-          const validRoles = appRoles
-            .filter(role => 
-              Object.values(ROLES).includes(role as UserRole)
-            ) as UserRole[];
-          
-          RBACBridge.setRoles(validRoles.length ? validRoles : [ROLES.GUEST]);
-        } else {
-          // For new users that might not have roles yet
-          RBACBridge.setRoles([ROLES.GUEST, ROLES.FOLLOWER]);
-        }
-      } else if (event === 'SIGNED_OUT') {
+        // Even if there's an error, mark as not loading so UI can show error state
         setIsAuthenticated(false);
         setUser(null);
         RBACBridge.setRoles([ROLES.GUEST]);
-        
-        logBridge.info(LogCategory.AUTH, 'User signed out', {
-          details: { event }
-        });
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    });
+    };
     
-    initAuth();
+    // Perform initial session check
+    checkSession();
     
-    // Cleanup subscription
+    // Cleanup
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -128,16 +140,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       setError(null);
+      setLoading(true);
+      
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         throw error;
       }
       
+      // Auth state listener will update state
       logBridge.info(LogCategory.AUTH, 'User login successful', {
         details: { userId: data.user?.id ?? 'unknown', email }
       });
     } catch (err) {
+      setLoading(false);
       const errorMsg = err instanceof Error ? err.message : 'Login failed';
       logBridge.error(LogCategory.AUTH, 'Login error', {
         details: { error: errorMsg, email }
@@ -151,6 +167,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, metadata?: any) => {
     try {
       setError(null);
+      setLoading(true);
+      
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -163,10 +181,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       
+      // Auth state listener will update state
       logBridge.info(LogCategory.AUTH, 'User registration successful', {
         details: { userId: data.user?.id ?? 'unknown', email }
       });
     } catch (err) {
+      setLoading(false);
       const errorMsg = err instanceof Error ? err.message : 'Registration failed';
       logBridge.error(LogCategory.AUTH, 'Registration error', {
         details: { error: errorMsg, email }
@@ -180,10 +200,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setError(null);
+      setLoading(true);
+      
       await supabase.auth.signOut();
       
+      // Auth state listener will update state
       logBridge.info(LogCategory.AUTH, 'User logged out');
     } catch (err) {
+      setLoading(false);
       const errorMsg = err instanceof Error ? err.message : 'Logout failed';
       logBridge.error(LogCategory.AUTH, 'Logout error', {
         details: { error: errorMsg }
@@ -205,7 +229,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {loading ? (
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
-};
+}

@@ -1,6 +1,6 @@
 
 /**
- * CircuitBreaker implementation to prevent cascading failures
+ * Simple CircuitBreaker implementation to prevent cascading failures
  * in network requests and other operations that might fail.
  */
 
