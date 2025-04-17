@@ -1,5 +1,5 @@
 
-export * from './logger.service';
+// Re-export from core modules
+export * from './logger';
 export * from './bridge';
-export * from './transports';
-export * from './config';
+export * from './bootstrap';

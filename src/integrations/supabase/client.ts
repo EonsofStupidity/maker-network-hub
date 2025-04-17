@@ -3,9 +3,6 @@
  * Supabase client wrapper
  * Singleton implementation with better logging and initialization
  */
-import { configureSupabaseClient } from './client-config';
-import { logBridge } from '@/logging/bridge';
-import { LogCategory } from '@/shared/types/core/logging.types';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Define base types for responses
@@ -14,16 +11,17 @@ export interface SupabaseResponse<T = any> {
   error: { message: string } | null;
 }
 
-// Singleton instance
-let supabaseClient: SupabaseClient | null = null;
-let isInitialized = false;
+// Singleton state
+let supabaseInstance: SupabaseClient | null = null;
 let isMockClient = false;
+let isInitialized = false;
+
+// Exported flag to check if using mock
+export const isUsingMockClient = (): boolean => isMockClient;
 
 // Create an offline-friendly mock client for development
 const createMockClient = () => {
-  logBridge.warn(LogCategory.SYSTEM, 'Creating mock Supabase client', {
-    details: { reason: 'Missing environment variables or initialization failure' }
-  });
+  console.warn('Creating mock Supabase client - limited functionality available');
   
   isMockClient = true;
   
@@ -42,7 +40,7 @@ const createMockClient = () => {
  */
 export const initializeSupabase = (): boolean => {
   if (isInitialized) {
-    logBridge.info(LogCategory.SYSTEM, 'Supabase client already initialized');
+    console.info('Supabase client already initialized');
     return true;
   }
   
@@ -55,12 +53,10 @@ export const initializeSupabase = (): boolean => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_KEY;
     
-    logBridge.info(LogCategory.SYSTEM, 'Initializing Supabase client', {
-      details: { url: supabaseUrl }
-    });
+    console.info('Initializing Supabase client', { url: supabaseUrl });
     
     try {
-      supabaseClient = createClient(supabaseUrl, supabaseKey, {
+      supabaseInstance = createClient(supabaseUrl, supabaseKey, {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
@@ -76,28 +72,22 @@ export const initializeSupabase = (): boolean => {
       
       isInitialized = true;
       isMockClient = false;
-      logBridge.info(LogCategory.SYSTEM, 'Supabase client initialized successfully', {
-        details: { isMock: false }
-      });
+      console.info('Supabase client initialized successfully');
       
       return true;
     } catch (error) {
-      logBridge.error(LogCategory.SYSTEM, 'Error creating Supabase client, falling back to mock', {
-        error: error instanceof Error ? error.message : String(error)
-      });
+      console.error('Error creating Supabase client, falling back to mock', error);
       
-      supabaseClient = createMockClient();
+      supabaseInstance = createMockClient();
       isInitialized = true;
       
       return false;
     }
   } catch (error) {
-    logBridge.error(LogCategory.SYSTEM, 'Critical error initializing Supabase client', {
-      error: error instanceof Error ? error.message : String(error)
-    });
+    console.error('Critical error initializing Supabase client', error);
     
     // Still create a mock client as last resort
-    supabaseClient = createMockClient();
+    supabaseInstance = createMockClient();
     isInitialized = true;
     
     return false;
@@ -113,16 +103,13 @@ export const getSupabaseClient = (): SupabaseClient => {
     initializeSupabase();
   }
   
-  return supabaseClient!;
+  if (!supabaseInstance) {
+    throw new Error('Supabase client not initialized');
+  }
+  
+  return supabaseInstance;
 };
 
-/**
- * Check if the current Supabase client is a mock
- */
-export const isUsingMockClient = (): boolean => {
-  return isMockClient;
-};
-
-// Export the getter method as the default
+// Export a getter function for lazy initialization
 export const supabase = getSupabaseClient();
 export default supabase;

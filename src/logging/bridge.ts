@@ -1,38 +1,52 @@
 
-import { v4 as uuidv4 } from 'uuid';
-import { 
-  LogLevel, 
-  LogCategory, 
-  LogEntry, 
-  LogFilter, 
-  LogEvent, 
-  LogDetails 
-} from '@/shared/types/core/logging.types';
-import { logger } from './logger';
+/**
+ * Simple logging bridge implementation
+ * Avoids circular dependencies by not importing from other modules
+ */
+
+// Define log levels and categories inline to avoid circular imports
+export enum LogLevel {
+  DEBUG = 0,
+  INFO = 1,
+  WARN = 2,
+  ERROR = 3,
+  CRITICAL = 4
+}
+
+export enum LogCategory {
+  APP = 'APP',
+  ADMIN = 'ADMIN',
+  AUTH = 'AUTH',
+  API = 'API',
+  UI = 'UI',
+  PERFORMANCE = 'PERFORMANCE',
+  ERROR = 'ERROR',
+  SECURITY = 'SECURITY',
+  THEME = 'THEME',
+  RBAC = 'RBAC',
+  SYSTEM = 'SYSTEM',
+  CHAT = 'CHAT',
+  DEBUG = 'DEBUG'
+}
+
+export interface LogDetails {
+  source?: string;
+  moduleId?: string;
+  moduleName?: string;
+  path?: string;
+  error?: string;
+  errorMessage?: string;
+  stack?: string;
+  [key: string]: unknown;
+}
 
 /**
  * LogBridge provides a unified interface for application logging
  * It acts as a facade over multiple logging mechanisms
  */
-export class LogBridge {
-  private static instance: LogBridge;
-  private subscribers: ((event: LogEvent) => void)[] = [];
+class LogBridgeClass {
   private initialized: boolean = false;
-
-  private constructor() {
-    // Private constructor to enforce singleton
-    this.initialized = false;
-  }
-
-  /**
-   * Get the singleton instance
-   */
-  public static getInstance(): LogBridge {
-    if (!LogBridge.instance) {
-      LogBridge.instance = new LogBridge();
-    }
-    return LogBridge.instance;
-  }
+  private subscribers: Array<(level: LogLevel, category: LogCategory, message: string, details?: LogDetails) => void> = [];
 
   /**
    * Initialize the logging system
@@ -46,16 +60,16 @@ export class LogBridge {
   }
 
   /**
-   * Set minimum log level
+   * Check if logging system is initialized
    */
-  public setMinLevel(level: LogLevel): void {
-    logger.setLevel(level);
+  public isInitialized(): boolean {
+    return this.initialized;
   }
 
   /**
    * Subscribe to log events
    */
-  public subscribe(callback: (event: LogEvent) => void): () => void {
+  public subscribe(callback: (level: LogLevel, category: LogCategory, message: string, details?: LogDetails) => void): () => void {
     this.subscribers.push(callback);
     
     // Return unsubscribe function
@@ -65,38 +79,39 @@ export class LogBridge {
   }
 
   /**
-   * Notify subscribers of new log event
-   */
-  private notify(entry: LogEntry): void {
-    const event: LogEvent = { entry };
-    this.subscribers.forEach(callback => {
-      try {
-        callback(event);
-      } catch (error) {
-        console.error('Error in log subscriber', error);
-      }
-    });
-  }
-
-  /**
-   * Log a message
+   * Log a message with a specific level
    */
   public log(level: LogLevel, category: LogCategory, message: string, details?: LogDetails): void {
-    const entry: LogEntry = {
-      id: uuidv4(),
-      level,
-      category,
-      message,
-      timestamp: Date.now(),
-      details: details || {},
-      source: details?.source || 'system'
-    };
+    // Format for console
+    const categoryStr = category.toString();
     
-    // Use our Logger implementation
-    logger.log(level, category, message, details);
+    // Log to console
+    switch (level) {
+      case LogLevel.DEBUG:
+        console.debug(`[${categoryStr}] ${message}`, details || {});
+        break;
+      case LogLevel.INFO:
+        console.info(`[${categoryStr}] ${message}`, details || {});
+        break;
+      case LogLevel.WARN:
+        console.warn(`[${categoryStr}] ${message}`, details || {});
+        break;
+      case LogLevel.ERROR:
+      case LogLevel.CRITICAL:
+        console.error(`[${categoryStr}] ${message}`, details || {});
+        break;
+      default:
+        console.log(`[${categoryStr}] ${message}`, details || {});
+    }
     
     // Notify subscribers
-    this.notify(entry);
+    this.subscribers.forEach(callback => {
+      try {
+        callback(level, category, message, details);
+      } catch (error) {
+        console.error('Error in log subscriber:', error);
+      }
+    });
   }
   
   /**
@@ -126,27 +141,7 @@ export class LogBridge {
   public error(category: LogCategory, message: string, details?: LogDetails): void {
     this.log(LogLevel.ERROR, category, message, details);
   }
-  
-  /**
-   * Query logs with filter
-   */
-  public query(filter: LogFilter = {}): LogEntry[] {
-    return logger.getEntries(filter);
-  }
-  
-  /**
-   * Clear all logs
-   */
-  public clearLogs(): void {
-    logger.clearEntries();
-  }
-
-  /**
-   * Check if logging system is initialized
-   */
-  public isInitialized(): boolean {
-    return this.initialized;
-  }
 }
 
-export const logBridge = LogBridge.getInstance();
+// Create and export the singleton instance
+export const logBridge = new LogBridgeClass();

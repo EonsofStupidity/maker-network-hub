@@ -1,31 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { LogCategory, LogLevel } from '@/shared/types/core/logging.types';
-import { getErrorMessage } from '@/utils/errors';
-
-// Example function with the error
-export async function logToDatabase(level: LogLevel, category: LogCategory, message: string, details?: any) {
-  try {
-    const response = await supabase
-      .from('application_logs')
-      .insert({
-        level,
-        category,
-        message,
-        details: details || {}
-      })
-      .select('id');
-      
-    if (response.error) {
-      console.error('Failed to log to database:', getErrorMessage(response.error));
-    }
-    
-    return true;
-  } catch (err) {
-    console.error('Logging error:', getErrorMessage(err));
-    return false;
-  }
-}
+import { LogCategory, LogLevel } from '../shared/types/SharedTypes';
 
 // In-memory log storage
 const logEntries: any[] = [];
@@ -53,11 +27,6 @@ export const logger = {
                           level === LogLevel.WARN ? 'warn' : 
                           level === LogLevel.DEBUG ? 'debug' : 'log';
       console[consoleMethod](`[${category}] ${message}`, details);
-      
-      // Log to database if not in development mode
-      if (process.env.NODE_ENV !== 'development') {
-        logToDatabase(level, category, message, details).catch(console.error);
-      }
     }
   },
   
@@ -84,14 +53,6 @@ export const logger = {
       );
     }
     
-    if (filter?.from) {
-      filtered = filtered.filter(entry => entry.timestamp >= filter.from);
-    }
-    
-    if (filter?.to) {
-      filtered = filtered.filter(entry => entry.timestamp <= filter.to);
-    }
-    
     return filtered;
   },
   
@@ -99,5 +60,3 @@ export const logger = {
     logEntries.length = 0;
   }
 };
-
-// Export other functions as needed

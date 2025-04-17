@@ -1,6 +1,5 @@
 
-import { logBridge } from './bridge';
-import { LogCategory, LogLevel } from '@/shared/types/core/logging.types';
+import { logBridge, LogCategory } from './bridge';
 
 /**
  * Initialize the logging system
@@ -19,7 +18,7 @@ export function initializeLogging(): void {
       // Log successful initialization
       const duration = Math.round(performance.now() - startTime);
       logBridge.info(LogCategory.SYSTEM, 'Logging system initialized', {
-        details: { durationMs: duration }
+        durationMs: duration
       });
     }
   } catch (error) {
@@ -35,23 +34,19 @@ function setupGlobalErrorHandlers(): void {
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
     logBridge.error(LogCategory.ERROR, 'Unhandled promise rejection', {
-      details: {
-        reason: event.reason?.message || String(event.reason),
-        stack: event.reason?.stack
-      }
+      reason: event.reason?.message || String(event.reason),
+      stack: event.reason?.stack
     });
   });
   
   // Handle uncaught exceptions
   window.addEventListener('error', (event) => {
     logBridge.error(LogCategory.ERROR, 'Uncaught error', {
-      details: {
-        message: event.message,
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-        stack: event.error?.stack
-      }
+      message: event.message,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+      stack: event.error?.stack
     });
   });
   
@@ -59,7 +54,7 @@ function setupGlobalErrorHandlers(): void {
   if (typeof window !== 'undefined') {
     window.addEventListener('popstate', () => {
       logBridge.info(LogCategory.SYSTEM, 'Navigation: popstate', {
-        details: { path: window.location.pathname }
+        path: window.location.pathname
       });
     });
   }

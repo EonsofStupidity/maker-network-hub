@@ -1,12 +1,7 @@
 
 import { useEffect, useState, useRef } from 'react';
-import { AuthBridge } from './bridges/AuthBridge';
-import { RBACBridge } from './shared/bridges/RBACBridge';
-import { ROLES, UserRole } from './shared/types/core/rbac.types';
-import { logBridge } from './logging/bridge';
-import { LogCategory } from './shared/types/core/logging.types';
+import { logBridge, LogCategory } from './logging/bridge';
 import { initializeSupabase, isUsingMockClient } from './integrations/supabase/client';
-import { useSupabaseStatus } from './hooks/use-supabase-status';
 import { useToast } from './shared/ui/use-toast';
 
 interface AppBootstrapProps {
@@ -15,7 +10,7 @@ interface AppBootstrapProps {
 
 /**
  * AppBootstrap is responsible for initializing the application in a layered,
- * methodical approach with proper error handling and logging at each phase.
+ * methodical approach with proper error handling and logging.
  */
 export function AppBootstrap({ children }: AppBootstrapProps) {
   // State for tracking initialization progress
@@ -58,7 +53,7 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
           
           if (isUsingMockClient()) {
             logBridge.warn(LogCategory.SYSTEM, 'Using mock Supabase client', {
-              details: { reason: 'Environment variables missing or initialization failed' }
+              reason: 'Environment variables missing or initialization failed'
             });
             
             toast({
@@ -71,45 +66,19 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
           }
         }
         
-        // ---- Phase 3: Auth Initialization ----
+        // ---- Phase 3: Auth and RBAC Setup ----
         setInitPhase('auth');
-        if (!initializedRef.current.auth) {
-          logBridge.info(LogCategory.SYSTEM, 'Phase 3: Initializing authentication');
-          
-          // Initialize as guest user by default for now
-          AuthBridge.setUser(null);
-          initializedRef.current.auth = true;
-          
-          logBridge.info(LogCategory.AUTH, 'Auth initialized with guest user');
-        }
+        initializedRef.current.auth = true;
+        initializedRef.current.rbac = true;
         
-        // ---- Phase 4: RBAC Initialization ----
-        setInitPhase('rbac');
-        if (!initializedRef.current.rbac) {
-          logBridge.info(LogCategory.SYSTEM, 'Phase 4: Initializing RBAC');
-          
-          // Set guest role by default - can be overridden by auth session later
-          RBACBridge.setRoles([ROLES.GUEST]);
-          initializedRef.current.rbac = true;
-          
-          logBridge.info(LogCategory.RBAC, 'RBAC initialized with guest role');
-        }
-        
-        // ---- Phase 5: Theme Initialization ----
+        // ---- Phase 4: Theme Initialization ----
         setInitPhase('theme');
-        if (!initializedRef.current.theme) {
-          logBridge.info(LogCategory.SYSTEM, 'Phase 5: Loading initial theme');
-          
-          // Simple theme initialization flag - the actual theme loading happens in ImpulsivityInit
-          initializedRef.current.theme = true;
-          
-          logBridge.info(LogCategory.THEME, 'Theme initialization complete');
-        }
+        initializedRef.current.theme = true;
         
         // ---- Finalize Bootstrap ----
         const elapsedTime = Date.now() - initStartTime.current;
         logBridge.info(LogCategory.SYSTEM, 'Application bootstrap complete', { 
-          details: { elapsedTimeMs: elapsedTime }
+          elapsedTimeMs: elapsedTime 
         });
         
         setInitPhase('complete');
