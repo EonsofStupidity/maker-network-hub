@@ -6,9 +6,9 @@ import { useAuthStore } from '@/auth/store/auth.store';
 import { LogOut, Shield, User } from 'lucide-react';
 import { useToast } from '@/shared/hooks/use-toast';
 import { AUTH_STATUS } from '@/shared/types/core/auth.types';
-import { LogLevel, LogCategory } from '@/shared/types/core/logging.types';
-import { logger } from '@/logging/logger.service';
 import { RBACBridge } from '@/shared/bridges/RBACBridge';
+import { logBridge } from '@/logging/bridge';
+import { LogCategory } from '@/shared/types/core/logging.types';
 
 export default function AuthSection() {
   const { isAuthenticated, user, logout, status } = useAuthStore();
@@ -25,7 +25,7 @@ export default function AuthSection() {
       });
       navigate('/');
     } catch (error) {
-      logger.log(LogLevel.ERROR, LogCategory.AUTH, 'Logout failed', { 
+      logBridge.error(LogCategory.AUTH, 'Logout failed', { 
         error: error instanceof Error ? error.message : String(error)
       });
       toast({

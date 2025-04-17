@@ -1,5 +1,12 @@
 
-import { UserRole, ROLES, AdminSection, SECTION_PERMISSIONS, Permission } from '../types/core/rbac.types';
+import { 
+  UserRole, 
+  ROLES, 
+  AdminSection, 
+  SECTION_PERMISSIONS, 
+  Permission,
+  DEFAULT_PERMISSIONS
+} from '../types/core/rbac.types';
 
 /**
  * RBACBridge - Role-Based Access Control Bridge
@@ -15,7 +22,7 @@ export interface IRBACBridge {
   isSuperAdmin: () => boolean;
   isModerator: () => boolean;
   isBuilder: () => boolean;
-  hasPermission: (permission: string | string[]) => boolean;
+  hasPermission: (permission: Permission | Permission[]) => boolean;
   canAccessAdminSection: (section: AdminSection) => boolean;
   getRoleLabels: () => Record<UserRole, string>;
 }
@@ -53,7 +60,7 @@ class RBACBridgeClass implements IRBACBridge {
     this.roles = roles.length > 0 ? roles : [ROLES.GUEST];
     
     // Set permissions based on roles
-    this.permissions = roles.flatMap(role => 
+    this.permissions = this.roles.flatMap(role => 
       DEFAULT_PERMISSIONS[role] as string[]
     );
     
@@ -100,7 +107,7 @@ class RBACBridgeClass implements IRBACBridge {
   /**
    * Check if user has a specific permission
    */
-  public hasPermission(permission: string | string[]): boolean {
+  public hasPermission(permission: Permission | Permission[]): boolean {
     // Super admin has all permissions
     if (this.isSuperAdmin()) {
       return true;
@@ -121,7 +128,7 @@ class RBACBridgeClass implements IRBACBridge {
     }
     
     // Check if user has any of the allowed roles
-    return allowedRoles.some(role => this.hasRole(role));
+    return this.hasRole(allowedRoles);
   }
 
   /**

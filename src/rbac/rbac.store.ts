@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
 import { logBridge } from '@/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
+import { RBACBridge } from './bridge';
 
 interface RBACState {
   userRoles: UserRole[];
@@ -26,6 +27,9 @@ export const useRBACStore = create<RBACState>((set, get) => ({
     });
     
     set({ userRoles: roles });
+    
+    // Update the RBAC bridge
+    RBACBridge.setRoles(roles);
   },
 
   // Alias for setRoles for components that expect this name
@@ -35,6 +39,9 @@ export const useRBACStore = create<RBACState>((set, get) => ({
     });
     
     set({ userRoles: roles });
+    
+    // Update the RBAC bridge
+    RBACBridge.setRoles(roles);
   },
   
   addRole: (role) => {
@@ -45,7 +52,11 @@ export const useRBACStore = create<RBACState>((set, get) => ({
         details: { role }
       });
       
-      set({ userRoles: [...userRoles, role] });
+      const newRoles = [...userRoles, role];
+      set({ userRoles: newRoles });
+      
+      // Update the RBAC bridge
+      RBACBridge.setRoles(newRoles);
     }
   },
   
@@ -57,13 +68,20 @@ export const useRBACStore = create<RBACState>((set, get) => ({
         details: { role }
       });
       
-      set({ userRoles: userRoles.filter(r => r !== role) });
+      const newRoles = userRoles.filter(r => r !== role);
+      set({ userRoles: newRoles });
+      
+      // Update the RBAC bridge
+      RBACBridge.setRoles(newRoles);
     }
   },
   
   clearRoles: () => {
     logBridge.info(LogCategory.RBAC, 'User roles cleared');
     set({ userRoles: [ROLES.GUEST] });
+    
+    // Update the RBAC bridge
+    RBACBridge.clearRoles();
   },
   
   setPermissions: (permissions) => {

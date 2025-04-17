@@ -3,7 +3,10 @@ import { create } from 'zustand';
 import { UserProfile, AUTH_STATUS, AuthStatus } from '@/shared/types/core/auth.types';
 import { mapUserToProfile } from '@/auth/utils/userMapper';
 import { supabase } from '@/integrations/supabase/client';
+import { RBACBridge } from '@/shared/bridges/RBACBridge';
 import { ROLES, UserRole } from '@/shared/types/core/rbac.types';
+import { logBridge } from '@/logging/bridge';
+import { LogCategory } from '@/shared/types/core/logging.types';
 
 export interface AuthState {
   user: UserProfile | null;
@@ -25,24 +28,6 @@ export interface AuthState {
   updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
 }
 
-// Default system user for development/testing
-const systemUser: UserProfile = {
-  id: 'system-user-id',
-  email: 'system@internal.app',
-  displayName: 'System User',
-  createdAt: new Date().toISOString(),
-  roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
-};
-
-// Create mock user for development
-const createMockUser = (id: string): UserProfile => ({
-  id,
-  email: `user-${id}@example.com`,
-  displayName: `User ${id}`,
-  createdAt: new Date().toISOString(),
-  roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
-});
-
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
@@ -51,12 +36,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   error: null,
   initialized: false,
   
-  setUser: (user) => set({ 
-    user, 
-    profile: user,
-    isAuthenticated: !!user,
-    status: user ? AUTH_STATUS.AUTHENTICATED : AUTH_STATUS.GUEST
-  }),
+  setUser: (user) => {
+    set({ 
+      user, 
+      profile: user,
+      isAuthenticated: !!user,
+      status: user ? AUTH_STATUS.AUTHENTICATED : AUTH_STATUS.GUEST
+    });
+    
+    // Update RBAC roles when user changes
+    if (user?.roles && Array.isArray(user.roles)) {
+      // Filter to ensure only valid roles
+      const validRoles = user.roles.filter(role => 
+        Object.values(ROLES).includes(role as UserRole)
+      ) as UserRole[];
+      
+      if (validRoles.length > 0) {
+        RBACBridge.setRoles(validRoles);
+      } else {
+        RBACBridge.setRoles([ROLES.GUEST]);
+      }
+    } else {
+      // Default to guest if no roles
+      RBACBridge.setRoles([ROLES.GUEST]);
+    }
+  },
   
   setAuthStatus: (status) => set({ status }),
   
@@ -66,16 +70,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ status: AUTH_STATUS.LOADING });
       
-      // In development, always succeed with system user
-      if (process.env.NODE_ENV === 'development') {
-        set({ 
-          user: systemUser,
-          profile: systemUser,
-          isAuthenticated: true,
-          status: AUTH_STATUS.AUTHENTICATED
-        });
-        return;
-      }
+      logBridge.info(LogCategory.AUTH, 'Login attempt', {
+        details: { email }
+      });
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -92,12 +89,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isAuthenticated: true,
           status: AUTH_STATUS.AUTHENTICATED
         });
+        
+        logBridge.info(LogCategory.AUTH, 'Login successful', {
+          details: { userId: userProfile.id }
+        });
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error during login';
+      logBridge.error(LogCategory.AUTH, 'Login failed', {
+        details: { error: errorMessage, email }
+      });
+      
       set({ 
         error: error instanceof Error ? error : new Error('Unknown error during login'),
         status: AUTH_STATUS.ERROR
       });
+      
       throw error;
     }
   },
@@ -106,16 +113,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ status: AUTH_STATUS.LOADING });
       
-      // In development, always succeed with system user
-      if (process.env.NODE_ENV === 'development') {
-        set({ 
-          user: systemUser,
-          profile: systemUser,
-          isAuthenticated: true,
-          status: AUTH_STATUS.AUTHENTICATED
-        });
-        return;
-      }
+      logBridge.info(LogCategory.AUTH, 'Signup attempt', {
+        details: { email }
+      });
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -132,12 +132,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isAuthenticated: true,
           status: AUTH_STATUS.AUTHENTICATED
         });
+        
+        logBridge.info(LogCategory.AUTH, 'Signup successful', {
+          details: { userId: userProfile.id }
+        });
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error during signup';
+      logBridge.error(LogCategory.AUTH, 'Signup failed', {
+        details: { error: errorMessage, email }
+      });
+      
       set({ 
         error: error instanceof Error ? error : new Error('Unknown error during signup'),
         status: AUTH_STATUS.ERROR
       });
+      
       throw error;
     }
   },
@@ -146,22 +156,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ status: AUTH_STATUS.LOADING });
       
-      // In development mode, just simulate success
-      if (process.env.NODE_ENV === 'development') {
-        set({ status: AUTH_STATUS.IDLE });
-        return;
-      }
+      logBridge.info(LogCategory.AUTH, 'Password reset requested', {
+        details: { email }
+      });
       
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       
       if (error) throw error;
       
       set({ status: AUTH_STATUS.IDLE });
+      
+      logBridge.info(LogCategory.AUTH, 'Password reset email sent', {
+        details: { email }
+      });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error during password reset';
+      logBridge.error(LogCategory.AUTH, 'Password reset failed', {
+        details: { error: errorMessage, email }
+      });
+      
       set({ 
         error: error instanceof Error ? error : new Error('Unknown error during password reset'),
         status: AUTH_STATUS.ERROR
       });
+      
       throw error;
     }
   },
@@ -170,16 +188,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ status: AUTH_STATUS.LOADING });
       
-      // In development, just reset the state
-      if (process.env.NODE_ENV === 'development') {
-        set({ 
-          user: null, 
-          profile: null,
-          isAuthenticated: false,
-          status: AUTH_STATUS.GUEST
-        });
-        return;
-      }
+      logBridge.info(LogCategory.AUTH, 'Logout attempt', {
+        details: { userId: get().user?.id }
+      });
       
       const { error } = await supabase.auth.signOut();
       
@@ -191,11 +202,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: false,
         status: AUTH_STATUS.GUEST
       });
+      
+      // Reset RBAC to guest
+      RBACBridge.clearRoles();
+      
+      logBridge.info(LogCategory.AUTH, 'Logout successful');
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error during logout';
+      logBridge.error(LogCategory.AUTH, 'Logout failed', {
+        details: { error: errorMessage }
+      });
+      
       set({ 
         error: error instanceof Error ? error : new Error('Unknown error during logout'),
         status: AUTH_STATUS.ERROR
       });
+      
       throw error;
     }
   },
@@ -204,22 +226,47 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ status: AUTH_STATUS.LOADING });
       
-      // In development, always use the system user
-      if (process.env.NODE_ENV === 'development') {
-        console.info('Development mode: Using system user');
-        set({ 
-          user: systemUser,
-          profile: systemUser,
-          isAuthenticated: true,
-          status: AUTH_STATUS.AUTHENTICATED,
-          initialized: true
-        });
-        return;
-      }
+      logBridge.info(LogCategory.AUTH, 'Initializing auth state');
       
+      // Set up auth state listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (session?.user) {
+          const userProfile = mapUserToProfile(session.user);
+          set({ 
+            user: userProfile,
+            profile: userProfile,
+            isAuthenticated: true,
+            status: AUTH_STATUS.AUTHENTICATED
+          });
+          
+          logBridge.info(LogCategory.AUTH, 'Auth state changed', {
+            details: { event, userId: userProfile.id }
+          });
+        } else {
+          set({
+            user: null,
+            profile: null,
+            isAuthenticated: false,
+            status: AUTH_STATUS.GUEST
+          });
+          
+          // Reset RBAC to guest
+          RBACBridge.clearRoles();
+          
+          logBridge.info(LogCategory.AUTH, 'Auth state changed - no session', {
+            details: { event }
+          });
+        }
+      });
+      
+      // Check for existing session
       const { data, error } = await supabase.auth.getSession();
       
-      if (error) throw error;
+      if (error) {
+        logBridge.error(LogCategory.AUTH, 'Failed to get session', {
+          details: { error: error.message }
+        });
+      }
       
       if (data?.session?.user) {
         const userProfile = mapUserToProfile(data.session.user);
@@ -230,6 +277,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           status: AUTH_STATUS.AUTHENTICATED,
           initialized: true
         });
+        
+        logBridge.info(LogCategory.AUTH, 'Session found during initialization', {
+          details: { userId: userProfile.id }
+        });
       } else {
         set({
           user: null,
@@ -238,19 +289,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           status: AUTH_STATUS.GUEST,
           initialized: true
         });
+        
+        // Set default guest role
+        RBACBridge.setRoles([ROLES.GUEST]);
+        
+        logBridge.info(LogCategory.AUTH, 'No session found during initialization');
       }
     } catch (error) {
-      console.error('Auth initialization error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error during initialization';
+      logBridge.error(LogCategory.AUTH, 'Initialization error', {
+        details: { error: errorMessage }
+      });
       
-      // In case of an error in production, set guest mode
       set({ 
-        user: null,
-        profile: null,
-        isAuthenticated: false,
         error: error instanceof Error ? error : new Error('Unknown error during initialization'),
-        status: AUTH_STATUS.GUEST,
+        status: AUTH_STATUS.ERROR,
         initialized: true
       });
+      
+      // Default to guest on error
+      RBACBridge.setRoles([ROLES.GUEST]);
     }
   },
   
@@ -262,14 +320,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw new Error('No user logged in');
       }
       
-      // In development, just update the state
-      if (process.env.NODE_ENV === 'development') {
-        set(state => ({
-          user: state.user ? { ...state.user, ...profileData } : null,
-          profile: state.profile ? { ...state.profile, ...profileData } : null
-        }));
-        return;
-      }
+      logBridge.info(LogCategory.AUTH, 'Profile update requested', {
+        details: { userId: user.id }
+      });
       
       const { error } = await supabase.auth.updateUser({
         data: {
@@ -284,7 +337,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: state.user ? { ...state.user, ...profileData } : null,
         profile: state.profile ? { ...state.profile, ...profileData } : null
       }));
+      
+      logBridge.info(LogCategory.AUTH, 'Profile updated successfully', {
+        details: { userId: user.id }
+      });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error updating profile';
+      logBridge.error(LogCategory.AUTH, 'Profile update failed', {
+        details: { error: errorMessage, userId: get().user?.id }
+      });
+      
       set({ error: error instanceof Error ? error : new Error('Unknown error updating profile') });
       throw error;
     }
