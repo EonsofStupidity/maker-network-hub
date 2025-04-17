@@ -1,4 +1,6 @@
 
+import { ThemeEffect, ThemeEffectType } from '../core/theme.types';
+
 export enum ThemeStatus {
   ACTIVE = 'active',
   DRAFT = 'draft',
@@ -37,20 +39,17 @@ export interface Theme {
   label?: string;
   description?: string;
   isDark: boolean;
-  status?: ThemeStatus;
-  context?: ThemeContext;
+  active?: boolean;
+  dark?: boolean;
+  status?: ThemeStatus | string;
+  context?: ThemeContext | string;
   variables?: Record<string, string>;
   designTokens?: DesignTokens;
   componentTokens?: ComponentTokens;
   metadata?: Record<string, any>;
-}
-
-export interface ThemeEffect {
-  type: string;
-  intensity: number;
-  color?: string;
-  enabled?: boolean;
-  [key: string]: any;
+  colors?: Record<string, string>;
+  effects?: ThemeEffect[];
+  tokens?: any[];
 }
 
 export interface ThemeState {

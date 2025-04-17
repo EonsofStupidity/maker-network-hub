@@ -14,11 +14,12 @@ export interface ILogBridge {
   error: (category: LogCategory, message: string, details?: LogDetails) => void;
   critical: (category: LogCategory, message: string, details?: LogDetails) => void;
   log: (level: LogLevel, category: LogCategory, message: string, details?: LogDetails) => void;
+  isInitialized: boolean;
 }
 
 class LogBridgeClass implements ILogBridge {
   private logs: LogEntry[] = [];
-  private isInitialized = false;
+  isInitialized = false;
 
   /**
    * Initialize the logging system
@@ -119,3 +120,6 @@ class LogBridgeClass implements ILogBridge {
 
 // Export singleton instance
 export const logBridge = new LogBridgeClass();
+
+// Re-export LogCategory for convenience
+export { LogCategory, LogLevel } from '@/shared/types/core/logging.types';

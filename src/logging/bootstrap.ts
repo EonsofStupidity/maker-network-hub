@@ -1,5 +1,6 @@
 
-import { logBridge, LogCategory } from './bridge';
+import { logBridge } from './bridge';
+import { LogCategory } from '@/shared/types/core/logging.types';
 
 /**
  * Initialize the logging system
@@ -9,7 +10,7 @@ export function initializeLogging(): void {
   
   try {
     // Initialize the log bridge if not already initialized
-    if (!logBridge.isInitialized()) {
+    if (!logBridge.isInitialized) {
       logBridge.initialize();
       
       // Set up any global error handlers
