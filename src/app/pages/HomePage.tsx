@@ -1,8 +1,47 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FeaturesSection } from '../components/landing/FeaturesSection';
 import { ThemeEffectType } from '@/shared/types/shared.types';
 import { cn } from '@/shared/utils/cn';
+import { loadImage } from '@/shared/utils/assetLoader';
+
+// Define build card component separately
+interface BuildCardProps {
+  title: string;
+  description: string;
+  imagePath: string;
+  href: string;
+}
+
+const BuildCard = ({ title, description, imagePath, href }: BuildCardProps) => {
+  const [imageUrl, setImageUrl] = useState<string>('/images/placeholder.jpg');
+  
+  useEffect(() => {
+    // Load the image with fallbacks
+    loadImage(imagePath, 'app/feat_3dpbuilds', 'placeholder1')
+      .then(url => setImageUrl(url))
+      .catch(() => setImageUrl('/images/placeholder.jpg'));
+  }, [imagePath]);
+  
+  return (
+    <a 
+      href={href}
+      className="block overflow-hidden rounded-lg border border-primary/10 bg-card transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10 group relative"
+    >
+      <div className="h-48 overflow-hidden">
+        <div 
+          className="w-full h-full bg-cover bg-center transform group-hover:scale-110 transition-transform duration-500"
+          style={{ backgroundImage: `url(${imageUrl})` }}
+        />
+      </div>
+      <div className="p-4">
+        <h3 className="font-bold text-lg mb-1 group-hover:text-primary transition-colors">{title}</h3>
+        <p className="text-muted-foreground text-sm">{description}</p>
+      </div>
+      <div className="absolute inset-0 border-2 border-transparent group-hover:border-primary/20 rounded-lg transition-all duration-300" />
+    </a>
+  );
+};
 
 export default function HomePage() {
   return (
@@ -64,23 +103,23 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Featured builds */}
+            {/* Featured builds with local paths */}
             <BuildCard
               title="Voron 2.4 Build"
               description="CoreXY precision printer with full enclosure"
-              image="/images/placeholder-1.jpg"
+              imagePath="voron24.jpg"
               href="/builds/voron-24"
             />
             <BuildCard
               title="Ender 3 Modifications"
               description="Upgraded firmware and custom parts"
-              image="/images/placeholder-2.jpg"
+              imagePath="ender3.jpg"
               href="/builds/ender-3-mods"
             />
             <BuildCard
               title="Custom Resin Printer"
               description="DIY SLA printer with 4K resolution"
-              image="/images/placeholder-3.jpg"
+              imagePath="resin.jpg"
               href="/builds/diy-resin"
             />
           </div>
@@ -89,28 +128,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-// Build card component
-const BuildCard = ({ title, description, image, href }: { 
-  title: string; 
-  description: string; 
-  image: string; 
-  href: string;
-}) => (
-  <a 
-    href={href}
-    className="block overflow-hidden rounded-lg border border-primary/10 bg-card transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10 group relative"
-  >
-    <div className="h-48 overflow-hidden">
-      <div 
-        className="w-full h-full bg-cover bg-center transform group-hover:scale-110 transition-transform duration-500"
-        style={{ backgroundImage: `url(${image})` }}
-      />
-    </div>
-    <div className="p-4">
-      <h3 className="font-bold text-lg mb-1 group-hover:text-primary transition-colors">{title}</h3>
-      <p className="text-muted-foreground text-sm">{description}</p>
-    </div>
-    <div className="absolute inset-0 border-2 border-transparent group-hover:border-primary/20 rounded-lg transition-all duration-300" />
-  </a>
-);
