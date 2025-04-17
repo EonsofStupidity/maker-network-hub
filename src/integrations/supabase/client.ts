@@ -27,75 +27,14 @@ const createMockClient = () => {
   
   isMockClient = true;
   
-  return {
-    from: (table: string) => ({
-      select: (columns: string = '*') => {
-        const mockResponse: SupabaseResponse = { 
-          data: [], 
-          error: null 
-        };
-        
-        logBridge.info(LogCategory.SYSTEM, 'Mock Supabase select operation', {
-          details: { table, columns }
-        });
-        
-        return {
-          eq: () => ({
-            single: () => Promise.resolve<SupabaseResponse>(mockResponse),
-            maybeSingle: () => Promise.resolve<SupabaseResponse>(mockResponse),
-          }),
-          single: () => Promise.resolve<SupabaseResponse>(mockResponse),
-          maybeSingle: () => Promise.resolve<SupabaseResponse>(mockResponse),
-        };
-      },
-      insert: (data: any) => ({
-        select: () => ({
-          single: () => Promise.resolve<SupabaseResponse>({ data, error: null }),
-        }),
-      }),
-      update: (data: any) => ({
-        eq: () => ({
-          select: () => ({
-            single: () => Promise.resolve<SupabaseResponse>({ data, error: null }),
-          }),
-        }),
-      }),
-      delete: () => ({
-        eq: () => Promise.resolve<SupabaseResponse>({ data: null, error: null }),
-      }),
-    }),
+  // Return a properly typed mock client that satisfies the SupabaseClient interface
+  return createClient('https://example.com', 'mock-key', {
     auth: {
-      getSession: () => {
-        logBridge.info(LogCategory.AUTH, 'Mock auth.getSession called');
-        return Promise.resolve({ 
-          data: { session: null }, 
-          error: null 
-        });
-      },
-      onAuthStateChange: (callback: any) => {
-        logBridge.info(LogCategory.AUTH, 'Mock auth.onAuthStateChange registered');
-        return {
-          data: {
-            subscription: {
-              unsubscribe: () => {
-                logBridge.info(LogCategory.AUTH, 'Mock auth subscription unsubscribed');
-              },
-            },
-          },
-        };
-      },
-      signOut: () => Promise.resolve({ error: null }),
-      signInWithPassword: () => Promise.resolve({ data: { user: null }, error: null }),
-      signUp: () => Promise.resolve({ data: { user: null }, error: null }),
-    },
-    storage: {
-      from: (bucket: string) => ({
-        upload: () => Promise.resolve({ data: null, error: null }),
-        getPublicUrl: () => ({ data: { publicUrl: '' } }),
-      }),
-    },
-  };
-};
+      persistSession: false,
+      autoRefreshToken: false,
+    }
+  });
+}
 
 /**
  * Initialize the Supabase client
@@ -169,12 +108,12 @@ export const initializeSupabase = (): boolean => {
  * Get the Supabase client instance
  * Will initialize the client if not already initialized
  */
-export const getSupabaseClient = (): any => {
+export const getSupabaseClient = (): SupabaseClient => {
   if (!isInitialized) {
     initializeSupabase();
   }
   
-  return supabaseClient;
+  return supabaseClient!;
 };
 
 /**
