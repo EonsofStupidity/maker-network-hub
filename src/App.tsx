@@ -1,5 +1,5 @@
 
-import React, { Suspense } from "react";
+import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "./shared/ui/toaster";
@@ -9,6 +9,7 @@ import { AuthProvider } from "./auth/context/AuthContext";
 import Routes from "./router/Routes";
 import { GlobalErrorBoundary } from "./shared/components/GlobalErrorBoundary";
 import { AppProvider } from "./app/context/AppContext";
+import AppBootstrap from "./AppBootstrap";
 
 // Configure Query Client with simpler settings focused on reliability
 const queryClient = new QueryClient({
@@ -31,9 +32,11 @@ function App() {
             <AppProvider>
               <Toaster />
               <Sonner />
-              <BrowserRouter>
-                <Routes />
-              </BrowserRouter>
+              <AppBootstrap>
+                <BrowserRouter>
+                  <Routes />
+                </BrowserRouter>
+              </AppBootstrap>
             </AppProvider>
           </AuthProvider>
         </TooltipProvider>

@@ -6,6 +6,7 @@
 import { configureSupabaseClient } from './client-config';
 import { logBridge } from '@/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
+import { createClient } from '@supabase/supabase-js';
 
 // Define base types for responses
 export interface SupabaseResponse<T = any> {
@@ -20,16 +21,13 @@ const createMockClient = () => {
   return {
     from: (table: string) => ({
       select: (columns: string = '*') => {
-        // Mock response based on table name
         const mockResponse: SupabaseResponse = { 
           data: [], 
           error: null 
         };
         
         return {
-          ...mockResponse,
           eq: () => ({
-            ...mockResponse,
             single: () => Promise.resolve<SupabaseResponse>(mockResponse),
             maybeSingle: () => Promise.resolve<SupabaseResponse>(mockResponse),
           }),
@@ -58,7 +56,6 @@ const createMockClient = () => {
         data: { session: null }, 
         error: null 
       }),
-      signOut: () => Promise.resolve({ error: null }),
       onAuthStateChange: (callback: any) => ({
         data: {
           subscription: {
@@ -66,8 +63,15 @@ const createMockClient = () => {
           },
         },
       }),
+      signOut: () => Promise.resolve({ error: null }),
       signInWithPassword: () => Promise.resolve({ data: { user: null }, error: null }),
       signUp: () => Promise.resolve({ data: { user: null }, error: null }),
+    },
+    storage: {
+      from: (bucket: string) => ({
+        upload: () => Promise.resolve({ data: null, error: null }),
+        getPublicUrl: () => ({ data: { publicUrl: '' } }),
+      }),
     },
   };
 };
@@ -76,14 +80,33 @@ const createMockClient = () => {
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Create either a real Supabase client or a mock one
 let baseClient;
 
 if (supabaseUrl && supabaseKey) {
-  logBridge.info(LogCategory.SYSTEM, 'Initializing Supabase client', {
-    details: { url: supabaseUrl }
-  });
-  baseClient = configureSupabaseClient(supabaseUrl, supabaseKey);
+  try {
+    logBridge.info(LogCategory.SYSTEM, 'Initializing Supabase client', {
+      details: { url: supabaseUrl }
+    });
+    
+    baseClient = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: 'supabase.auth.token',
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'supabase-js/2.x',
+        },
+      }
+    });
+  } catch (error) {
+    logBridge.error(LogCategory.SYSTEM, 'Error creating Supabase client, falling back to mock', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    baseClient = createMockClient();
+  }
 } else {
   logBridge.warn(LogCategory.SYSTEM, 'Supabase environment variables missing, using mock client');
   baseClient = createMockClient();
