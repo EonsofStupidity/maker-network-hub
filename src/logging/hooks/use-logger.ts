@@ -1,48 +1,71 @@
 
 import { useCallback } from 'react';
-import { logger } from '../logger.service';
-import { LogLevel, LogCategory, LogCategoryType, LogDetails } from '@/shared/types/shared.types';
+import { logBridge } from '../bridge';
+import { LogCategory, LogLevel, LogDetails } from '@/shared/types/core/logging.types';
+import { useAuthStore } from '@/auth/store/auth.store';
 
 /**
- * Custom hook for component-level logging
- * 
- * @param source - Source of the log (component name, service, etc.)
- * @param category - Log category
- * @returns Object with log methods for different log levels
+ * Hook for component-scoped logging
  */
-export const useLogger = (source: string, category: LogCategoryType = LogCategory.UI) => {
-  const createLogDetails = (details?: Partial<LogDetails>): LogDetails => ({
-    source,
-    ...details
-  });
-
-  const debug = useCallback((message: string, details?: Partial<LogDetails>) => {
-    logger.log(LogLevel.DEBUG, category, message, createLogDetails(details));
-  }, [source, category]);
-
-  const info = useCallback((message: string, details?: Partial<LogDetails>) => {
-    logger.log(LogLevel.INFO, category, message, createLogDetails(details));
-  }, [source, category]);
-
-  const warn = useCallback((message: string, details?: Partial<LogDetails>) => {
-    logger.log(LogLevel.WARN, category, message, createLogDetails(details));
-  }, [source, category]);
-
-  const error = useCallback((message: string, details?: Partial<LogDetails>) => {
-    logger.log(LogLevel.ERROR, category, message, createLogDetails(details));
-  }, [source, category]);
-
+export function useLogger(source: string, defaultCategory: LogCategory = LogCategory.APP) {
+  const user = useAuthStore(state => state.user);
+  
+  const debug = useCallback((message: string, details?: LogDetails) => {
+    logBridge.debug(defaultCategory, message, {
+      ...details,
+      source,
+      userId: user?.id
+    });
+  }, [defaultCategory, source, user]);
+  
+  const info = useCallback((message: string, details?: LogDetails) => {
+    logBridge.info(defaultCategory, message, {
+      ...details,
+      source,
+      userId: user?.id
+    });
+  }, [defaultCategory, source, user]);
+  
+  const warn = useCallback((message: string, details?: LogDetails) => {
+    logBridge.warn(defaultCategory, message, {
+      ...details,
+      source,
+      userId: user?.id
+    });
+  }, [defaultCategory, source, user]);
+  
+  const error = useCallback((message: string, details?: LogDetails) => {
+    logBridge.error(defaultCategory, message, {
+      ...details,
+      source,
+      userId: user?.id
+    });
+  }, [defaultCategory, source, user]);
+  
+  const critical = useCallback((message: string, details?: LogDetails) => {
+    logBridge.critical(defaultCategory, message, {
+      ...details,
+      source,
+      userId: user?.id
+    });
+  }, [defaultCategory, source, user]);
+  
+  const log = useCallback((level: LogLevel, message: string, details?: LogDetails) => {
+    logBridge.log(level, defaultCategory, message, {
+      ...details,
+      source,
+      userId: user?.id
+    });
+  }, [defaultCategory, source, user]);
+  
   return {
     debug,
     info,
     warn,
     error,
-    log: useCallback((level: LogLevel, message: string, details?: Partial<LogDetails>) => {
-      logger.log(level, category, message, createLogDetails(details));
-    }, [source, category]),
-    
-    withCategory: useCallback((newCategory: LogCategoryType) => {
-      return useLogger(source, newCategory);
-    }, [source])
+    critical,
+    log
   };
-};
+}
+
+export default useLogger;

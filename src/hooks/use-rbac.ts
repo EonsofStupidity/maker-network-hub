@@ -1,50 +1,15 @@
 
 import { useCallback } from 'react';
 import { RBACBridge } from '@/shared/bridges/RBACBridge';
-import { UserRole, ROLES, Permission, AdminSection } from '@/shared/types/core/rbac.types';
-import { logBridge } from '@/logging/bridge';
-import { LogCategory } from '@/shared/types/core/logging.types';
+import { AdminSection, UserRole, ROLES } from '@/shared/types/core/rbac.types';
+import { useRBACStore } from '@/rbac/rbac.store';
 
-export interface IRBACHook {
-  roles: UserRole[];
-  hasRole: (role: UserRole | UserRole[]) => boolean;
-  can: (permission: Permission) => boolean;
-  hasAdminAccess: () => boolean;
-  isSuperAdmin: () => boolean;
-  isModerator: () => boolean;
-  isBuilder: () => boolean;
-  canAccessAdminSection: (section: AdminSection) => boolean;
-  getHighestRole: () => UserRole;
-  getRoleLabels: () => Record<UserRole, string>;
-}
-
-/**
- * Hook for accessing RBAC functionality
- * @returns Object with RBAC methods and state
- */
-export const useRbac = (): IRBACHook => {
-  const roles = RBACBridge.getRoles();
+export function useRbac() {
+  const userRoles = useRBACStore((state) => state.userRoles);
   
-  // Check if user has a specific role
+  // Check if user has specific role
   const hasRole = useCallback((role: UserRole | UserRole[]): boolean => {
-    const result = RBACBridge.hasRole(role);
-    
-    // Log failed permission checks for auditing
-    if (!result && process.env.NODE_ENV !== 'production') {
-      logBridge.debug(LogCategory.RBAC, 'Role check failed', {
-        details: {
-          requiredRoles: Array.isArray(role) ? role : [role],
-          userRoles: roles,
-        }
-      });
-    }
-    
-    return result;
-  }, [roles]);
-  
-  // Check if user has a specific permission
-  const can = useCallback((permission: Permission): boolean => {
-    return RBACBridge.hasPermission(permission);
+    return RBACBridge.hasRole(role);
   }, []);
   
   // Check if user has admin access
@@ -52,7 +17,7 @@ export const useRbac = (): IRBACHook => {
     return RBACBridge.hasAdminAccess();
   }, []);
   
-  // Check if user is a super admin
+  // Check if user is super admin
   const isSuperAdmin = useCallback((): boolean => {
     return RBACBridge.isSuperAdmin();
   }, []);
@@ -67,47 +32,36 @@ export const useRbac = (): IRBACHook => {
     return RBACBridge.isBuilder();
   }, []);
   
-  // Check if user can access a specific admin section
+  // Check if user has permission to access admin section
   const canAccessAdminSection = useCallback((section: AdminSection): boolean => {
     return RBACBridge.canAccessAdminSection(section);
   }, []);
-  
-  // Get the highest role a user has
+
+  // Get highest role for a user
   const getHighestRole = useCallback((): UserRole => {
-    const roleOrder: UserRole[] = [
-      ROLES.GUEST,
-      ROLES.FOLLOWER,
-      ROLES.MAKER,
-      ROLES.MOD,
-      ROLES.ADMIN,
-      ROLES.SUPER_ADMIN
-    ];
-    
-    // Find the highest role the user has
-    for (let i = roleOrder.length - 1; i >= 0; i--) {
-      if (roles.includes(roleOrder[i])) {
-        return roleOrder[i];
-      }
-    }
-    
+    if (userRoles.includes(ROLES.SUPER_ADMIN)) return ROLES.SUPER_ADMIN;
+    if (userRoles.includes(ROLES.ADMIN)) return ROLES.ADMIN;
+    if (userRoles.includes(ROLES.MOD)) return ROLES.MOD;
+    if (userRoles.includes(ROLES.MAKER)) return ROLES.MAKER;
+    if (userRoles.includes(ROLES.FOLLOWER)) return ROLES.FOLLOWER;
     return ROLES.GUEST;
-  }, [roles]);
+  }, [userRoles]);
   
-  // Get role labels for UI display
-  const getRoleLabels = useCallback((): Record<UserRole, string> => {
-    return RBACBridge.getRoleLabels();
-  }, []);
+  // Check if user has elevated privileges (mod or higher)
+  const hasElevatedPrivileges = useCallback((): boolean => {
+    return hasRole([ROLES.MOD, ROLES.ADMIN, ROLES.SUPER_ADMIN]);
+  }, [hasRole]);
   
   return {
-    roles,
+    roles: userRoles,
     hasRole,
-    can,
     hasAdminAccess,
     isSuperAdmin,
     isModerator,
     isBuilder,
-    canAccessAdminSection,
     getHighestRole,
-    getRoleLabels
+    hasElevatedPrivileges,
+    canAccessAdminSection,
+    ROLES
   };
-};
+}

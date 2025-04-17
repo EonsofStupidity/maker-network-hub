@@ -3,7 +3,6 @@ import { useEffect, useState, useRef } from 'react';
 import { logBridge } from './logging/bridge';
 import { LogCategory } from './shared/types/core/logging.types';
 import { initializeSupabase } from './integrations/supabase/client';
-import { RBACBridge } from './shared/bridges/RBACBridge';
 import { useAuthStore } from './auth/store/auth.store';
 import { useToast } from './shared/ui/use-toast';
 
@@ -27,7 +26,7 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
   const initStartTime = useRef(Date.now());
   
   // Access auth store
-  const { initialize: initializeAuth, initialized: authInitialized } = useAuthStore();
+  const { initialize: initializeAuth } = useAuthStore();
   
   // Bootstrap the application
   useEffect(() => {
@@ -38,7 +37,6 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
         // ---- Phase 1: Initialize Logging System ----
         setInitStatus(prev => ({ ...prev, phase: 'logging' }));
         console.log('📝 Initializing logging system');
-        logBridge.initialize();
         logBridge.info(LogCategory.SYSTEM, 'Phase 1: Logging system initialized');
 
         // ---- Phase 2: Supabase Client Initialization ----
@@ -99,7 +97,7 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
     if (!initStatus.completed && !initStatus.error) {
       bootstrap();
     }
-  }, [initStatus.completed, initStatus.error, toast, initializeAuth]);
+  }, [initStatus.completed, initStatus.error, toast, initializeAuth, initStatus.phase]);
   
   // Show loading state with the current initialization phase
   if (!initStatus.completed) {

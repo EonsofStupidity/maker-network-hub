@@ -1,10 +1,13 @@
 
 // Re-export the core RBAC types from the shared directory
-export { 
+export type { 
   UserRole, 
-  ROLES, 
   Permission, 
-  AdminSection, 
+  AdminSection
+} from '@/shared/types/core/rbac.types';
+
+export { 
+  ROLES, 
   SECTION_PERMISSIONS, 
   ROLE_LABELS,
   DEFAULT_PERMISSIONS 

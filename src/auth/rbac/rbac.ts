@@ -1,5 +1,5 @@
 
-import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
+import { UserRole, ROLES, ROLE_LABELS } from '@/shared/types/core/rbac.types';
 
 /**
  * Core RBAC functionality
@@ -33,12 +33,5 @@ export function isBuilder(userRoles: UserRole[]): boolean {
 }
 
 export function getRoleLabels(): Record<UserRole, string> {
-  return {
-    'GUEST': 'Guest',
-    'FOLLOWER': 'Follower',
-    'MAKER': 'Maker',
-    'MOD': 'Moderator', 
-    'ADMIN': 'Admin',
-    'SUPER_ADMIN': 'Super Admin'
-  };
+  return ROLE_LABELS;
 }

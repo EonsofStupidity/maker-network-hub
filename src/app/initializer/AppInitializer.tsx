@@ -21,11 +21,13 @@ export function AppInitializer({ children }: AppInitializerProps) {
   // Initialize auth
   useEffect(() => {
     if (!isInitialized) {
+      logger.info('Starting app initialization');
       initialize().finally(() => {
         setIsInitialized(true);
+        logger.info('App initialization complete');
       });
     }
-  }, [initialize, isInitialized]);
+  }, [initialize, isInitialized, logger]);
   
   // Update RBAC when auth state changes
   useEffect(() => {
@@ -43,14 +45,14 @@ export function AppInitializer({ children }: AppInitializerProps) {
         if (validRoles.length === 0) {
           setUserRoles([ROLES.GUEST]);
           RBACBridge.setRoles([ROLES.GUEST]);
+          logger.info('No valid roles found, set to GUEST');
         } else {
           setUserRoles(validRoles);
           RBACBridge.setRoles(validRoles);
+          logger.info('User roles set in RBAC store', {
+            details: { roles: validRoles }
+          });
         }
-        
-        logger.info('User roles set in RBAC store', {
-          details: { roles: validRoles }
-        });
       } else {
         // Set guest role for unauthenticated users
         setUserRoles([ROLES.GUEST]);

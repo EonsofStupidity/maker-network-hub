@@ -3,13 +3,12 @@ import { create } from 'zustand';
 import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
 import { logBridge } from '@/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
-import { RBACBridge } from './bridge';
+import { RBACBridge } from '@/shared/bridges/RBACBridge';
 
 interface RBACState {
   userRoles: UserRole[];
   permissions: string[];
-  setRoles: (roles: UserRole[]) => void;
-  setUserRoles: (roles: UserRole[]) => void; // Added alias for compatibility
+  setUserRoles: (roles: UserRole[]) => void;
   addRole: (role: UserRole) => void;
   removeRole: (role: UserRole) => void;
   clearRoles: () => void;
@@ -21,18 +20,6 @@ export const useRBACStore = create<RBACState>((set, get) => ({
   userRoles: [ROLES.GUEST],
   permissions: [],
   
-  setRoles: (roles) => {
-    logBridge.info(LogCategory.RBAC, 'User roles set', { 
-      details: { roles }
-    });
-    
-    set({ userRoles: roles });
-    
-    // Update the RBAC bridge
-    RBACBridge.setRoles(roles);
-  },
-
-  // Alias for setRoles for components that expect this name
   setUserRoles: (roles) => {
     logBridge.info(LogCategory.RBAC, 'User roles set', { 
       details: { roles }
@@ -69,10 +56,10 @@ export const useRBACStore = create<RBACState>((set, get) => ({
       });
       
       const newRoles = userRoles.filter(r => r !== role);
-      set({ userRoles: newRoles });
+      set({ userRoles: newRoles.length > 0 ? newRoles : [ROLES.GUEST] });
       
       // Update the RBAC bridge
-      RBACBridge.setRoles(newRoles);
+      RBACBridge.setRoles(newRoles.length > 0 ? newRoles : [ROLES.GUEST]);
     }
   },
   

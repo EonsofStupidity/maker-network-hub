@@ -1,147 +1,121 @@
 
-/**
- * Simple logging bridge implementation
- * Avoids circular dependencies by not importing from other modules
- */
-
-// Define log levels and categories inline to avoid circular imports
-export enum LogLevel {
-  DEBUG = 0,
-  INFO = 1,
-  WARN = 2,
-  ERROR = 3,
-  CRITICAL = 4
-}
-
-export enum LogCategory {
-  APP = 'APP',
-  ADMIN = 'ADMIN',
-  AUTH = 'AUTH',
-  API = 'API',
-  UI = 'UI',
-  PERFORMANCE = 'PERFORMANCE',
-  ERROR = 'ERROR',
-  SECURITY = 'SECURITY',
-  THEME = 'THEME',
-  RBAC = 'RBAC',
-  SYSTEM = 'SYSTEM',
-  CHAT = 'CHAT',
-  DEBUG = 'DEBUG'
-}
-
-export interface LogDetails {
-  source?: string;
-  moduleId?: string;
-  moduleName?: string;
-  path?: string;
-  error?: string;
-  errorMessage?: string;
-  stack?: string;
-  [key: string]: unknown;
-}
+import { LogCategory, LogLevel, LogDetails, LogEntry } from '@/shared/types/core/logging.types';
 
 /**
- * LogBridge provides a unified interface for application logging
- * It acts as a facade over multiple logging mechanisms
+ * LogBridge - Logging Bridge
+ * Provides a unified interface for logging across the application
+ * without requiring direct access to the logging implementation
  */
-class LogBridgeClass {
-  private initialized: boolean = false;
-  private subscribers: Array<(level: LogLevel, category: LogCategory, message: string, details?: LogDetails) => void> = [];
+export interface ILogBridge {
+  initialize: () => void;
+  debug: (category: LogCategory, message: string, details?: LogDetails) => void;
+  info: (category: LogCategory, message: string, details?: LogDetails) => void;
+  warn: (category: LogCategory, message: string, details?: LogDetails) => void;
+  error: (category: LogCategory, message: string, details?: LogDetails) => void;
+  critical: (category: LogCategory, message: string, details?: LogDetails) => void;
+  log: (level: LogLevel, category: LogCategory, message: string, details?: LogDetails) => void;
+}
+
+class LogBridgeClass implements ILogBridge {
+  private logs: LogEntry[] = [];
+  private isInitialized = false;
 
   /**
    * Initialize the logging system
    */
   public initialize(): void {
-    if (this.initialized) return;
+    if (this.isInitialized) return;
     
-    console.info('🔍 Initializing logging system');
-    this.initialized = true;
+    this.isInitialized = true;
+    console.info('Logging system initialized');
+    
+    // Log this initialization
     this.info(LogCategory.SYSTEM, 'Logging system initialized');
   }
 
   /**
-   * Check if logging system is initialized
+   * Log a debug message
    */
-  public isInitialized(): boolean {
-    return this.initialized;
+  public debug(category: LogCategory, message: string, details?: LogDetails): void {
+    this.log(LogLevel.DEBUG, category, message, details);
   }
 
   /**
-   * Subscribe to log events
+   * Log an info message
    */
-  public subscribe(callback: (level: LogLevel, category: LogCategory, message: string, details?: LogDetails) => void): () => void {
-    this.subscribers.push(callback);
-    
-    // Return unsubscribe function
-    return () => {
-      this.subscribers = this.subscribers.filter(cb => cb !== callback);
-    };
+  public info(category: LogCategory, message: string, details?: LogDetails): void {
+    this.log(LogLevel.INFO, category, message, details);
+  }
+
+  /**
+   * Log a warning message
+   */
+  public warn(category: LogCategory, message: string, details?: LogDetails): void {
+    this.log(LogLevel.WARN, category, message, details);
+  }
+
+  /**
+   * Log an error message
+   */
+  public error(category: LogCategory, message: string, details?: LogDetails): void {
+    this.log(LogLevel.ERROR, category, message, details);
+  }
+
+  /**
+   * Log a critical error message
+   */
+  public critical(category: LogCategory, message: string, details?: LogDetails): void {
+    this.log(LogLevel.CRITICAL, category, message, details);
   }
 
   /**
    * Log a message with a specific level
    */
   public log(level: LogLevel, category: LogCategory, message: string, details?: LogDetails): void {
-    // Format for console
-    const categoryStr = category.toString();
+    // Create log entry
+    const entry: LogEntry = {
+      timestamp: new Date().toISOString(),
+      level,
+      category,
+      message,
+      details
+    };
     
-    // Log to console
+    // Store log entry
+    this.logs.push(entry);
+    
+    // Output to console based on level
     switch (level) {
       case LogLevel.DEBUG:
-        console.debug(`[${categoryStr}] ${message}`, details || {});
+        console.debug(`[${category}] ${message}`, details || '');
         break;
       case LogLevel.INFO:
-        console.info(`[${categoryStr}] ${message}`, details || {});
+        console.info(`[${category}] ${message}`, details || '');
         break;
       case LogLevel.WARN:
-        console.warn(`[${categoryStr}] ${message}`, details || {});
+        console.warn(`[${category}] ${message}`, details || '');
         break;
       case LogLevel.ERROR:
       case LogLevel.CRITICAL:
-        console.error(`[${categoryStr}] ${message}`, details || {});
+        console.error(`[${category}] ${message}`, details || '');
         break;
-      default:
-        console.log(`[${categoryStr}] ${message}`, details || {});
     }
-    
-    // Notify subscribers
-    this.subscribers.forEach(callback => {
-      try {
-        callback(level, category, message, details);
-      } catch (error) {
-        console.error('Error in log subscriber:', error);
-      }
-    });
   }
-  
+
   /**
-   * Convenience method for debug logs
+   * Get all logs
    */
-  public debug(category: LogCategory, message: string, details?: LogDetails): void {
-    this.log(LogLevel.DEBUG, category, message, details);
+  public getLogs(): LogEntry[] {
+    return [...this.logs];
   }
-  
+
   /**
-   * Convenience method for info logs
+   * Clear all logs
    */
-  public info(category: LogCategory, message: string, details?: LogDetails): void {
-    this.log(LogLevel.INFO, category, message, details);
-  }
-  
-  /**
-   * Convenience method for warning logs
-   */
-  public warn(category: LogCategory, message: string, details?: LogDetails): void {
-    this.log(LogLevel.WARN, category, message, details);
-  }
-  
-  /**
-   * Convenience method for error logs
-   */
-  public error(category: LogCategory, message: string, details?: LogDetails): void {
-    this.log(LogLevel.ERROR, category, message, details);
+  public clearLogs(): void {
+    this.logs = [];
   }
 }
 
-// Create and export the singleton instance
+// Export singleton instance
 export const logBridge = new LogBridgeClass();
