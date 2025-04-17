@@ -1,4 +1,3 @@
-
 import { LogEntry, LogLevel, LogFilter } from '@/shared/types/shared.types';
 
 /**
@@ -54,37 +53,34 @@ export class MemoryTransport {
 
   getFilteredLogs(filter: LogFilter = {}): LogEntry[] {
     return this.logs.filter((entry) => {
-      // Filter by level
-      if (filter.level && entry.level !== filter.level) {
+      // Filter by levels
+      if (filter.levels && !filter.levels.includes(entry.level)) {
         return false;
       }
 
-      // Filter by category
-      if (filter.category && entry.category !== filter.category) {
+      // Filter by categories
+      if (filter.categories && !filter.categories.includes(entry.category)) {
         return false;
       }
 
       // Filter by time range
-      if (filter.from !== undefined) {
-        const fromTime = typeof filter.from === 'number' ? filter.from : filter.from.getTime();
-        if (entry.timestamp < fromTime) {
-          return false;
-        }
+      const entryTime = new Date(entry.timestamp).getTime();
+      
+      if (filter.from && entryTime < filter.from.getTime()) {
+        return false;
       }
 
-      if (filter.to !== undefined) {
-        const toTime = typeof filter.to === 'number' ? filter.to : filter.to.getTime();
-        if (entry.timestamp > toTime) {
-          return false;
-        }
+      if (filter.to && entryTime > filter.to.getTime()) {
+        return false;
       }
 
       // Filter by search term
       if (filter.search) {
         const searchTerm = filter.search.toLowerCase();
-        const messageContains = entry.message.toLowerCase().includes(searchTerm);
-        const sourceContains = entry.source && entry.source.toLowerCase().includes(searchTerm);
-        return messageContains || sourceContains;
+        return (
+          entry.message.toLowerCase().includes(searchTerm) ||
+          (entry.source && entry.source.toLowerCase().includes(searchTerm))
+        );
       }
 
       return true;

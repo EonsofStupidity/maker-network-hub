@@ -1,4 +1,3 @@
-
 // Define user roles
 export type UserRole = 'guest' | 'follower' | 'maker' | 'mod' | 'admin' | 'super_admin';
 
@@ -38,60 +37,19 @@ export const SECTION_PERMISSIONS: Record<AdminSection, ReadonlyArray<UserRole>> 
 
 // Role labels
 export const ROLE_LABELS: Record<UserRole, string> = {
-  [ROLES.GUEST]: 'Guest',
-  [ROLES.FOLLOWER]: 'Follower',
-  [ROLES.MAKER]: 'Maker',
-  [ROLES.MOD]: 'Moderator',
-  [ROLES.ADMIN]: 'Admin',
-  [ROLES.SUPER_ADMIN]: 'Super Admin'
+  guest: 'Guest',
+  follower: 'Follower', 
+  maker: 'Maker',
+  mod: 'Moderator',
+  admin: 'Admin',
+  super_admin: 'Super Admin'
 };
 
-// Default permissions
-export const DEFAULT_PERMISSIONS: Record<UserRole, ReadonlyArray<string>> = {
-  [ROLES.GUEST]: [
-    'view:public:content',
-    'view:builds'
-  ],
-  [ROLES.FOLLOWER]: [
-    'view:profile',
-    'edit:profile',
-    'view:builds',
-    'comment:builds'
-  ],
-  [ROLES.MAKER]: [
-    'view:profile',
-    'edit:profile',
-    'create:build',
-    'edit:own:build',
-    'delete:own:build',
-    'view:builds',
-    'comment:builds',
-    'feature:own:build',
-    'upload:firmware'
-  ],
-  [ROLES.MOD]: [
-    'view:profile',
-    'edit:profile',
-    'view:builds',
-    'comment:builds',
-    'moderate:comments',
-    'review:builds'
-  ],
-  [ROLES.ADMIN]: [
-    'view:profile',
-    'edit:profile',
-    'view:builds',
-    'comment:builds',
-    'moderate:comments',
-    'review:builds',
-    'edit:any:build',
-    'delete:any:build',
-    'feature:any:build',
-    'view:admin',
-    'manage:users',
-    'manage:builds'
-  ],
-  [ROLES.SUPER_ADMIN]: [
-    '*' // All permissions
-  ]
+export const DEFAULT_PERMISSIONS: Record<UserRole, readonly string[]> = {
+  guest: ['view:public:content', 'view:builds'],
+  follower: ['view:profile', 'edit:profile', 'view:builds', 'comment:builds'],
+  maker: ['view:profile', 'edit:profile', 'create:build', 'edit:own:build', 'delete:own:build'],
+  mod: ['view:profile', 'edit:profile', 'moderate:comments', 'review:builds'],
+  admin: ['view:admin', 'manage:users', 'manage:builds'],
+  super_admin: ['*']
 };

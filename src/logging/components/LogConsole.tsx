@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { LogLevel, LogCategory, LogEntry } from '@/shared/types/core/logging.types';
 import { logBridge } from '@/logging/bridge';
@@ -28,15 +27,12 @@ export const LogConsole: React.FC<LogConsoleProps> = ({
 
   // Subscribe to logs
   useEffect(() => {
-    const unsubscribe = logBridge.subscribe(
-      (entry: LogEntry) => {
-        setLogEntries(prev => {
-          const newLogs = [...prev, {...entry, timestamp: entry.timestamp || new Date().toISOString()}];
-          return newLogs.slice(-maxEntries);
-        });
-      },
-      { level: LogLevel.DEBUG }
-    );
+    const unsubscribe = logBridge.subscribe((event) => {
+      setLogEntries(prev => {
+        const newLogs = [...prev, event.entry];
+        return newLogs.slice(-maxEntries);
+      });
+    });
     
     return () => {
       unsubscribe();

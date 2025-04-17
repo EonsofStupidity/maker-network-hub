@@ -1,18 +1,21 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 
-export const Header: React.FC = () => {
+export const Header = () => {
   return (
-    <header className="bg-primary text-white p-4 shadow-md">
-      <div className="container mx-auto flex justify-between items-center">
-        <h1 className="text-2xl font-bold">MakersIMPULSE</h1>
-        <nav>
-          <ul className="flex space-x-4">
-            <li><a href="/" className="hover:underline">Home</a></li>
-            <li><a href="/app" className="hover:underline">App</a></li>
-            <li><a href="/admin" className="hover:underline">Admin</a></li>
-          </ul>
-        </nav>
+    <header className="bg-background border-b">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between">
+          <Link to="/" className="font-bold text-xl">MakersIMPULSE</Link>
+          <nav>
+            <ul className="flex space-x-4">
+              <li><Link to="/" className="hover:text-primary">Home</Link></li>
+              <li><Link to="/app" className="hover:text-primary">App</Link></li>
+              <li><Link to="/admin" className="hover:text-primary">Admin</Link></li>
+            </ul>
+          </nav>
+        </div>
       </div>
     </header>
   );

@@ -1,4 +1,3 @@
-
 // Logging levels
 export enum LogLevel {
   DEBUG = 0,
@@ -66,14 +65,13 @@ export interface LogFilter {
 }
 
 // Map of log level values (for comparison)
-export const LOG_LEVEL_VALUES: Record<LogLevel, number> = {
+export const LOG_LEVEL_VALUES = {
   [LogLevel.TRACE]: -1,
   [LogLevel.DEBUG]: 0,
   [LogLevel.INFO]: 1,
   [LogLevel.WARN]: 2,
-  [LogLevel.SUCCESS]: 2,
   [LogLevel.ERROR]: 3,
   [LogLevel.CRITICAL]: 4,
   [LogLevel.FATAL]: 5,
-  [LogLevel.SILENT]: 100
+  [LogLevel.SILENT]: 100,
 };

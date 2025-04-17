@@ -1,4 +1,3 @@
-
 /**
  * Base theme effect type
  */
@@ -121,7 +120,6 @@ export interface ThemeState {
   isLoading?: boolean;
 }
 
-// Separate action interface for theme store
 export interface ThemeStoreActions {
   setThemes: (themes: Theme[]) => void;
   setActiveTheme: (themeId: string) => void;
