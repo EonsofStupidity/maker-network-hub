@@ -62,6 +62,6 @@ export function useRbac() {
     getHighestRole,
     hasElevatedPrivileges,
     canAccessAdminSection,
-    ROLES
+    getRoleLabels: RBACBridge.getRoleLabels
   };
 }

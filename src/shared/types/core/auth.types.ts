@@ -50,3 +50,6 @@ export interface AuthError extends Error {
   code?: string;
   customData?: Record<string, any>;
 }
+
+// Export UserRole for easier access
+export { UserRole, ROLES } from './rbac.types';

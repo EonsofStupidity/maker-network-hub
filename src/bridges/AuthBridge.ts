@@ -1,5 +1,5 @@
 
-import { UserProfile, AUTH_STATUS, AuthStatus } from '../shared/types/SharedTypes';
+import { UserProfile, AUTH_STATUS, AuthStatus } from '../shared/types/core/auth.types';
 
 /**
  * AuthBridge provides a clean abstraction over authentication functionality 

@@ -5,7 +5,8 @@ import {
   AdminSection, 
   SECTION_PERMISSIONS, 
   Permission,
-  DEFAULT_PERMISSIONS
+  DEFAULT_PERMISSIONS,
+  ROLE_LABELS
 } from '../types/core/rbac.types';
 
 /**
@@ -135,14 +136,7 @@ class RBACBridgeClass implements IRBACBridge {
    * Get role labels for UI display
    */
   public getRoleLabels(): Record<UserRole, string> {
-    return {
-      [ROLES.GUEST]: 'Guest',
-      [ROLES.FOLLOWER]: 'Follower',
-      [ROLES.MAKER]: 'Maker',
-      [ROLES.MOD]: 'Moderator',
-      [ROLES.ADMIN]: 'Admin',
-      [ROLES.SUPER_ADMIN]: 'Super Admin'
-    };
+    return ROLE_LABELS;
   }
 }
 

@@ -1,5 +1,5 @@
 
-import { UserProfile } from '@/shared/types/shared.types';
+import { UserProfile } from '@/shared/types/core/auth.types';
 import { authBridge } from '@/auth/lib/AuthBridgeImpl';
 
 /**

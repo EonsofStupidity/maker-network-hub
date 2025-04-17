@@ -1,5 +1,6 @@
 
-import { UserProfile, UserRole, ROLES, AUTH_STATUS, AuthStatus } from '@/shared/types/core/auth.types';
+import { UserProfile, AUTH_STATUS, AuthStatus } from '@/shared/types/core/auth.types';
+import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
 
 /**
  * Auth bridge implementation

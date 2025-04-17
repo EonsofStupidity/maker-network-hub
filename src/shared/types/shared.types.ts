@@ -10,3 +10,11 @@ export type { AuthStatus, UserProfile } from './core/auth.types';
 
 export { LogCategory, LogLevel } from './core/logging.types';
 export type { LogDetails, LogEntry } from './core/logging.types';
+
+export { ThemeEffectType } from './core/theme.types';
+export type { 
+  ThemeEffect, 
+  ThemeToken, 
+  Theme, 
+  ThemeState 
+} from './core/theme.types';
