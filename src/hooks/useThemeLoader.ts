@@ -14,6 +14,9 @@ interface ThemeLoaderResult {
   applyTheme: (themeName?: string) => Promise<boolean>;
 }
 
+/**
+ * Hook for loading and applying themes with robust logging and fallbacks
+ */
 export function useThemeLoader(): ThemeLoaderResult {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -29,11 +32,13 @@ export function useThemeLoader(): ThemeLoaderResult {
       return;
     }
 
+    const loadStartTime = Date.now();
     setIsLoading(true);
     setError(null);
 
     try {
       logger.debug(`Loading theme: ${themeName}`);
+      logBridge.info(LogCategory.THEME, `Starting theme load: ${themeName}`);
       
       // Try to get the hardcoded theme when all else fails
       const hardcodedTheme: Theme = {
@@ -87,16 +92,59 @@ export function useThemeLoader(): ThemeLoaderResult {
         componentTokens: {}
       };
       
-      // Apply the hardcoded theme - most reliable approach right now
-      logger.info('Using hardcoded theme for reliability', { themeName: hardcodedTheme.name });
-      setThemes([hardcodedTheme]);
-      setActiveTheme(hardcodedTheme.id);
+      // Try to load from localStorage first (fastest)
+      let theme: Theme | null = null;
+      let source = 'unknown';
+      
+      try {
+        const cachedThemeJson = localStorage.getItem('theme-cache');
+        if (cachedThemeJson) {
+          const cachedTheme = JSON.parse(cachedThemeJson) as Theme;
+          logger.debug('Found cached theme in localStorage');
+          theme = cachedTheme;
+          source = 'localStorage';
+        }
+      } catch (localStorageError) {
+        logger.warn('Failed to read theme from localStorage', {
+          error: localStorageError instanceof Error ? localStorageError.message : String(localStorageError)
+        });
+      }
+      
+      // If no localStorage theme, try to get from API/Supabase
+      if (!theme) {
+        try {
+          // This would be implemented to fetch from Supabase
+          logger.debug('No cached theme found, attempting to load from fallback');
+          theme = await getFallbackTheme(themeName);
+          source = theme ? 'fallback-service' : 'unknown';
+        } catch (apiError) {
+          logger.warn('Failed to load theme from fallback service', {
+            error: apiError instanceof Error ? apiError.message : String(apiError)
+          });
+        }
+      }
+      
+      // If still no theme, use hardcoded fallback
+      if (!theme) {
+        logger.info('Using hardcoded theme as final fallback');
+        theme = hardcodedTheme;
+        source = 'hardcoded';
+      }
+      
+      // Apply the theme
+      logger.info(`Applying theme from source: ${source}`, { themeName: theme.name });
+      logBridge.info(LogCategory.THEME, 'Theme loaded successfully', {
+        details: { source, themeName: theme.name, loadTimeMs: Date.now() - loadStartTime }
+      });
+      
+      setThemes([theme]);
+      setActiveTheme(theme.id);
       
       // Try to save to localStorage for future visits
       try {
-        localStorage.setItem('theme-cache', JSON.stringify(hardcodedTheme));
+        localStorage.setItem('theme-cache', JSON.stringify(theme));
       } catch (localStorageError) {
-        // Ignore localStorage errors - the hardcoded theme is already applied
+        // Ignore localStorage errors - the theme is already applied
         logger.warn('Failed to save theme to localStorage', {
           error: localStorageError instanceof Error ? localStorageError.message : String(localStorageError)
         });
@@ -105,6 +153,13 @@ export function useThemeLoader(): ThemeLoaderResult {
       const errorObj = err instanceof Error ? err : new Error(String(err));
       setError(errorObj);
       logger.error('Critical theme loading failure', { error: errorObj.message });
+      logBridge.error(LogCategory.THEME, 'Theme loading failed', {
+        details: { 
+          error: errorObj.message,
+          themeName,
+          loadTimeMs: Date.now() - loadStartTime 
+        }
+      });
       
       // Use the simplest possible fallback - this should never fail
       const minimalTheme: Theme = {
@@ -133,10 +188,13 @@ export function useThemeLoader(): ThemeLoaderResult {
       
       setThemes([minimalTheme]);
       setActiveTheme(minimalTheme.id);
+      logBridge.warn(LogCategory.THEME, 'Applied minimal fallback theme', {
+        details: { reason: 'Critical loading failure' }
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, logger, setThemes, setActiveTheme]);
+  }, [isLoading, logger, setThemes, setActiveTheme, getFallbackTheme]);
 
   // Function to apply a specific theme
   const applyTheme = useCallback(async (themeName = 'Impulsivity'): Promise<boolean> => {
@@ -144,6 +202,9 @@ export function useThemeLoader(): ThemeLoaderResult {
       await loadTheme(themeName);
       return true;
     } catch (err) {
+      logBridge.error(LogCategory.THEME, 'Failed to apply theme', {
+        details: { themeName, error: err instanceof Error ? err.message : String(err) }
+      });
       return false;
     }
   }, [loadTheme]);

@@ -17,9 +17,11 @@ import { logger } from './logger';
 export class LogBridge {
   private static instance: LogBridge;
   private subscribers: ((event: LogEvent) => void)[] = [];
+  private initialized: boolean = false;
 
   private constructor() {
     // Private constructor to enforce singleton
+    this.initialized = false;
   }
 
   /**
@@ -30,6 +32,17 @@ export class LogBridge {
       LogBridge.instance = new LogBridge();
     }
     return LogBridge.instance;
+  }
+
+  /**
+   * Initialize the logging system
+   */
+  public initialize(): void {
+    if (this.initialized) return;
+    
+    console.info('🔍 Initializing logging system');
+    this.initialized = true;
+    this.info(LogCategory.SYSTEM, 'Logging system initialized');
   }
 
   /**
@@ -76,7 +89,7 @@ export class LogBridge {
       message,
       timestamp: Date.now(),
       details: details || {},
-      source: details?.source
+      source: details?.source || 'system'
     };
     
     // Use our Logger implementation
@@ -126,6 +139,13 @@ export class LogBridge {
    */
   public clearLogs(): void {
     logger.clearEntries();
+  }
+
+  /**
+   * Check if logging system is initialized
+   */
+  public isInitialized(): boolean {
+    return this.initialized;
   }
 }
 

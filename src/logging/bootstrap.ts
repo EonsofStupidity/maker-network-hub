@@ -1,24 +1,40 @@
-import { LogLevel, LogCategory } from '@/shared/types/core/logging.types';
-import { logger } from './logger.service';
+
+import { logBridge } from './bridge';
+import { LogCategory, LogLevel } from '@/shared/types/core/logging.types';
 
 /**
  * Initialize the logging system
  */
-export function initializeLogging() {
-  // Here we assume the logger service has a log method instead of info
-  logger.log(LogLevel.INFO, LogCategory.SYSTEM, 'Logging system initialized');
+export function initializeLogging(): void {
+  const startTime = performance.now();
   
-  // Set up any global error handlers
-  setupGlobalErrorHandlers();
+  try {
+    // Initialize the log bridge if not already initialized
+    if (!logBridge.isInitialized()) {
+      logBridge.initialize();
+      
+      // Set up any global error handlers
+      setupGlobalErrorHandlers();
+      
+      // Log successful initialization
+      const duration = Math.round(performance.now() - startTime);
+      logBridge.info(LogCategory.SYSTEM, 'Logging system initialized', {
+        details: { durationMs: duration }
+      });
+    }
+  } catch (error) {
+    // Fallback to console if logBridge fails
+    console.error('Failed to initialize logging system:', error);
+  }
 }
 
 /**
- * Set up global error handlers
+ * Set up global error handlers to catch unhandled errors
  */
-function setupGlobalErrorHandlers() {
+function setupGlobalErrorHandlers(): void {
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
-    logger.log(LogLevel.ERROR, LogCategory.ERROR, 'Unhandled promise rejection', {
+    logBridge.error(LogCategory.ERROR, 'Unhandled promise rejection', {
       details: {
         reason: event.reason?.message || String(event.reason),
         stack: event.reason?.stack
@@ -28,7 +44,7 @@ function setupGlobalErrorHandlers() {
   
   // Handle uncaught exceptions
   window.addEventListener('error', (event) => {
-    logger.log(LogLevel.ERROR, LogCategory.ERROR, 'Uncaught error', {
+    logBridge.error(LogCategory.ERROR, 'Uncaught error', {
       details: {
         message: event.message,
         filename: event.filename,
@@ -38,4 +54,18 @@ function setupGlobalErrorHandlers() {
       }
     });
   });
+  
+  // Log navigation events
+  if (typeof window !== 'undefined') {
+    window.addEventListener('popstate', () => {
+      logBridge.info(LogCategory.SYSTEM, 'Navigation: popstate', {
+        details: { path: window.location.pathname }
+      });
+    });
+  }
+  
+  logBridge.info(LogCategory.SYSTEM, 'Global error handlers registered');
 }
+
+// Export the initialization function
+export default initializeLogging;
