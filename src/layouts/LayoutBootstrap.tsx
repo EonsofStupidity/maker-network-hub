@@ -10,7 +10,7 @@ import { loadLayout } from '@/app/utils/layoutLoader';
 import { useLocalStorage } from '@/shared/hooks/useLocalStorage';
 import { Button } from '@/shared/ui/button';
 import { useToast } from '@/shared/ui/use-toast';
-import { CircleRefresh } from 'lucide-react';
+import { RefreshCcw } from 'lucide-react';
 
 export interface LayoutBootstrapProps {
   children: React.ReactNode;
@@ -140,7 +140,7 @@ export function LayoutBootstrap({
             onClick={handleRefresh}
             className="flex items-center gap-1"
           >
-            <CircleRefresh className="h-4 w-4" />
+            <RefreshCcw className="h-4 w-4" />
             <span>Retry</span>
           </Button>
         </div>

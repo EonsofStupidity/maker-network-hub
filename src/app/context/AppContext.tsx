@@ -1,137 +1,101 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useSupabaseStatus } from '@/hooks/use-supabase-status';
 import { logBridge } from '@/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
-import { useLocalStorage } from '@/shared/hooks/useLocalStorage';
+import { supabase } from '@/integrations/supabase/client';
 
-// Define core app data types
-export interface AppSettings {
-  siteTitle: string;
-  siteDescription: string;
-  maintenanceMode: boolean;
-  defaultTheme: string;
-  [key: string]: any;
+interface AppContextType {
+  isOffline: boolean;
+  isInitialized: boolean;
+  connectionQuality: 'good' | 'poor' | 'offline';
+  lastSyncTime: Date | null;
+  syncStatus: 'synced' | 'syncing' | 'error';
+  checkConnection: () => Promise<boolean>;
 }
 
-export interface AppData {
-  settings: AppSettings | null;
-  pages: any[] | null;
-  menus: any[] | null;
-  fetchedAt: number | null;
-  source: 'supabase' | 'backup' | 'default' | 'unknown';
-  error?: boolean;
-  isLoading: boolean;
-}
+const AppContext = createContext<AppContextType>({
+  isOffline: false,
+  isInitialized: false,
+  connectionQuality: 'good',
+  lastSyncTime: null,
+  syncStatus: 'synced',
+  checkConnection: async () => true,
+});
 
-export interface AppContextType extends AppData {
-  refresh: () => Promise<void>;
-  isOnline: boolean;
-}
+export const useAppContext = () => useContext(AppContext);
 
-// Create the context
-const AppContext = createContext<AppContextType | undefined>(undefined);
-
-// Default values for the app
-const defaultAppData: AppData = {
-  settings: {
-    siteTitle: 'MakersIMPULSE',
-    siteDescription: 'Build something amazing',
-    maintenanceMode: false,
-    defaultTheme: 'cyberpunk'
-  },
-  pages: [],
-  menus: [],
-  fetchedAt: null,
-  source: 'default',
-  isLoading: true
-};
-
-// Provider component
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // State
-  const [appData, setAppData] = useState<AppData>({...defaultAppData});
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  const [appBackup, setAppBackup] = useLocalStorage<AppData | null>('__appBackup', null);
+  // Get Supabase status
+  const { isConnected, checkConnection, hasInitiallyChecked, retryCount } = useSupabaseStatus(
+    true, // Check immediately
+    30000, // Check every 30s
+    true // Show toasts
+  );
   
-  // Load app data from Supabase
-  const loadAppData = async (): Promise<AppData> => {
-    try {
-      logBridge.info(LogCategory.SYSTEM, 'Loading app data from Supabase');
-      
-      // Load essential app data in parallel
-      const [
-        { data: settings, error: settingsError }, 
-        { data: pages, error: pagesError },
-        { data: menus, error: menusError }
-      ] = await Promise.all([
-        supabase.from('settings').select('*').maybeSingle(),
-        supabase.from('pages').select('*'),
-        supabase.from('menus').select('*')
-      ]);
-      
-      // Check for errors
-      if (settingsError || pagesError || menusError) {
-        throw new Error('Error fetching app data');
-      }
-      
-      const freshData: AppData = {
-        settings: settings || defaultAppData.settings,
-        pages: pages || [],
-        menus: menus || [],
-        fetchedAt: Date.now(),
-        source: 'supabase',
-        isLoading: false
-      };
-      
-      // Save successful response as backup
-      setAppBackup(freshData);
-      
-      logBridge.info(LogCategory.SYSTEM, 'App data loaded successfully', {
-        details: { source: 'supabase' }
-      });
-      
-      return freshData;
-    } catch (error) {
-      logBridge.error(LogCategory.SYSTEM, 'Error loading app data from Supabase', {
-        details: { error: error instanceof Error ? error.message : String(error) }
-      });
-      
-      // Try to use backup
-      if (appBackup) {
-        logBridge.info(LogCategory.SYSTEM, 'Using backup app data', {
-          details: { backupDate: new Date(appBackup.fetchedAt || 0).toISOString() }
+  // Additional state
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [connectionQuality, setConnectionQuality] = useState<'good' | 'poor' | 'offline'>('good');
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'error'>('synced');
+  
+  // Connection quality monitoring
+  useEffect(() => {
+    if (!isConnected) {
+      setConnectionQuality('offline');
+    } else if (retryCount > 0) {
+      setConnectionQuality('poor');
+    } else {
+      setConnectionQuality('good');
+    }
+  }, [isConnected, retryCount]);
+  
+  // Initialization
+  useEffect(() => {
+    const initApp = async () => {
+      try {
+        // Check if we can reach Supabase
+        const canConnect = await checkConnection();
+        
+        if (canConnect) {
+          // Perform any initialization that requires Supabase
+          const { data } = await supabase.from('layout_skeletons').select('count').single();
+          
+          logBridge.info(LogCategory.SYSTEM, 'App initialized with Supabase connection', {
+            details: { layoutCount: data?.count }
+          });
+        } else {
+          logBridge.warn(LogCategory.SYSTEM, 'App initialized in offline mode');
+        }
+        
+        // Mark as initialized regardless of connection status
+        setIsInitialized(true);
+        setLastSyncTime(new Date());
+      } catch (error) {
+        logBridge.error(LogCategory.SYSTEM, 'Error initializing app', {
+          details: { error: error instanceof Error ? error.message : String(error) }
         });
         
-        return {
-          ...appBackup,
-          source: 'backup',
-          error: true,
-          isLoading: false
-        };
+        // Mark as initialized anyway to not block the app
+        setIsInitialized(true);
       }
-      
-      // Fall back to defaults
-      return {
-        ...defaultAppData,
-        source: 'default', 
-        error: true,
-        isLoading: false
-      };
+    };
+    
+    if (hasInitiallyChecked && !isInitialized) {
+      initApp();
     }
-  };
+  }, [hasInitiallyChecked, isInitialized, checkConnection]);
   
-  // Network status monitoring
+  // Set up offline detection via window events
   useEffect(() => {
     const handleOnline = () => {
-      setIsOnline(true);
-      logBridge.info(LogCategory.SYSTEM, 'App is back online');
-      refresh();
+      logBridge.info(LogCategory.SYSTEM, 'Browser reported online status');
+      checkConnection();
     };
     
     const handleOffline = () => {
-      setIsOnline(false);
-      logBridge.info(LogCategory.SYSTEM, 'App is offline');
+      logBridge.warn(LogCategory.SYSTEM, 'Browser reported offline status');
+      setConnectionQuality('offline');
     };
     
     window.addEventListener('online', handleOnline);
@@ -141,45 +105,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [checkConnection]);
   
-  // Initial data load
-  useEffect(() => {
-    refresh();
-  }, []);
-  
-  // Function to refresh app data
-  const refresh = async (): Promise<void> => {
-    try {
-      setAppData(prevData => ({...prevData, isLoading: true}));
-      const freshData = await loadAppData();
-      setAppData(freshData);
-    } catch (error) {
-      logBridge.error(LogCategory.SYSTEM, 'Error refreshing app data', {
-        details: { error: error instanceof Error ? error.message : String(error) }
-      });
-      setAppData(prevData => ({...prevData, isLoading: false, error: true}));
-    }
+  const value = {
+    isOffline: !isConnected,
+    isInitialized,
+    connectionQuality,
+    lastSyncTime,
+    syncStatus,
+    checkConnection,
   };
   
-  const contextValue: AppContextType = {
-    ...appData,
-    refresh,
-    isOnline
-  };
-  
-  return (
-    <AppContext.Provider value={contextValue}>
-      {children}
-    </AppContext.Provider>
-  );
-};
-
-// Hook to use the app context
-export const useApp = (): AppContextType => {
-  const context = useContext(AppContext);
-  if (context === undefined) {
-    throw new Error('useApp must be used within an AppProvider');
-  }
-  return context;
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

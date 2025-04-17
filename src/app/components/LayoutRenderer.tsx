@@ -5,6 +5,7 @@ import { cn } from '@/shared/utils/cn';
 import { useLogger } from '@/hooks/use-logger';
 import { LogCategory } from '@/shared/types/core/logging.types';
 import { toast } from '@/shared/ui/use-toast';
+import { useEffect, useState } from 'react';
 
 interface LayoutRendererProps {
   layout: Layout | null;
@@ -15,6 +16,12 @@ interface LayoutRendererProps {
 
 export function LayoutRenderer({ layout, isLoading, error, fallback }: LayoutRendererProps) {
   const logger = useLogger('LayoutRenderer', LogCategory.UI);
+  const [renderError, setRenderError] = useState<Error | null>(null);
+
+  // Reset render error when layout changes
+  useEffect(() => {
+    setRenderError(null);
+  }, [layout]);
 
   if (isLoading) {
     return (
@@ -28,12 +35,13 @@ export function LayoutRenderer({ layout, isLoading, error, fallback }: LayoutRen
     );
   }
 
-  if (error) {
-    logger.error('Layout error', { error: error.message });
+  if (error || renderError) {
+    const displayError = renderError || error;
+    logger.error('Layout error', { error: displayError?.message });
     return (
       <div className="p-6 border border-destructive/30 bg-destructive/10 rounded-lg">
         <h3 className="text-lg font-medium text-destructive mb-2">Layout Error</h3>
-        <p className="text-sm">{error.message}</p>
+        <p className="text-sm">{displayError?.message}</p>
       </div>
     );
   }
@@ -44,66 +52,108 @@ export function LayoutRenderer({ layout, isLoading, error, fallback }: LayoutRen
 
   // Process and validate the layout before rendering
   try {
+    // Get all top-level components (those without a parent)
+    const topLevelItems = layout.layout.filter(item => !item.parentId);
+    
+    // Sort by position
+    topLevelItems.sort((a, b) => a.position - b.position);
+    
     return (
       <div className="layout-root" data-layout-id={layout.id}>
-        {Object.values(layout.components).map((component, index) => (
-          <ComponentRenderer 
-            key={component.id || index} 
-            component={component} 
-            logger={logger}
-          />
-        ))}
+        {topLevelItems.map((item) => {
+          const component = layout.components[item.componentId];
+          if (!component) {
+            logger.warn('Component not found in layout', { 
+              details: { componentId: item.componentId }
+            });
+            return null;
+          }
+          
+          return (
+            <ComponentRenderer 
+              key={item.id} 
+              component={component}
+              componentId={item.componentId}
+              layout={layout}
+              layoutItem={item}
+              logger={logger}
+            />
+          );
+        })}
       </div>
     );
-  } catch (renderError) {
-    logger.error('Layout rendering error', { error: renderError instanceof Error ? renderError.message : String(renderError) });
+  } catch (renderErr) {
+    const error = renderErr instanceof Error ? renderErr : new Error(String(renderErr));
+    logger.error('Layout rendering error', { error: error.message });
+    setRenderError(error);
+    
     toast({
       title: "Layout Error",
       description: "There was a problem rendering the layout. Showing fallback content.",
       variant: "destructive"
     });
+    
     return fallback ? <>{fallback}</> : null;
   }
 }
 
 interface ComponentRendererProps {
   component: LayoutComponent;
+  componentId: string;
+  layout: Layout;
+  layoutItem: Layout['layout'][0];
   logger: ReturnType<typeof useLogger>;
 }
 
-function ComponentRenderer({ component, logger }: ComponentRendererProps) {
+function ComponentRenderer({ component, componentId, layout, layoutItem, logger }: ComponentRendererProps) {
   // Validate component props first
   if (!component || !component.type) {
     logger.warn('Invalid component', { details: { component } });
     return null;
   }
 
-  const baseStyles = "w-full p-4";
+  // Find child layout items for this component
+  const childItems = layout.layout
+    .filter(item => item.parentId === layoutItem.id)
+    .sort((a, b) => a.position - b.position);
 
+  const baseStyles = "w-full p-4";
+  
+  // Set up error boundary at component level
   try {
     switch (component.type) {
       case 'container':
         return (
-          <div className={cn(baseStyles, "border rounded-md")} data-component-type="container">
-            {Array.isArray(component.children) && 
-              component.children.map((child) => (
-                <ComponentRenderer key={child.id} component={child} logger={logger} />
-              ))}
-            {component.props?.children && !Array.isArray(component.children) &&
-              component.props.children}
+          <div className={cn(baseStyles, "border rounded-md")} data-component-type="container" data-component-id={componentId}>
+            {childItems.map((childItem) => {
+              const childComponent = layout.components[childItem.componentId];
+              if (!childComponent) return null;
+              
+              return (
+                <ComponentRenderer 
+                  key={childItem.id}
+                  component={childComponent}
+                  componentId={childItem.componentId}
+                  layout={layout}
+                  layoutItem={childItem}
+                  logger={logger}
+                />
+              );
+            })}
+            {component.props?.children && !childItems.length && component.props.children}
           </div>
         );
         
       case 'text':
         return (
-          <div className={cn(baseStyles)} data-component-type="text">
+          <div className={cn(baseStyles)} data-component-type="text" data-component-id={componentId}>
             {component.props?.content || 'Text content'}
           </div>
         );
         
       case 'image':
         return (
-          <div className={cn(baseStyles)} data-component-type="image">
+          <div className={cn(baseStyles)} data-component-type="image" data-component-id={componentId}>
             <img 
               src={component.props?.src || ''} 
               alt={component.props?.alt || ''} 
@@ -118,13 +168,19 @@ function ComponentRenderer({ component, logger }: ComponentRendererProps) {
         
       default:
         return (
-          <div className={cn(baseStyles, "border border-dashed border-amber-400 bg-amber-50/10")} data-component-type="unknown">
+          <div 
+            className={cn(baseStyles, "border border-dashed border-amber-400 bg-amber-50/10")} 
+            data-component-type="unknown"
+            data-component-id={componentId}
+          >
             Unknown component type: {component.type}
           </div>
         );
     }
   } catch (error) {
-    logger.error('Component rendering error', { details: { componentType: component.type, error } });
+    logger.error('Component rendering error', { 
+      details: { componentType: component.type, error } 
+    });
     return (
       <div className="p-4 border border-destructive/30 bg-destructive/10 rounded-lg">
         <p className="text-sm text-destructive">Component Error: Failed to render {component.type}</p>

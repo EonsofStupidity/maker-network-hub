@@ -11,18 +11,23 @@ import Routes from "./router/Routes";
 import { GlobalErrorBoundary } from "./shared/components/GlobalErrorBoundary";
 import { AppProvider } from "./app/context/AppContext";
 
+// Configure Query Client with more resilient settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: (failureCount, error) => {
         // Don't retry on 4xx errors
-        if (error instanceof Error && 'status' in error && (error as any).status >= 400 && (error as any).status < 500) {
+        if (error instanceof Error && 'status' in error && 
+            (error as any).status >= 400 && (error as any).status < 500) {
           return false;
         }
-        // Retry up to 3 times on other errors
+        // Retry up to 3 times on other errors with exponential backoff
         return failureCount < 3;
       },
-      staleTime: 30000,
+      staleTime: 30000, // Consider data fresh for 30s
+      cacheTime: 5 * 60 * 1000, // Cache for 5 minutes
+      refetchOnWindowFocus: false, // Don't refetch when window gains focus
+      refetchOnReconnect: true, // Refetch when reconnecting
     },
   },
 });

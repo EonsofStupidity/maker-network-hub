@@ -83,62 +83,56 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
     // Use circuit breaker for API call
     const response = await layoutCircuitBreaker.execute(
       async () => {
-        return await supabase
+        const { data, error } = await supabase
           .from('layout_skeletons')
-          .select('*');
+          .select('*')
+          .eq('type', type)
+          .eq('scope', scope)
+          .eq('is_active', true)
+          .maybeSingle();
+          
+        if (error) throw new Error(error.message);
+        return data;
       },
       // Fallback function if circuit is open
       () => {
         logBridge.warn(LogCategory.SYSTEM, 'Circuit open, using fallback empty data', {
           details: { circuitName: 'layout-loader' }
         });
-        return { data: [], error: null };
+        return null;
       }
     );
     
-    // Since we can't chain eq with the mock, we'll filter manually
-    const data = response.data?.find(item => 
-      item.type === type && 
-      item.scope === scope && 
-      item.is_active === true
-    );
-    
-    const responseError = response.error;
-    
-    if (responseError) {
-      throw new Error(`Failed to load layout: ${responseError.message || 'Unknown error'}`);
-    }
-    
-    if (data) {
-      // Validate data with Zod schema
-      const validationResult = LayoutSkeletonSchema.safeParse(data);
-      
-      if (!validationResult.success) {
-        throw new Error(`Layout validation failed: ${validationResult.error.message}`);
-      }
-      
-      const validatedSkeleton = validationResult.data;
-      
-      // Convert from database format to our app format
-      const mappedLayout = mapSkeletonToLayout(validatedSkeleton);
-      
-      // Update cache
-      layoutCache.set(cacheKey, {
-        layout: mappedLayout,
-        timestamp: now
-      });
-      
-      logBridge.info(LogCategory.SYSTEM, 'Layout loaded successfully', {
-        details: { layoutId: data.id, type, scope }
-      });
-      
-      return mappedLayout;
-    } else {
+    if (!response) {
       logBridge.warn(LogCategory.SYSTEM, 'No active layout found', {
         details: { type, scope }
       });
       return null;
     }
+    
+    // Validate data with Zod schema
+    const validationResult = LayoutSkeletonSchema.safeParse(response);
+    
+    if (!validationResult.success) {
+      throw new Error(`Layout validation failed: ${validationResult.error.message}`);
+    }
+    
+    const validatedSkeleton = validationResult.data;
+    
+    // Convert from database format to our app format
+    const mappedLayout = mapSkeletonToLayout(validatedSkeleton);
+    
+    // Update cache
+    layoutCache.set(cacheKey, {
+      layout: mappedLayout,
+      timestamp: now
+    });
+    
+    logBridge.info(LogCategory.SYSTEM, 'Layout loaded successfully', {
+      details: { layoutId: response.id, type, scope }
+    });
+    
+    return mappedLayout;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     
@@ -146,12 +140,7 @@ export async function loadLayout(type: string, scope: string): Promise<Layout | 
       details: { error: errorMessage, type, scope }
     });
     
-    toast({
-      title: "Error loading layout",
-      description: `Could not load layout: ${errorMessage}`,
-      variant: "destructive"
-    });
-    
+    // Don't display error to user, let the caller handle it
     return null;
   }
 }
