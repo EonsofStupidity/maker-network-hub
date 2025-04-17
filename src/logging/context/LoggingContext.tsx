@@ -1,61 +1,47 @@
+import React, { createContext, useState, useCallback } from 'react';
+import { LogEntry, LogFilter } from '@/shared/types/core/logging.types';
 
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import { LogLevel, LogCategory } from '@/shared/types/shared.types';
-import type { LogEntry, LogFilter } from '@/shared/types/shared.types';
-
-export interface LoggingContextType {
-  logs: LogEntry[];
-  addLog: (entry: LogEntry) => void;
-  clearLogs: () => void;
-  filter: LogFilter;
-  setFilter: (filter: LogFilter) => void;
-  showLogConsole: boolean;
-  setShowLogConsole: (show: boolean) => void;
-  findLog: (id: string) => LogEntry | undefined;
-  lastLog?: LogEntry;
+interface LoggingContextType {
+  entries: LogEntry[];
+  addEntry: (entry: LogEntry) => void;
+  clearEntries: () => void;
+  setFilter: (filter: LogFilter | null) => void;
+  filter: LogFilter | null;
 }
 
-const LoggingContext = createContext<LoggingContextType>({
-  logs: [],
-  addLog: () => {},
-  clearLogs: () => {},
-  filter: {},
+export const LoggingContext = createContext<LoggingContextType>({
+  entries: [],
+  addEntry: () => {},
+  clearEntries: () => {},
   setFilter: () => {},
-  showLogConsole: false,
-  setShowLogConsole: () => {},
-  findLog: () => undefined
+  filter: null
 });
 
-export const LoggingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [filter, setFilter] = useState<LogFilter>({});
-  const [showLogConsole, setShowLogConsole] = useState(false);
-  const logsMap = useRef(new Map<string, LogEntry>());
+export function LoggingProvider({ children }: { children: React.ReactNode }) {
+  const [entries, setEntries] = useState<LogEntry[]>([]);
+  const [filter, setFilterState] = useState<LogFilter | null>(null);
 
-  const addLog = useCallback((entry: LogEntry) => {
-    setLogs(prev => [...prev, entry]);
-    logsMap.current.set(entry.id, entry);
+  const addEntry = useCallback((entry: LogEntry) => {
+    if (!entry.source) {
+      entry.source = 'unknown';
+    }
+    setEntries(prev => [...prev, entry]);
   }, []);
 
-  const clearLogs = useCallback(() => {
-    setLogs([]);
-    logsMap.current.clear();
+  const clearEntries = useCallback(() => {
+    setEntries([]);
   }, []);
 
-  const findLog = useCallback((id: string) => {
-    return logsMap.current.get(id);
+  const setFilter = useCallback((filter: LogFilter | null) => {
+    setFilterState(filter);
   }, []);
 
-  const value = {
-    logs,
-    addLog,
-    clearLogs,
-    filter,
+  const value: LoggingContextType = {
+    entries,
+    addEntry,
+    clearEntries,
     setFilter,
-    showLogConsole,
-    setShowLogConsole,
-    findLog,
-    lastLog: logs[logs.length - 1]
+    filter
   };
 
   return (
@@ -63,12 +49,4 @@ export const LoggingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       {children}
     </LoggingContext.Provider>
   );
-};
-
-export const useLoggingContext = () => {
-  const context = useContext(LoggingContext);
-  if (!context) {
-    throw new Error('useLoggingContext must be used within a LoggingProvider');
-  }
-  return context;
-};
+}

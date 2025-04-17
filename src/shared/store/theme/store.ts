@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { Theme, ThemeState, ComponentTokens, DesignTokens, ThemeStoreActions } from '@/shared/types/core/theme.types';
 import { LogLevel, LogCategory } from '@/shared/types/core/logging.types';
@@ -19,6 +20,7 @@ export const useThemeStore = create<ThemeState & ThemeStoreActions>((set) => ({
   variables: {},
   componentStyles: {},
   animations: {},
+  effects: [],
 
   setThemes: (themes: Theme[]) => {
     set({ themes });
