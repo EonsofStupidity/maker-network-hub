@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { useThemeStore } from '@/stores/theme.store';
+import { useThemeStore } from '@/shared/store/theme/store';
 
 export function useThemeVariables() {
   const themeState = useThemeStore();
@@ -12,24 +12,22 @@ export function useThemeVariables() {
   }, [themeVariables]);
   
   const setVariable = useCallback((name: string, value: string): void => {
-    if (useThemeStore.getState().setVariables) {
-      const currentVars = useThemeStore.getState().variables || {};
-      useThemeStore.getState().setVariables!({
-        ...currentVars,
+    if (themeState.setVariables) {
+      themeState.setVariables({
+        ...themeVariables,
         [name]: value
       });
     }
-  }, []);
+  }, [themeState.setVariables, themeVariables]);
   
   const updateVariables = useCallback((newVariables: Record<string, string>): void => {
-    if (useThemeStore.getState().setVariables) {
-      const currentVars = useThemeStore.getState().variables || {};
-      useThemeStore.getState().setVariables!({
-        ...currentVars,
+    if (themeState.setVariables) {
+      themeState.setVariables({
+        ...themeVariables,
         ...newVariables
       });
     }
-  }, []);
+  }, [themeState.setVariables, themeVariables]);
   
   return {
     variables: themeVariables,

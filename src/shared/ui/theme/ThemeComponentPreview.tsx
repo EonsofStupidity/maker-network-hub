@@ -1,6 +1,12 @@
 
 import React from 'react';
-import { ThemeComponent } from '@/shared/types/theme.types';
+import { Theme } from '@/shared/types/core/theme.types';
+
+interface ThemeComponent {
+  component_name?: string;
+  id?: string;
+  styles?: Record<string, string>;
+}
 
 interface ThemeComponentPreviewProps {
   component?: ThemeComponent;
