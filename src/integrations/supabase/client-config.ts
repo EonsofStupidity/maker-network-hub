@@ -34,9 +34,19 @@ export function configureSupabaseClient(
     realtime: {
       params: {
         eventsPerSecond: 10
+      },
+      headers: {
+        // Add CORS headers to WebSocket connections
+        'Origin': window.location.origin,
+        'X-Client-Info': 'supabase-js/2.x'
       }
     },
     global: {
+      headers: {
+        'X-Client-Info': 'supabase-js/2.x',
+        // Add CORS headers to all requests
+        'Origin': window.location.origin
+      },
       // Add request hooks for retries on network errors
       fetch: async (input, init) => {
         // Apply timeout to all requests
@@ -53,7 +63,13 @@ export function configureSupabaseClient(
                 // Add abort controller to the request
                 const requestInit = {
                   ...init,
-                  signal: controller.signal
+                  signal: controller.signal,
+                  headers: {
+                    ...(init?.headers || {}),
+                    // Ensure CORS headers are set
+                    'Origin': window.location.origin,
+                    'X-Client-Info': 'supabase-js/2.x'
+                  }
                 };
 
                 return await fetch(input, requestInit);

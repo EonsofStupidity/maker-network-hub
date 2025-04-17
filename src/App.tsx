@@ -25,7 +25,7 @@ const queryClient = new QueryClient({
         return failureCount < 3;
       },
       staleTime: 30000, // Consider data fresh for 30s
-      cacheTime: 5 * 60 * 1000, // Cache for 5 minutes
+      gcTime: 5 * 60 * 1000, // Cache for 5 minutes (renamed from cacheTime)
       refetchOnWindowFocus: false, // Don't refetch when window gains focus
       refetchOnReconnect: true, // Refetch when reconnecting
     },

@@ -3,9 +3,8 @@ import { useEffect, useState } from 'react';
 import { AuthBridge } from './bridges/AuthBridge';
 import { RBACBridge } from './shared/bridges/RBACBridge';
 import { ROLES, UserRole } from './shared/types/core/rbac.types';
-import { AUTH_STATUS } from './shared/types/core/auth.types';
 import { logBridge } from './logging/bridge';
-import { LogCategory, LogLevel } from './shared/types/core/logging.types';
+import { LogCategory } from './shared/types/core/logging.types';
 import { useThemeStore } from './stores/theme.store';
 import { supabase } from './integrations/supabase/client';
 import { ThemeEffect, ThemeEffectType } from './shared/types/core/theme.types';
@@ -46,52 +45,61 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
           console.log('Auth state changed:', event, session?.user?.id);
           if (session?.user) {
             // Try to handle this with circuit breaker in case auth fails
-            await bootstrapCircuitBreaker.execute(
-              async () => {
-                AuthBridge.setUser({
-                  id: session.user.id,
-                  email: session.user.email || '',
-                  displayName: session.user.user_metadata?.display_name || session.user.email,
-                  createdAt: session.user.created_at,
-                  roles: session.user.app_metadata?.roles || [ROLES.GUEST],
-                });
-                
-                // Map Supabase roles to our app roles
-                let roles: UserRole[] = [ROLES.GUEST];
-                
-                if (session.user.app_metadata?.roles) {
-                  const appRoles = session.user.app_metadata.roles;
-                  if (Array.isArray(appRoles) && appRoles.length > 0) {
-                    // Properly validate and cast roles to UserRole type
-                    const validRoles: UserRole[] = [];
-                    for (const role of appRoles) {
-                      if (typeof role === 'string' && Object.values(ROLES).includes(role as UserRole)) {
-                        validRoles.push(role as UserRole);
+            try {
+              await bootstrapCircuitBreaker.execute(
+                async () => {
+                  AuthBridge.setUser({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    displayName: session.user.user_metadata?.display_name || session.user.email,
+                    createdAt: session.user.created_at,
+                    roles: session.user.app_metadata?.roles || [ROLES.GUEST],
+                  });
+                  
+                  // Map Supabase roles to our app roles
+                  let roles: UserRole[] = [ROLES.GUEST];
+                  
+                  if (session.user.app_metadata?.roles) {
+                    const appRoles = session.user.app_metadata.roles;
+                    if (Array.isArray(appRoles) && appRoles.length > 0) {
+                      // Properly validate and cast roles to UserRole type
+                      const validRoles: UserRole[] = [];
+                      for (const role of appRoles) {
+                        if (typeof role === 'string' && Object.values(ROLES).includes(role as UserRole)) {
+                          validRoles.push(role as UserRole);
+                        }
                       }
+                      
+                      // Use the validated roles array
+                      roles = validRoles.length > 0 ? validRoles : [ROLES.GUEST];
                     }
-                    
-                    // Use the validated roles array
-                    roles = validRoles.length > 0 ? validRoles : [ROLES.GUEST];
                   }
+                  
+                  // Set roles in RBAC bridge
+                  RBACBridge.setRoles(roles);
+                  
+                  logBridge.info(LogCategory.RBAC, 'User roles set', { 
+                    roles 
+                  });
+                  
+                  return true;
+                },
+                () => {
+                  // Fallback to guest access on failure
+                  AuthBridge.setUser(null);
+                  RBACBridge.setRoles([ROLES.GUEST]);
+                  logBridge.error(LogCategory.AUTH, 'Failed to process auth state change, falling back to guest');
+                  return false;
                 }
-                
-                // Set roles in RBAC bridge
-                RBACBridge.setRoles(roles);
-                
-                logBridge.info(LogCategory.RBAC, 'User roles set', { 
-                  roles 
-                });
-                
-                return true;
-              },
-              () => {
-                // Fallback to guest access on failure
-                AuthBridge.setUser(null);
-                RBACBridge.setRoles([ROLES.GUEST]);
-                logBridge.error(LogCategory.AUTH, 'Failed to process auth state change, falling back to guest');
-                return Promise.resolve(false);
-              }
-            );
+              );
+            } catch (err) {
+              // In case the circuit breaker throws, we still want to handle this gracefully
+              AuthBridge.setUser(null);
+              RBACBridge.setRoles([ROLES.GUEST]);
+              logBridge.error(LogCategory.AUTH, 'Exception in auth state change handler', {
+                error: err instanceof Error ? err.message : String(err)
+              });
+            }
           } else {
             logBridge.info(LogCategory.AUTH, 'User signed out, setting guest role');
             RBACBridge.setRoles([ROLES.GUEST]);
@@ -101,13 +109,18 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
         
         // Try to get current session, with fallback to guest if it fails
         try {
-          const { data } = await bootstrapCircuitBreaker.execute(
+          const { data, error } = await bootstrapCircuitBreaker.execute(
             async () => await supabase.auth.getSession(),
-            () => Promise.resolve({ 
+            () => ({ 
               data: { session: null },
               error: null
             })
           );
+          
+          // Handle any potential errors
+          if (error) {
+            throw error;
+          }
           
           const sessionUser = data?.session?.user;
           if (sessionUser) {

@@ -7,6 +7,10 @@ enabled = true
 [api.cors]
 enabled = true
 origins = ["*"]
+allowed_headers = ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"]
+exposed_headers = ["Content-Range", "X-Content-Range"]
+max_age = 600
+credentials = true
 
 [auth]
 # These variables are used in the client side React application
@@ -20,3 +24,6 @@ enabled = true
 
 [functions.theme-service]
 verify_jwt = false
+
+[realtime]
+enabled = true

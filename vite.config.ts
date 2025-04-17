@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     cors: {
       origin: "*",
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
       credentials: true
     },
     watch: {
@@ -26,12 +26,16 @@ export default defineConfig(({ mode }) => ({
       // Only use wss for production
       clientPort: mode === 'production' ? 443 : undefined,
       protocol: mode === 'production' ? 'wss' : 'ws',
+      // Add more robust reconnection settings
+      timeout: 5000,
+      reconnect: true,
     },
     headers: {
       // Add permissive CORS headers for development
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Accept, Origin",
+      "Access-Control-Allow-Credentials": "true"
     }
   },
   plugins: [
@@ -109,6 +113,7 @@ export default defineConfig(({ mode }) => ({
             "MoreVertical",
             "Settings",
             "Star",
+            "RefreshCw",
           ],
         },
       ],
