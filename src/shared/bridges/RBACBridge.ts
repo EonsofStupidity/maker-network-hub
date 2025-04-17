@@ -52,6 +52,11 @@ class RBACBridgeClass implements IRBACBridge {
     // Always ensure we have at least guest role
     this.roles = roles.length > 0 ? roles : [ROLES.GUEST];
     
+    // Set permissions based on roles
+    this.permissions = roles.flatMap(role => 
+      DEFAULT_PERMISSIONS[role] as string[]
+    );
+    
     console.info('RBAC roles set:', this.roles);
   }
 
@@ -60,7 +65,7 @@ class RBACBridgeClass implements IRBACBridge {
    */
   public clearRoles(): void {
     this.roles = [ROLES.GUEST];
-    this.permissions = [];
+    this.permissions = DEFAULT_PERMISSIONS[ROLES.GUEST] as string[];
     console.info('RBAC roles cleared, reset to guest');
   }
 

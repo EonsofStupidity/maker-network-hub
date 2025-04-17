@@ -8,7 +8,7 @@ import { useToast } from '@/shared/hooks/use-toast';
 import { AUTH_STATUS } from '@/shared/types/core/auth.types';
 import { LogLevel, LogCategory } from '@/shared/types/core/logging.types';
 import { logger } from '@/logging/logger.service';
-import { RBACBridge } from '@/rbac/bridge';
+import { RBACBridge } from '@/shared/bridges/RBACBridge';
 
 export default function AuthSection() {
   const { isAuthenticated, user, logout, status } = useAuthStore();

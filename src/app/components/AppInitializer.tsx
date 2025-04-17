@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
-import { RBACBridge } from '@/rbac/bridge';
+import { RBACBridge } from '@/shared/bridges/RBACBridge';
 import { useLogger } from '@/hooks/use-logger';
 import { LogCategory } from '@/shared/types/core/logging.types';
 import { UserRole, ROLES } from '@/shared/types/core/rbac.types';
@@ -27,25 +27,32 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
   
   // Update RBAC when auth state changes
   useEffect(() => {
-    if (isAuthenticated && user) {
-      // Only set valid roles
-      const validRoles = (user.roles || []).filter(role => 
-        Object.values(ROLES).includes(role as UserRole)
-      ) as UserRole[];
-      
-      // Set roles in RBAC system
-      RBACBridge.setRoles(validRoles);
-      
-      logger.info('User roles set in RBAC', {
-        details: { roles: validRoles }
-      });
-    } else {
-      // Clear roles when logged out
-      RBACBridge.clearRoles();
-      
-      logger.info('RBAC roles cleared');
+    if (status !== AUTH_STATUS.LOADING) {
+      if (isAuthenticated && user) {
+        // Only set valid roles
+        const validRoles = (user.roles || []).filter(role => 
+          Object.values(ROLES).includes(role as UserRole)
+        ) as UserRole[];
+        
+        // Set roles in RBAC system - default to guest if no valid roles
+        if (validRoles.length === 0) {
+          RBACBridge.setRoles([ROLES.GUEST]);
+          logger.info('No valid roles found, set to GUEST', { 
+            details: { userId: user.id } 
+          });
+        } else {
+          RBACBridge.setRoles(validRoles);
+          logger.info('User roles set in RBAC', {
+            details: { roles: validRoles }
+          });
+        }
+      } else {
+        // Clear roles when logged out
+        RBACBridge.clearRoles();
+        logger.info('RBAC roles cleared, set to GUEST');
+      }
     }
-  }, [isAuthenticated, user, logger]);
+  }, [isAuthenticated, user, status, logger]);
 
   if (!isInitialized || status === AUTH_STATUS.LOADING) {
     return (

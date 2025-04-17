@@ -2,7 +2,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/auth/hooks/useAuth';
-import { UserRole } from '@/shared/types/core/auth.types';
+import { UserRole } from '@/shared/types/core/rbac.types';
 
 interface WithRoleProtectionProps {
   allowedRoles: UserRole | UserRole[];

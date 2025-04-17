@@ -2,7 +2,6 @@
 import { useCallback } from 'react';
 import { RBACBridge } from '@/shared/bridges/RBACBridge';
 import { UserRole, ROLES, Permission, AdminSection } from '@/shared/types/core/rbac.types';
-import { useRBACStore } from '@/rbac/rbac.store';
 import { logBridge } from '@/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
 
