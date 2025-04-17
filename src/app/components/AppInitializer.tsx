@@ -30,12 +30,7 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
     if (isAuthenticated && user) {
       // Only set valid roles
       const validRoles = (user.roles || []).filter(role => 
-        role === ROLES.GUEST || 
-        role === ROLES.FOLLOWER || 
-        role === ROLES.MAKER || 
-        role === ROLES.MOD || 
-        role === ROLES.ADMIN || 
-        role === ROLES.SUPER_ADMIN
+        Object.values(ROLES).includes(role as UserRole)
       ) as UserRole[];
       
       // Set roles in RBAC system
@@ -47,7 +42,6 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
     } else {
       // Clear roles when logged out
       RBACBridge.clearRoles();
-      RBACBridge.setRoles([ROLES.GUEST]);
       
       logger.info('RBAC roles cleared');
     }

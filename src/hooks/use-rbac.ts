@@ -24,7 +24,7 @@ export interface IRBACHook {
  * @returns Object with RBAC methods and state
  */
 export const useRbac = (): IRBACHook => {
-  const roles = useRBACStore(state => state.userRoles);
+  const roles = RBACBridge.getRoles();
   
   // Check if user has a specific role
   const hasRole = useCallback((role: UserRole | UserRole[]): boolean => {
@@ -55,17 +55,17 @@ export const useRbac = (): IRBACHook => {
   
   // Check if user is a super admin
   const isSuperAdmin = useCallback((): boolean => {
-    return RBACBridge.hasRole(ROLES.SUPER_ADMIN);
+    return RBACBridge.isSuperAdmin();
   }, []);
   
   // Check if user is a moderator
   const isModerator = useCallback((): boolean => {
-    return RBACBridge.hasRole(ROLES.MOD);
+    return RBACBridge.isModerator();
   }, []);
   
   // Check if user is a builder/maker
   const isBuilder = useCallback((): boolean => {
-    return RBACBridge.hasRole(ROLES.MAKER);
+    return RBACBridge.isBuilder();
   }, []);
   
   // Check if user can access a specific admin section

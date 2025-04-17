@@ -1,4 +1,3 @@
-
 import { useState, memo, useCallback } from "react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useLogger } from "@/logging/hooks/use-logger";
@@ -16,11 +15,9 @@ export function UserMenu() {
   const { toast } = useToast();
   const loggingContext = useLogger("UserMenu", LogCategory.AUTH);
   
-  // Get auth data from centralized store
   const user = useAuthStore(state => state.user);
   const roles = RBACBridge.getRoles();
   
-  // Handle opening the user menu
   const handleOpenUserMenu = useCallback(() => {
     setIsMenuOpen(true);
     logger.log(LogLevel.DEBUG, LogCategory.AUTH, 'User menu opened', { 
@@ -29,12 +26,10 @@ export function UserMenu() {
     });
   }, [roles]);
   
-  // Handle profile
   const handleShowProfile = useCallback(() => {
     setIsMenuOpen(false);
   }, []);
   
-  // Logout handler
   const handleLogout = useCallback(async () => {
     try {
       logger.log(LogLevel.INFO, LogCategory.AUTH, "User logging out", { source: 'UserMenu' });
@@ -57,12 +52,10 @@ export function UserMenu() {
     }
   }, [toast]);
 
-  // Don't render if no user
   if (!user) {
     return null;
   }
 
-  // Get display name and email from user
   const displayName = user.displayName || user.email?.split('@')[0] || 'User';
   const userEmail = user.email || '';
   const userAvatar = user.avatarUrl || '';

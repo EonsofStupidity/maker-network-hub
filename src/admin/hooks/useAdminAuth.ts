@@ -19,8 +19,7 @@ export const useAdminAuth = () => {
   
   // Check if user has admin access
   const hasAdminAccess = useCallback((): boolean => {
-    const result = RBACBridge.hasAdminAccess();
-    return result;
+    return RBACBridge.hasAdminAccess();
   }, []);
   
   // Check if user is super admin

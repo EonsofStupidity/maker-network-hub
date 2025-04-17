@@ -23,7 +23,7 @@ const isModeratorAtom = atom(
 );
 
 const isBuilderAtom = atom(
-  (get) => () => RBACBridge.isBuilder && RBACBridge.isBuilder()
+  (get) => () => RBACBridge.isBuilder()
 );
 
 export {
