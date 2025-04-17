@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { useThemeStore } from '@/stores/theme.store';
+import { useThemeStore } from '@/shared/store/theme/store';
 import { ThemeEffect, ThemeEffectType } from '@/shared/types/core/theme.types';
 
 export function useThemeEffects() {

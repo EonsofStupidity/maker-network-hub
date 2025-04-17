@@ -2,8 +2,8 @@
 import React from 'react';
 import { Dialog } from '@/shared/ui/dialog';
 import { Button } from '@/shared/ui/button';
-import { useThemeStore } from '@/shared/stores/theme/themeStore';
-import { Theme } from '@/shared/types/features/theme.types';
+import { useThemeStore } from '@/shared/store/theme/store';
+import { Theme } from '@/shared/types/core/theme.types';
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/shared/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 
@@ -42,7 +42,7 @@ export function ThemeInfoPopup({ open, onClose, activeTheme }: ThemeInfoPopupPro
                 <div>
                   <h4 className="font-medium mb-2">Design Tokens</h4>
                   <div className="grid grid-cols-2 gap-2">
-                    {theme.designTokens.colors && Object.entries(theme.designTokens.colors).map(([key, value]) => (
+                    {Object.entries(theme.designTokens.colors || {}).map(([key, value]) => (
                       <div key={key} className="flex items-center gap-2">
                         <div 
                           className="h-4 w-4 rounded-full" 
@@ -64,7 +64,7 @@ export function ThemeInfoPopup({ open, onClose, activeTheme }: ThemeInfoPopupPro
                       <div key={key} className="border p-2 rounded">
                         <h5 className="font-medium">{key}</h5>
                         <div className="text-sm">
-                          {Object.entries(values).map(([prop, val]) => (
+                          {Object.entries(values as Record<string, string>).map(([prop, val]) => (
                             <div key={prop}>{prop}: {val}</div>
                           ))}
                         </div>

@@ -1,6 +1,5 @@
-
 import { useState, useCallback, useEffect } from 'react';
-import { useThemeStore } from '@/stores/theme.store';
+import { useThemeStore } from '@/shared/store/theme/store';
 import { useThemeFallback } from './useThemeFallback';
 import { useLogger } from '@/hooks/use-logger';
 import { LogCategory } from '@/shared/types/core/logging.types';

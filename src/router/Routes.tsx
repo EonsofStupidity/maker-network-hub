@@ -1,22 +1,22 @@
 
 import React, { Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes as RouterRoutes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoutes } from '@/routes/PublicRoutes';
 import { AdminRoutes } from '@/routes/AdminRoutes';
-import { AppRoutes } from '@/routes/AppRoutes';
+import { AppRoutes as ApplicationRoutes } from '@/routes/AppRoutes';
 
 // Lazy-loaded routes
 const Home = React.lazy(() => import('@/pages/Home'));
 const NotFound = React.lazy(() => import('@/pages/NotFound'));
 
-export function AppRoutes() {
+export function Routes() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <Routes>
+      <RouterRoutes>
         {/* Public routes */}
-        <Route path="/" element={<MainLayout children={<Home />} />} />
+        <Route path="/" element={<MainLayout><Home /></MainLayout>} />
         
         <Route path="/*" element={<PublicRoutes />} />
         
@@ -25,7 +25,7 @@ export function AppRoutes() {
           path="/app/*"
           element={
             <ProtectedRoute>
-              <AppRoutes />
+              <ApplicationRoutes />
             </ProtectedRoute>
           }
         />
@@ -42,9 +42,9 @@ export function AppRoutes() {
         
         {/* 404 route */}
         <Route path="*" element={<NotFound />} />
-      </Routes>
+      </RouterRoutes>
     </Suspense>
   );
 }
 
-export default AppRoutes;
+export default Routes;
