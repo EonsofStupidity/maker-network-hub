@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import AppBootstrap from "./AppBootstrap";
@@ -11,10 +11,12 @@ import Routes from "./router/Routes";
 import { GlobalErrorBoundary } from "./shared/components/GlobalErrorBoundary";
 import { AppProvider } from "./app/context/AppContext";
 
-// Configure Query Client with more resilient settings
+// Configure Query Client with more resilient settings and proper initialization
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      refetchOnWindowFocus: false, // Don't refetch when window gains focus
+      refetchOnReconnect: true, // Refetch when reconnecting
       retry: (failureCount, error) => {
         // Don't retry on 4xx errors
         if (error instanceof Error && 'status' in error && 
@@ -25,9 +27,7 @@ const queryClient = new QueryClient({
         return failureCount < 3;
       },
       staleTime: 30000, // Consider data fresh for 30s
-      gcTime: 5 * 60 * 1000, // Cache for 5 minutes (renamed from cacheTime)
-      refetchOnWindowFocus: false, // Don't refetch when window gains focus
-      refetchOnReconnect: true, // Refetch when reconnecting
+      gcTime: 5 * 60 * 1000, // Cache for 5 minutes
     },
   },
 });
@@ -37,17 +37,19 @@ function App() {
     <GlobalErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <AuthProvider>
-            <AppProvider>
-              <AppBootstrap>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <Routes />
-                </BrowserRouter>
-              </AppBootstrap>
-            </AppProvider>
-          </AuthProvider>
+          <Suspense fallback={<div className="p-4">Loading application...</div>}>
+            <AuthProvider>
+              <AppProvider>
+                <AppBootstrap>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <Routes />
+                  </BrowserRouter>
+                </AppBootstrap>
+              </AppProvider>
+            </AuthProvider>
+          </Suspense>
         </TooltipProvider>
       </QueryClientProvider>
     </GlobalErrorBoundary>
