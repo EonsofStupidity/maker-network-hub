@@ -26,7 +26,7 @@ class ThemeBridgeClass implements IThemeBridge {
     // This would typically load theme from storage or API
     console.log('Theme bridge initializing...');
     
-    // Set a default theme
+    // Set a default theme with all required properties
     this._activeTheme = {
       id: 'default',
       name: 'Default Theme',
@@ -36,6 +36,11 @@ class ThemeBridgeClass implements IThemeBridge {
       textColor: '#1e293b',
       designTokens: {},
       componentTokens: {},
+      colors: {
+        primary: '#3b82f6',
+        background: '#ffffff',
+        text: '#1e293b'
+      }
     };
     
     // Check system preference for dark mode
@@ -46,6 +51,11 @@ class ThemeBridgeClass implements IThemeBridge {
       this._activeTheme.isDark = true;
       this._activeTheme.backgroundColor = '#1e293b';
       this._activeTheme.textColor = '#f8fafc';
+      this._activeTheme.colors = {
+        primary: '#00f0ff',
+        background: '#1e293b',
+        text: '#f8fafc'
+      };
     }
     
     console.log('Theme bridge initialized');
