@@ -85,7 +85,8 @@ export class WebSocketManager {
       try {
         logBridge.info(LogCategory.SYSTEM, `WebSocket connecting to ${this.options.url}`);
         
-        this.socket = new WebSocket(this.options.url, this.options.protocols);
+        // Fix: Create WebSocket without 'new' keyword since it's a function call in the Promise
+        this.socket = new globalThis.WebSocket(this.options.url, this.options.protocols);
         
         const onOpen = (event: Event) => {
           this.handleOpen(event);
