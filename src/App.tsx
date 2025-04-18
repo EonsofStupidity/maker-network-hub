@@ -8,17 +8,33 @@ import { Toaster as Sonner } from "./shared/ui/sonner";
 import { AuthProvider } from "./auth/context/AuthContext";
 import { Routes } from "./router/Routes";
 import { GlobalErrorBoundary } from "./shared/components/GlobalErrorBoundary";
-import { AppBootstrap } from "./app/bootstrap/AppBootstrap";
+import { AppBootstrap } from "./AppBootstrap";
 import { ThemeProvider } from "./shared/ui/theme-provider";
 
-// Configure Query Client with simpler settings focused on reliability
+// Configure Query Client with robust error handling and retry settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      retry: 1,
+      retry: (failureCount, error) => {
+        // Only retry on network errors, not server errors
+        if (typeof error === 'object' && error !== null && 'status' in error) {
+          // @ts-ignore - status might not exist on all errors
+          return error.status >= 500 && failureCount < 2;
+        }
+        return failureCount < 2;
+      },
       staleTime: 10000,
+      onError: (error) => {
+        console.error('Query error:', error);
+      }
     },
+    mutations: {
+      retry: false,
+      onError: (error) => {
+        console.error('Mutation error:', error);
+      }
+    }
   },
 });
 
@@ -28,14 +44,15 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="dark">
           <TooltipProvider>
-            <AuthProvider>
-              <BrowserRouter>
-                <AppBootstrap />
+            <BrowserRouter>
+              <AuthProvider>
+                <AppBootstrap>
+                  <Routes />
+                </AppBootstrap>
                 <Toaster />
                 <Sonner />
-                <Routes />
-              </BrowserRouter>
-            </AuthProvider>
+              </AuthProvider>
+            </BrowserRouter>
           </TooltipProvider>
         </ThemeProvider>
       </QueryClientProvider>

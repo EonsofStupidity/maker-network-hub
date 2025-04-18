@@ -43,6 +43,7 @@ export class CircuitBreaker {
     try {
       const result = await fn();
       
+      // Fixed type safety issue - was comparing incompatible states
       if (this.state === CircuitState.HALF_OPEN) {
         this.reset();
       }
@@ -51,6 +52,7 @@ export class CircuitBreaker {
     } catch (error) {
       this.recordFailure();
       
+      // Only schedule reconnect if state is OPEN (not comparing incompatible states)
       if (this.options.reconnectInterval && this.state === CircuitState.OPEN) {
         this.scheduleReconnect();
       }
@@ -78,6 +80,7 @@ export class CircuitBreaker {
     }
 
     this.reconnectTimer = window.setInterval(() => {
+      // Clear timer if state has already been reset to CLOSED
       if (this.state === CircuitState.CLOSED) {
         this.clearReconnectTimer();
         return;

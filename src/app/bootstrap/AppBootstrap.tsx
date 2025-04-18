@@ -5,10 +5,13 @@ import { LogCategory, LogLevel } from '@/shared/types/core/logging.types';
 import { logBridge } from '@/bridges/logging/bridge';
 import { authBridge } from '@/bridges/auth/bridge';
 import { rbacBridge } from '@/bridges/rbac/bridge';
+import { PlatformLoader } from '@/shared/components/platform/PlatformLoader'; 
+import { usePlatformBootstrap } from '@/hooks/use-platform-bootstrap';
 
 export function AppBootstrap() {
   const { initialize, initialized } = useAuthStore();
   const initAttemptRef = useRef(false);
+  const { phases, bootstrap } = usePlatformBootstrap();
 
   useEffect(() => {
     if (initAttemptRef.current || initialized) {
@@ -21,11 +24,10 @@ export function AppBootstrap() {
       try {
         logBridge.info(LogCategory.SYSTEM, '🚀 Starting app initialization');
         
-        // Initialize core bridges
-        await authBridge.initialize();
-        await rbacBridge.initialize();
+        // Execute the bootstrap sequence
+        await bootstrap();
         
-        // Initialize auth store last
+        // Initialize auth store last (after all bridges are initialized)
         await initialize();
         
         logBridge.info(LogCategory.SYSTEM, '✅ App initialization complete');
@@ -37,7 +39,15 @@ export function AppBootstrap() {
     };
 
     initializeApp();
-  }, [initialize, initialized]);
+  }, [initialize, initialized, bootstrap]);
 
+  // If we're not yet initialized, show the platform loader
+  if (!initialized) {
+    return <PlatformLoader phases={phases} />;
+  }
+
+  // Once initialized, no need to render anything
   return null;
 }
+
+export default AppBootstrap;

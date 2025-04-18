@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from 'react';
 import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
@@ -8,6 +9,8 @@ import { themeBridge } from '@/bridges/theme/bridge';
 import { contentBridge } from '@/bridges/content/bridge';
 import { useToast } from '@/shared/ui/use-toast';
 import { CircuitBreaker } from '@/utils/CircuitBreaker';
+import { PlatformLoader, LoadPhase } from '@/shared/components/platform/PlatformLoader';
+import { AppError } from '@/utils/AppError';
 
 interface AppBootstrapProps {
   children: React.ReactNode;
@@ -16,125 +19,251 @@ interface AppBootstrapProps {
 // Create circuit breakers for critical services
 const supabaseCircuitBreaker = new CircuitBreaker('supabase', { maxFailures: 3, resetTimeout: 10000 });
 const authCircuitBreaker = new CircuitBreaker('auth', { maxFailures: 2, resetTimeout: 5000 });
+const themeCircuitBreaker = new CircuitBreaker('theme', { maxFailures: 2, resetTimeout: 5000 });
+const contentCircuitBreaker = new CircuitBreaker('content', { maxFailures: 2, resetTimeout: 5000 });
 
 export function AppBootstrap({ children }: AppBootstrapProps) {
-  const [initStatus, setInitStatus] = useState({
-    phase: 'starting',
-    completed: false,
-    error: null as Error | null
-  });
-
+  // State
+  const [phases, setPhases] = useState<LoadPhase[]>([
+    { id: 'supabase', name: 'Database Connection', status: 'idle' },
+    { id: 'auth', name: 'Authentication', status: 'idle' },
+    { id: 'rbac', name: 'Permissions System', status: 'idle' },
+    { id: 'theme', name: 'Visual Theme', status: 'idle' },
+    { id: 'content', name: 'Content Management', status: 'idle' }
+  ]);
+  const [bootstrapCompleted, setBootstrapCompleted] = useState(false);
+  const [bootstrapError, setBootstrapError] = useState<Error | null>(null);
   const { toast } = useToast();
   const initStartTime = useRef(Date.now());
   const initAttempt = useRef(0);
 
-  useEffect(() => {
-    async function bootstrap() {
-      try {
-        // Increment attempt counter
-        initAttempt.current += 1;
-        logBridge.info(LogCategory.SYSTEM, `🚀 Starting App Bootstrap (attempt ${initAttempt.current})`);
-
-        // ---- Phase 1: Supabase Init ----
-        setInitStatus(prev => ({ ...prev, phase: 'supabase' }));
-        await supabaseCircuitBreaker.execute(
-          async () => await initializeSupabase(),
-          () => {
-            logBridge.warn(LogCategory.SYSTEM, 'Supabase initialization failed, using fallback');
-            // Continue execution with fallback/offline mode
-          }
-        );
-        logBridge.info(LogCategory.SYSTEM, 'Supabase initialized');
-
-        // ---- Phase 2: Sequential Bridge Init ----
-        // Auth must be initialized first
-        setInitStatus(prev => ({ ...prev, phase: 'auth' }));
-        await authCircuitBreaker.execute(
-          async () => await authBridge.initialize(),
-          () => {
-            logBridge.warn(LogCategory.SYSTEM, 'Auth bridge initialization failed, continuing as guest');
-            // Continue as guest
-          }
-        );
-        logBridge.info(LogCategory.SYSTEM, 'Auth bridge initialized');
-
-        // RBAC depends on Auth
-        setInitStatus(prev => ({ ...prev, phase: 'rbac' }));
-        await rbacBridge.initialize();
-        logBridge.info(LogCategory.SYSTEM, 'RBAC bridge initialized');
-
-        // Other bridges can initialize in parallel as they don't depend on each other
-        setInitStatus(prev => ({ ...prev, phase: 'remaining_bridges' }));
-        await Promise.all([
-          themeBridge.initialize(),
-          contentBridge.initialize(),
-          logBridge.initialize(),
-        ]);
-
-        // ---- Bootstrap Complete ----
-        const elapsedTime = Date.now() - initStartTime.current;
-        logBridge.info(LogCategory.SYSTEM, '✅ App Bootstrap Complete', { 
-          elapsedTimeMs: elapsedTime,
-          attempt: initAttempt.current
-        });
-
-        setInitStatus({ phase: 'complete', completed: true, error: null });
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error('Unknown bootstrap error');
-        logBridge.error(LogCategory.SYSTEM, '❌ Bootstrap Error', { 
-          error: error.message, 
-          phase: initStatus.phase,
-          attempt: initAttempt.current
-        });
-
-        setInitStatus(prev => ({ ...prev, error }));
-
-        toast({
-          title: 'Initialization Error',
-          description: `Error during ${initStatus.phase} phase: ${error.message}`,
-          variant: 'destructive'
-        });
+  // Update phase status helper function
+  const updatePhase = (
+    phaseId: string, 
+    status: LoadPhase['status'], 
+    detail?: string,
+    retry?: () => Promise<void>
+  ) => {
+    setPhases(prev => prev.map(phase => {
+      if (phase.id === phaseId) {
+        return { ...phase, status, detail, retry };
       }
-    }
+      return phase;
+    }));
+  };
 
-    if (!initStatus.completed && !initStatus.error) {
+  // Initialize functions for each phase
+  const initializeSupabasePhase = async () => {
+    try {
+      updatePhase('supabase', 'loading');
+      
+      await supabaseCircuitBreaker.execute(
+        async () => await initializeSupabase(),
+        () => {
+          throw new AppError('Failed to initialize Supabase', 'SUPABASE_ERROR', {}, true, 'supabase');
+        }
+      );
+      
+      updatePhase('supabase', 'success', 'Database connected');
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      updatePhase('supabase', 'error', error.message, initializeSupabasePhase);
+      throw error;
+    }
+  };
+
+  const initializeAuthPhase = async () => {
+    try {
+      updatePhase('auth', 'loading');
+      
+      await authCircuitBreaker.execute(
+        async () => {
+          await authBridge.initialize();
+          const user = authBridge.getUser();
+          const userInfo = user ? `(${user.email || user.id})` : '(Guest)';
+          updatePhase('auth', 'success', `Authenticated ${userInfo}`);
+        },
+        () => {
+          updatePhase('auth', 'success', 'Guest mode (offline)');
+          logBridge.warn(LogCategory.SYSTEM, 'Auth bridge initialization failed, continuing as guest');
+        }
+      );
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      updatePhase('auth', 'error', error.message, initializeAuthPhase);
+      // Don't throw here - we can continue as guest
+      logBridge.warn(LogCategory.SYSTEM, 'Authentication failed, continuing as guest', {
+        error: error.message
+      });
+    }
+  };
+
+  const initializeRBACPhase = async () => {
+    try {
+      updatePhase('rbac', 'loading');
+      
+      await rbacBridge.initialize();
+      
+      const roles = rbacBridge.getRoles();
+      const rolesDetail = roles.length > 0 
+        ? `(${roles.join(', ')})` 
+        : '(Guest)';
+      
+      updatePhase('rbac', 'success', `Roles loaded ${rolesDetail}`);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      updatePhase('rbac', 'error', error.message, initializeRBACPhase);
+      // Don't throw here - we can continue with default permissions
+      logBridge.warn(LogCategory.SYSTEM, 'RBAC initialization failed, using default permissions', {
+        error: error.message
+      });
+    }
+  };
+
+  const initializeThemePhase = async () => {
+    try {
+      updatePhase('theme', 'loading');
+      
+      await themeCircuitBreaker.execute(
+        async () => {
+          await themeBridge.initialize();
+          const isDark = themeBridge.isDarkMode();
+          const themeDetail = `(${isDark ? 'Dark' : 'Light'} Mode)`; 
+          updatePhase('theme', 'success', `Theme loaded ${themeDetail}`);
+        },
+        () => {
+          updatePhase('theme', 'success', 'Default theme (fallback)');
+          logBridge.warn(LogCategory.SYSTEM, 'Theme bridge initialization failed, using default theme');
+        }
+      );
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      updatePhase('theme', 'error', error.message, initializeThemePhase);
+      // Don't throw here - we can continue with default theme
+      logBridge.warn(LogCategory.SYSTEM, 'Theme initialization failed, using default theme', {
+        error: error.message
+      });
+    }
+  };
+
+  const initializeContentPhase = async () => {
+    try {
+      updatePhase('content', 'loading');
+      
+      await contentCircuitBreaker.execute(
+        async () => {
+          await contentBridge.initialize();
+          updatePhase('content', 'success', 'Content ready');
+        },
+        () => {
+          updatePhase('content', 'success', 'Limited content (offline)');
+          logBridge.warn(LogCategory.SYSTEM, 'Content bridge initialization failed, using offline content');
+        }
+      );
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      updatePhase('content', 'error', error.message, initializeContentPhase);
+      // Don't throw here - we can continue with limited functionality
+      logBridge.warn(LogCategory.SYSTEM, 'Content initialization failed, functionality may be limited', {
+        error: error.message
+      });
+    }
+  };
+
+  // Complete bootstrap function
+  const bootstrap = async () => {
+    initAttempt.current += 1;
+    
+    try {
+      logBridge.info(LogCategory.SYSTEM, `🚀 Starting App Bootstrap (attempt ${initAttempt.current})`);
+      
+      // Critical phase - if this fails, we can't continue
+      await initializeSupabasePhase();
+      
+      // Non-critical phases - continue even if they fail
+      await initializeAuthPhase();
+      await initializeRBACPhase();
+      
+      // These can run in parallel
+      await Promise.allSettled([
+        initializeThemePhase(),
+        initializeContentPhase()
+      ]);
+
+      // Bootstrap complete!
+      const elapsedTime = Date.now() - initStartTime.current;
+      logBridge.info(LogCategory.SYSTEM, '✅ App Bootstrap Complete', { 
+        elapsedTimeMs: elapsedTime,
+        attempt: initAttempt.current
+      });
+
+      setBootstrapCompleted(true);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      
+      setBootstrapError(error);
+      
+      logBridge.error(LogCategory.SYSTEM, '❌ Bootstrap Error', { 
+        error: error.message, 
+        attempt: initAttempt.current
+      });
+
+      toast({
+        title: 'Initialization Error',
+        description: `Critical error: ${error.message}`,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Run the bootstrap on component mount
+  useEffect(() => {
+    if (!bootstrapCompleted && !bootstrapError) {
       bootstrap();
     }
-  }, [initStatus.completed, initStatus.error, initStatus.phase, toast]);
+  }, [bootstrapCompleted, bootstrapError]);
 
-  // ---- UI during bootstrap phases ----
-  if (!initStatus.completed) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background text-foreground">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-        <p className="text-lg mb-2">Bootstrapping Application...</p>
-        <p className="text-sm text-muted-foreground">Phase: {initStatus.phase}</p>
-      </div>
-    );
-  }
-
-  if (initStatus.error) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="bg-destructive/10 p-6 rounded-lg shadow-lg max-w-md">
-          <h2 className="text-xl font-bold text-destructive mb-2">Application Error</h2>
-          <p className="text-muted-foreground mb-4">
-            Error during {initStatus.phase}: {initStatus.error.message}
-          </p>
-          <button 
-            className="bg-primary text-primary-foreground px-4 py-2 rounded"
-            onClick={() => window.location.reload()}
-          >
-            Reload
-          </button>
+  // If bootstrap has error in a critical phase
+  if (bootstrapError) {
+    // Check if it's a critical phase error (Supabase)
+    const criticalError = phases.find(p => p.id === 'supabase' && p.status === 'error');
+    
+    if (criticalError) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <div className="max-w-md w-full bg-card p-6 rounded-lg shadow-lg border border-destructive/20">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Critical Error</h2>
+            <p className="text-muted-foreground mb-6">
+              Unable to initialize the application due to a critical error:
+            </p>
+            <div className="bg-muted p-3 rounded-md mb-6 text-sm overflow-auto">
+              <code>{bootstrapError.message}</code>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-md"
+            >
+              Retry
+            </button>
+          </div>
         </div>
-      </div>
+      );
+    }
+  }
+
+  // Show platform loader until bootstrap is complete
+  if (!bootstrapCompleted) {
+    return (
+      <PlatformLoader
+        phases={phases}
+        title="Initializing MakersIMPULSE"
+        subtitle="Setting up your workspace..."
+      />
     );
   }
 
-  return (
-    <>{children}</>
-  );
+  // Bootstrap complete, render children
+  return <>{children}</>;
 }
 
 export default AppBootstrap;

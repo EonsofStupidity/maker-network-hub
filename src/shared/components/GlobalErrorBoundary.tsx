@@ -1,7 +1,9 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { logBridge } from '@/logging/bridge';
+import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
+import { Button } from '@/shared/ui/button';
+import { AppError } from '@/utils/AppError';
 
 interface GlobalErrorBoundaryProps {
   children: ReactNode;
@@ -26,12 +28,17 @@ export class GlobalErrorBoundary extends Component<GlobalErrorBoundaryProps, Glo
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Map to AppError for consistent error handling
+    const appError = AppError.isAppError(error) ? error : AppError.fromUnknown(error);
+    
     // Log the error to our logging system
     logBridge.error(LogCategory.SYSTEM, 'Unhandled application error', {
       details: { 
-        message: error.message,
-        stack: error.stack,
-        componentStack: errorInfo.componentStack
+        message: appError.message,
+        code: appError.code,
+        stack: appError.stack,
+        componentStack: errorInfo.componentStack,
+        recoverable: appError.recoverable
       }
     });
     
@@ -42,7 +49,7 @@ export class GlobalErrorBoundary extends Component<GlobalErrorBoundaryProps, Glo
   }
 
   public render(): ReactNode {
-    const { hasError, error } = this.state;
+    const { hasError, error, errorInfo } = this.state;
     const { children, fallback } = this.props;
 
     if (hasError) {
@@ -63,7 +70,7 @@ export class GlobalErrorBoundary extends Component<GlobalErrorBoundaryProps, Glo
               </div>
               <h2 className="text-xl font-bold text-foreground">Application Error</h2>
               <p className="text-muted-foreground">
-                Something went wrong. The application encountered an unexpected error.
+                An unexpected error occurred. The application has been notified.
               </p>
               
               <div className="w-full p-2 bg-muted rounded-md overflow-auto mt-2 text-left">
@@ -73,12 +80,19 @@ export class GlobalErrorBoundary extends Component<GlobalErrorBoundaryProps, Glo
               </div>
               
               <div className="flex gap-2 mt-4">
-                <button
+                <Button
                   onClick={() => window.location.reload()}
-                  className="bg-primary text-primary-foreground px-4 py-2 rounded shadow hover:bg-primary/90 transition-colors"
+                  variant="default"
                 >
                   Reload Application
-                </button>
+                </Button>
+                
+                <Button
+                  onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
+                  variant="outline"
+                >
+                  Try to Continue
+                </Button>
               </div>
             </div>
           </div>
