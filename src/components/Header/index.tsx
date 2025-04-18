@@ -1,0 +1,24 @@
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+export function Header() {
+  return (
+    <header className="bg-background border-b">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between">
+          <Link to="/" className="font-bold text-xl">MakersIMPULSE</Link>
+          <nav>
+            <ul className="flex space-x-4">
+              <li><Link to="/" className="hover:text-primary">Home</Link></li>
+              <li><Link to="/app" className="hover:text-primary">App</Link></li>
+              <li><Link to="/admin" className="hover:text-primary">Admin</Link></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export default Header;
