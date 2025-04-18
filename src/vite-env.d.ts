@@ -5,7 +5,6 @@ declare global {
   interface Window {
     __DEBUG__: boolean;
     __THEME__: string;
-    WebSocket: WebSocket;
   }
 }
 
@@ -23,4 +22,3 @@ declare module '@/shared/ui' {
 declare module '@/shared/types' {
   export * from '@/shared/types/shared.types';
 }
-

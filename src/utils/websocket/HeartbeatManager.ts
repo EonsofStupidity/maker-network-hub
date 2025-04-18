@@ -5,16 +5,23 @@ import { LogCategory } from '@/shared/types/core/logging.types';
 export class HeartbeatManager {
   private pingTimer: number | null = null;
   private pongTimer: number | null = null;
+  private readonly pingInterval: number;
+  private readonly pingTimeout: number;
+  private readonly onTimeout: () => void;
 
-  constructor(
-    private readonly pingInterval: number,
-    private readonly pingTimeout: number,
-    private readonly onPingTimeout: () => void
-  ) {}
+  constructor(pingInterval: number, pingTimeout: number, onTimeout: () => void) {
+    this.pingInterval = pingInterval;
+    this.pingTimeout = pingTimeout;
+    this.onTimeout = onTimeout;
+  }
 
   start(socket: WebSocket): void {
     this.stop();
     
+    if (socket.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
     this.pingTimer = window.setInterval(() => {
       this.sendPing(socket);
     }, this.pingInterval);
@@ -24,13 +31,13 @@ export class HeartbeatManager {
     if (socket.readyState !== WebSocket.OPEN) {
       return;
     }
-    
+
     try {
       socket.send('ping');
       
       this.pongTimer = window.setTimeout(() => {
-        logBridge.warn(LogCategory.SYSTEM, 'WebSocket ping timeout, reconnecting');
-        this.onPingTimeout();
+        logBridge.warn(LogCategory.SYSTEM, 'WebSocket ping timeout');
+        this.onTimeout();
       }, this.pingTimeout);
     } catch (error) {
       logBridge.error(LogCategory.SYSTEM, 'Error sending WebSocket ping', {

@@ -16,6 +16,7 @@ export class WebSocketManager {
   private readonly circuitBreaker: CircuitBreaker;
 
   constructor(private readonly options: WebSocketOptions) {
+    // Create managers with explicit type parameters
     this.heartbeatManager = new HeartbeatManager(
       options.pingInterval ?? 30000,
       options.pingTimeout ?? 5000,
@@ -195,11 +196,11 @@ export class WebSocketManager {
   }
 
   send(data: string | ArrayBufferLike | Blob | ArrayBufferView): boolean {
-    if (this.socket?.readyState !== WebSocket.OPEN) {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       logBridge.warn(LogCategory.SYSTEM, 'WebSocket not open, cannot send message');
       return false;
     }
-    
+
     try {
       this.socket.send(data);
       return true;
@@ -243,4 +244,3 @@ export class WebSocketManager {
     this.messageListeners = this.messageListeners.filter(l => l !== listener);
   }
 }
-

@@ -5,25 +5,21 @@ import { LogCategory } from '@/shared/types/core/logging.types';
 export class ReconnectionManager {
   private reconnectTimer: number | null = null;
   private attempts: number = 0;
+  private readonly maxAttempts: number;
+  private readonly baseInterval: number;
+  private readonly onReconnect: () => void;
 
-  constructor(
-    private readonly maxAttempts: number,
-    private readonly baseInterval: number,
-    private readonly onReconnect: () => void
-  ) {}
+  constructor(maxAttempts: number, baseInterval: number, onReconnect: () => void) {
+    this.maxAttempts = maxAttempts;
+    this.baseInterval = baseInterval;
+    this.onReconnect = onReconnect;
+  }
 
   scheduleReconnect(): void {
-    if (this.reconnectTimer !== null) {
+    if (this.reconnectTimer !== null || this.attempts >= this.maxAttempts) {
       return;
     }
-    
-    if (this.attempts >= this.maxAttempts) {
-      logBridge.warn(LogCategory.SYSTEM, 'Maximum WebSocket reconnect attempts reached', {
-        attempts: this.attempts
-      });
-      return;
-    }
-    
+
     this.attempts++;
     
     const delay = Math.min(
