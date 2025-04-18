@@ -1,4 +1,3 @@
-
 import { CircuitBreaker } from './CircuitBreaker';
 import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
@@ -44,30 +43,25 @@ export class WebSocketManager {
     this.pingInterval = options.pingInterval ?? 30000;
     this.pingTimeout = options.pingTimeout ?? 5000;
     
-    // Add message listener if provided
     if (options.onMessage) {
       this.messageListeners.push(options.onMessage);
     }
     
-    // Setup custom event handlers
     this.onOpenHandler = this.onOpenHandler.bind(this);
     this.onCloseHandler = this.onCloseHandler.bind(this);
     this.onErrorHandler = this.onErrorHandler.bind(this);
     this.onMessageHandler = this.onMessageHandler.bind(this);
     
-    // Store external handlers
     this.externalOnOpen = options.onOpen;
     this.externalOnClose = options.onClose;
     this.externalOnError = options.onError;
     
-    // Initialize circuit breaker
     this.circuitBreaker = new CircuitBreaker(`ws-${new URL(this.url).hostname}`, {
       maxFailures: 3,
       resetTimeout: 15000,
       reconnectInterval: this.reconnectInterval
     });
     
-    // Auto connect if specified
     if (this.autoConnect) {
       this.connect();
     }
@@ -97,21 +91,17 @@ export class WebSocketManager {
               
               this.socket = new WebSocket(this.url, this.protocols);
               
-              // Setup temp handlers for this connection attempt
               const tempOnOpen = (event: Event) => {
                 resolve(true);
-                // Regular handler will be called after
               };
               
               const tempOnError = (event: Event) => {
                 reject(new AppError.connection('WebSocket connection failed'));
-                // Regular handler will be called after
               };
               
               this.socket.addEventListener('open', tempOnOpen, { once: true });
               this.socket.addEventListener('error', tempOnError, { once: true });
               
-              // Setup regular handlers
               this.socket.addEventListener('open', this.onOpenHandler);
               this.socket.addEventListener('close', this.onCloseHandler);
               this.socket.addEventListener('error', this.onErrorHandler);
@@ -145,10 +135,8 @@ export class WebSocketManager {
       url: this.url
     });
     
-    // Start ping/pong heartbeat
     this.startHeartbeat();
     
-    // Call external handler if provided
     if (this.externalOnOpen) {
       try {
         this.externalOnOpen(event);
@@ -169,12 +157,10 @@ export class WebSocketManager {
       wasClean: event.wasClean
     });
     
-    // Attempt to reconnect if not manually closed
     if (event.code !== 1000 && this.autoConnect) {
       this.scheduleReconnect();
     }
     
-    // Call external handler if provided
     if (this.externalOnClose) {
       try {
         this.externalOnClose(event);
@@ -191,7 +177,6 @@ export class WebSocketManager {
       url: this.url
     });
     
-    // Call external handler if provided
     if (this.externalOnError) {
       try {
         this.externalOnError(event);
@@ -204,13 +189,11 @@ export class WebSocketManager {
   }
   
   private onMessageHandler(event: MessageEvent): void {
-    // Check if this is a pong response
     if (typeof event.data === 'string' && event.data === 'pong') {
       this.handlePong();
       return;
     }
     
-    // Notify all message listeners
     for (const listener of this.messageListeners) {
       try {
         listener(event);
@@ -236,10 +219,9 @@ export class WebSocketManager {
     
     this.reconnectAttempts++;
     
-    // Use exponential backoff
     const delay = Math.min(
       this.reconnectInterval * Math.pow(1.5, this.reconnectAttempts - 1),
-      60000 // Cap at 1 minute
+      60000
     );
     
     logBridge.info(LogCategory.SYSTEM, 'Scheduling WebSocket reconnect', {
@@ -256,7 +238,6 @@ export class WebSocketManager {
   private startHeartbeat(): void {
     this.clearTimers();
     
-    // Setup ping interval
     this.pingTimer = window.setInterval(() => {
       this.sendPing();
     }, this.pingInterval);
@@ -270,7 +251,6 @@ export class WebSocketManager {
     try {
       this.socket.send('ping');
       
-      // Setup timeout for pong response
       this.pongTimer = window.setTimeout(() => {
         logBridge.warn(LogCategory.SYSTEM, 'WebSocket ping timeout, reconnecting');
         this.close();
@@ -284,7 +264,6 @@ export class WebSocketManager {
   }
   
   private handlePong(): void {
-    // Clear pong timeout
     if (this.pongTimer !== null) {
       clearTimeout(this.pongTimer);
       this.pongTimer = null;
@@ -337,7 +316,6 @@ export class WebSocketManager {
         });
       }
       
-      // Clean up event listeners
       this.socket.removeEventListener('open', this.onOpenHandler);
       this.socket.removeEventListener('close', this.onCloseHandler);
       this.socket.removeEventListener('error', this.onErrorHandler);

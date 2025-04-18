@@ -17,22 +17,24 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: (failureCount, error) => {
-        // Only retry on network errors, not server errors
         if (typeof error === 'object' && error !== null && 'status' in error) {
-          // @ts-ignore - status might not exist on all errors
-          return error.status >= 500 && failureCount < 2;
+          return (error as { status: number }).status >= 500 && failureCount < 2;
         }
         return failureCount < 2;
       },
       staleTime: 10000,
-      onError: (error) => {
-        console.error('Query error:', error);
+      meta: {
+        errorHandler: (error: unknown) => {
+          console.error('Query error:', error);
+        }
       }
     },
     mutations: {
       retry: false,
-      onError: (error) => {
-        console.error('Mutation error:', error);
+      meta: {
+        errorHandler: (error: unknown) => {
+          console.error('Mutation error:', error);
+        }
       }
     }
   },

@@ -1,4 +1,3 @@
-
 export interface CircuitBreakerOptions {
   maxFailures: number;
   resetTimeout: number;
@@ -27,7 +26,7 @@ export class CircuitBreaker {
   ) {}
 
   async execute<T>(fn: () => Promise<T>, fallback?: () => T | Promise<T>): Promise<T> {
-    if (this.state === CircuitState.OPEN) {
+    if (this.isOpen()) {
       const timeElapsed = Date.now() - this.lastFailureTime;
       
       if (timeElapsed >= this.options.resetTimeout) {
@@ -43,8 +42,7 @@ export class CircuitBreaker {
     try {
       const result = await fn();
       
-      // Fixed type safety issue - was comparing incompatible states
-      if (this.state === CircuitState.HALF_OPEN) {
+      if (this.isHalfOpen()) {
         this.reset();
       }
       
@@ -52,8 +50,7 @@ export class CircuitBreaker {
     } catch (error) {
       this.recordFailure();
       
-      // Only schedule reconnect if state is OPEN (not comparing incompatible states)
-      if (this.options.reconnectInterval && this.state === CircuitState.OPEN) {
+      if (this.options.reconnectInterval && this.isOpen()) {
         this.scheduleReconnect();
       }
       
@@ -62,6 +59,18 @@ export class CircuitBreaker {
       }
       throw error;
     }
+  }
+
+  private isOpen(): boolean {
+    return this.state === CircuitState.OPEN;
+  }
+
+  private isHalfOpen(): boolean {
+    return this.state === CircuitState.HALF_OPEN;
+  }
+
+  private isClosed(): boolean {
+    return this.state === CircuitState.CLOSED;
   }
 
   private recordFailure(): void {
@@ -80,7 +89,6 @@ export class CircuitBreaker {
     }
 
     this.reconnectTimer = window.setInterval(() => {
-      // Clear timer if state has already been reset to CLOSED
       if (this.state === CircuitState.CLOSED) {
         this.clearReconnectTimer();
         return;
