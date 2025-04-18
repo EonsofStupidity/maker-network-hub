@@ -6,15 +6,6 @@ import { HeartbeatManager } from './websocket/HeartbeatManager';
 import { ReconnectionManager } from './websocket/ReconnectionManager';
 import { WebSocketOptions } from './websocket/types';
 
-declare const WebSocket: {
-  prototype: WebSocket;
-  new(url: string, protocols?: string | string[]): WebSocket;
-  readonly CLOSED: number;
-  readonly CLOSING: number;
-  readonly CONNECTING: number;
-  readonly OPEN: number;
-};
-
 export class WebSocketManager {
   private socket: WebSocket | null = null;
   private isConnecting: boolean = false;
@@ -97,7 +88,13 @@ export class WebSocketManager {
           throw new AppError.connection('WebSocket not supported in this environment');
         }
 
-        const ws = new WebSocket(this.options.url, this.options.protocols);
+        // Ensure WebSocket is available in this environment
+        if (!('WebSocket' in window)) {
+          throw new AppError.connection('WebSocket not supported in this browser');
+        }
+
+        // Create WebSocket with proper type handling
+        const ws = new window.WebSocket(this.options.url, this.options.protocols);
         this.socket = ws;
 
         const onOpen = (event: Event) => {
