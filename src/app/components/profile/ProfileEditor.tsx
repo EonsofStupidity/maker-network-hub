@@ -35,13 +35,7 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({
       await updateProfile({
         displayName: formData.displayName,
         bio: formData.bio,
-        avatarUrl: formData.avatarUrl,
-        userMetadata: {
-          ...user.userMetadata,
-          full_name: formData.displayName,
-          bio: formData.bio,
-          avatar_url: formData.avatarUrl
-        }
+        avatarUrl: formData.avatarUrl
       });
       
       logger.log(LogLevel.INFO, LogCategory.UI, 'Profile updated');

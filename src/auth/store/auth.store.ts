@@ -138,8 +138,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   updateProfile: async (profile: Partial<UserProfile>) => {
     try {
       set({ status: AUTH_STATUS.LOADING });
+      
+      // Prepare data for Supabase - extract userMetadata or create new object
+      const userData = {
+        ...profile.userMetadata,
+        // Add fields directly to user_metadata if provided
+        ...(profile.displayName && { full_name: profile.displayName }),
+        ...(profile.bio && { bio: profile.bio }),
+        ...(profile.avatarUrl && { avatar_url: profile.avatarUrl })
+      };
+      
       const { data, error } = await supabase.auth.updateUser({
-        data: profile.userMetadata
+        data: userData
       });
 
       if (error) throw error;

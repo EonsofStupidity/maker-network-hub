@@ -8,6 +8,20 @@ export const AUTH_STATUS = {
 
 export type AuthStatus = (typeof AUTH_STATUS)[keyof typeof AUTH_STATUS];
 
+// Define more specific metadata types
+export type UserMetadata = {
+  full_name?: string;
+  avatar_url?: string;
+  bio?: string;
+  [key: string]: unknown;
+};
+
+export type AppMetadata = {
+  roles?: string[];
+  permissions?: string[];
+  [key: string]: unknown;
+};
+
 export interface UserProfile {
   id: string;
   email?: string;
@@ -18,12 +32,12 @@ export interface UserProfile {
   updatedAt?: string;
   lastSignIn?: string;
   bio?: string;
-  userMetadata?: Record<string, any>;
-  appMetadata?: Record<string, any>;
+  userMetadata?: UserMetadata;
+  appMetadata?: AppMetadata;
   roles?: string[];
 }
 
 export interface AuthError extends Error {
   code?: string;
-  customData?: Record<string, any>;
+  customData?: Record<string, unknown>;
 }
