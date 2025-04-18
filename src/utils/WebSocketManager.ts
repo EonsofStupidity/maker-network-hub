@@ -85,12 +85,13 @@ export class WebSocketManager {
       try {
         logBridge.info(LogCategory.SYSTEM, `WebSocket connecting to ${this.options.url}`);
         
-        // Check if WebSocket is available in this environment
-        if (typeof window === 'undefined' || !window.WebSocket) {
+        // Check if we're in a browser environment with WebSocket support
+        if (typeof window === 'undefined' || !('WebSocket' in window)) {
           throw new AppError.connection('WebSocket not supported in this environment');
         }
         
-        this.socket = new window.WebSocket(this.options.url, this.options.protocols);
+        const WebSocketConstructor: typeof WebSocket = window.WebSocket;
+        this.socket = new WebSocketConstructor(this.options.url, this.options.protocols);
         
         if (!this.socket) {
           throw new AppError.connection('Failed to create WebSocket instance');
