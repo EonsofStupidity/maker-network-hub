@@ -1,3 +1,4 @@
+
 import { CircuitBreaker } from './CircuitBreaker';
 import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
@@ -84,12 +85,12 @@ export class WebSocketManager {
       try {
         logBridge.info(LogCategory.SYSTEM, `WebSocket connecting to ${this.options.url}`);
         
-        // Create WebSocket with proper constructor type
-        if (!globalThis.WebSocket) {
+        if (typeof WebSocket === 'undefined' && typeof globalThis.WebSocket === 'undefined') {
           throw new AppError.connection('WebSocket not supported in this environment');
         }
         
-        this.socket = globalThis.WebSocket ? new globalThis.WebSocket(this.options.url, this.options.protocols) : null;
+        const WebSocketClass = WebSocket || globalThis.WebSocket;
+        this.socket = new WebSocketClass(this.options.url, this.options.protocols);
         
         if (!this.socket) {
           throw new AppError.connection('Failed to create WebSocket instance');
