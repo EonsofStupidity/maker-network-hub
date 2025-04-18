@@ -1,14 +1,11 @@
 
 import { useEffect, useState } from 'react';
+import { useAuthStore } from '@/auth/store/auth.store';
 import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
 import { LoadPhase } from '@/shared/types/core/app.types';
 import { PlatformLoader } from '@/shared/components/platform/PlatformLoader';
 import { themeBridge } from '@/bridges/theme/bridge';
-import { contentBridge } from '@/bridges/content/bridge';
-import { authBridge } from '@/bridges/auth/bridge';
-import { useAuthStore } from '@/auth/store/auth.store';
-import { toast } from '@/shared/ui/use-toast';
 
 interface AppBootstrapProps {
   children: React.ReactNode;
@@ -16,8 +13,7 @@ interface AppBootstrapProps {
 
 const INITIALIZATION_PHASES: LoadPhase[] = [
   { id: 'auth', status: 'idle', name: 'Authentication' },
-  { id: 'theme', status: 'idle', name: 'Theme' },
-  { id: 'content', status: 'idle', name: 'Content' }
+  { id: 'theme', status: 'idle', name: 'Theme' }
 ];
 
 export function AppBootstrap({ children }: AppBootstrapProps) {
@@ -51,21 +47,11 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
         await themeBridge.initialize();
         updatePhase('theme', 'success');
         
-        // Initialize content
-        updatePhase('content', 'loading');
-        await contentBridge.initialize();
-        updatePhase('content', 'success');
-        
         setIsLoading(false);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to initialize app';
         setError(message);
         logBridge.error(LogCategory.SYSTEM, 'App initialization failed', { error: message });
-        toast({
-          variant: "destructive",
-          title: "Initialization Error",
-          description: message
-        });
       }
     };
 

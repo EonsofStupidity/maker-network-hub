@@ -3,10 +3,10 @@ import React from 'react';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { LoginSheet } from '@/app/components/auth/LoginSheet';
-import { useAuth } from '@/auth/hooks/useAuth';
+import { useAuthStore } from '@/auth/store/auth.store';
 
 export default function HomePage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthStore();
   
   return (
     <div className="container mx-auto p-6 space-y-8">
