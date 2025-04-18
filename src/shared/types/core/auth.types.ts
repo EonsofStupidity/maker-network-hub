@@ -1,7 +1,4 @@
 
-import type { UserRole } from './rbac.types';
-
-// Auth status enum
 export const AUTH_STATUS = {
   IDLE: 'IDLE',
   LOADING: 'LOADING',
@@ -10,9 +7,8 @@ export const AUTH_STATUS = {
   ERROR: 'ERROR'
 } as const;
 
-export type AuthStatus = keyof typeof AUTH_STATUS;
+export type AuthStatus = (typeof AUTH_STATUS)[keyof typeof AUTH_STATUS];
 
-// User profile type
 export interface UserProfile {
   id: string;
   email?: string;
@@ -24,33 +20,10 @@ export interface UserProfile {
   lastSignIn?: string;
   userMetadata?: Record<string, any>;
   appMetadata?: Record<string, any>;
-  roles?: UserRole[];
-  [key: string]: any;
+  roles?: string[];
 }
 
-// Provider information
-export interface AuthProviderData {
-  providerId: string;
-  uid: string;
-  displayName?: string;
-  email?: string;
-  phoneNumber?: string;
-  photoURL?: string;
-}
-
-// Auth credential type
-export interface AuthCredential {
-  providerId: string;
-  signInMethod: string;
-  accessToken?: string;
-}
-
-// Auth error type
 export interface AuthError extends Error {
   code?: string;
   customData?: Record<string, any>;
 }
-
-// Export UserRole for easier access
-export type { UserRole } from './rbac.types';
-export { ROLES } from './rbac.types';
