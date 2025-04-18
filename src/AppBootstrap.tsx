@@ -7,6 +7,7 @@ import { PlatformLoader } from '@/shared/components/platform/PlatformLoader';
 import { themeBridge } from '@/bridges/theme/bridge';
 import { contentBridge } from '@/bridges/content/bridge';
 import { authBridge } from '@/bridges/auth/bridge';
+import { useAuthStore } from '@/auth/store/auth.store';
 import { toast } from '@/shared/ui/use-toast';
 
 interface AppBootstrapProps {
@@ -20,6 +21,7 @@ const INITIALIZATION_PHASES: LoadPhase[] = [
 ];
 
 export function AppBootstrap({ children }: AppBootstrapProps) {
+  const { initialize: initAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [phases, setPhases] = useState<LoadPhase[]>(INITIALIZATION_PHASES);
@@ -39,9 +41,9 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Initialize auth
+        // Initialize auth first
         updatePhase('auth', 'loading');
-        await authBridge.initialize();
+        await initAuth();
         updatePhase('auth', 'success');
         
         // Initialize theme
@@ -68,7 +70,7 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
     };
 
     initializeApp();
-  }, []);
+  }, [initAuth]);
 
   if (error) {
     return (

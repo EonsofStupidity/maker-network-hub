@@ -1,99 +1,60 @@
-import React from 'react';
-import { useHomeStore } from './store/home.store';
-import { loadHomeLayout } from './utils/homeLayoutLoader';
-import type { SectionType } from './types/layout.types';
-import { RBACBridge } from '@/rbac/bridge';
-import { HeroBanner } from './components/HeroBanner';
-import { FeaturedSection } from './components/FeaturedSection';
-import { CategorySection } from './components/CategorySection';
-import { PostsSection } from './components/PostsSection';
-import { DBSection } from './components/DBSection';
-import { AdminOverlay, AdminOverlayButton } from './components/AdminOverlay';
-import { supabase } from '@/integrations/supabase/client';
 
-interface FeaturedPostOption {
-  id: string;
-  title: string;
-}
+import React from 'react';
+import { Button } from '@/shared/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { LoginSheet } from '@/app/components/auth/LoginSheet';
+import { useAuth } from '@/auth/hooks/useAuth';
 
 export default function HomePage() {
-  const { layout, setLayout, isLoading } = useHomeStore();
-  const [isAdminOverlayVisible, setIsAdminOverlayVisible] = useState(false);
-  const [featuredPosts, setFeaturedPosts] = useState<FeaturedPostOption[]>([]);
+  const { isAuthenticated } = useAuth();
   
-  const hasAdminAccess = RBACBridge.hasAdminAccess();
-  
-  useEffect(() => {
-    const initLayout = async () => {
-      const homeLayout = await loadHomeLayout();
-      if (homeLayout) {
-        setLayout(homeLayout);
-      }
-    };
-    
-    initLayout();
-  }, [setLayout]);
-  
-  useEffect(() => {
-    if (hasAdminAccess) {
-      const fetchFeaturedPosts = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('blog_posts')
-            .select('id, title')
-            .order('created_at', { ascending: false })
-            .limit(10);
-            
-          if (error) throw error;
-          if (data) {
-            setFeaturedPosts(data as FeaturedPostOption[]);
-          }
-        } catch (error) {
-          console.error('Failed to load posts for admin overlay:', error);
-        }
-      };
-      
-      fetchFeaturedPosts();
-    }
-  }, [hasAdminAccess]);
-
-  const renderSection = (sectionType: SectionType, index: number) => {
-    switch (sectionType) {
-      case 'hero':
-        return <HeroBanner key={`section-${index}`} />;
-      case 'featured':
-        return <FeaturedSection key={`section-${index}`} />;
-      case 'categories':
-        return <CategorySection key={`section-${index}`} />;
-      case 'posts':
-        return <PostsSection key={`section-${index}`} />;
-      case 'db':
-        return <DBSection key={`section-${index}`} />;
-      default:
-        return null;
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col">
-      {isLoading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      ) : (
-        layout.section_order.map((section, index) => renderSection(section, index))
-      )}
-      
-      {hasAdminAccess && (
-        <>
-          <AdminOverlayButton onClick={() => setIsAdminOverlayVisible(true)} />
-          <AdminOverlay 
-            isVisible={isAdminOverlayVisible} 
-            onClose={() => setIsAdminOverlayVisible(false)}
-            featuredPosts={featuredPosts}
-          />
-        </>
-      )}
+    <div className="container mx-auto p-6 space-y-8">
+      <header className="text-center">
+        <h1 className="text-4xl font-bold mb-4">Welcome to MakersIMPULSE</h1>
+        <p className="text-xl text-muted-foreground mb-6">
+          Your hub for maker projects and 3D printing
+        </p>
+        {!isAuthenticated && <LoginSheet />}
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Explore Projects</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Discover amazing 3D printing projects from our community.</p>
+            <Button variant="outline" asChild>
+              <a href="/projects">Browse Projects</a>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Parts Database</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Find compatible parts and upgrades for your printer.</p>
+            <Button variant="outline" asChild>
+              <a href="/parts">View Parts</a>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Community</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Join discussions and share your experiences.</p>
+            <Button variant="outline" asChild>
+              <a href="/community">Join Community</a>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

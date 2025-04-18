@@ -22,10 +22,10 @@ const queryClient = new QueryClient({
       },
       staleTime: 10000
     }
-  },
+  }
 });
 
-function App() {
+export default function App() {
   return (
     <GlobalErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -44,5 +44,3 @@ function App() {
     </GlobalErrorBoundary>
   );
 }
-
-export default App;
