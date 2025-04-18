@@ -84,12 +84,11 @@ export class WebSocketManager {
       try {
         logBridge.info(LogCategory.SYSTEM, `WebSocket connecting to ${this.options.url}`);
         
-        // Create WebSocket with proper constructor type
-        if (!globalThis.WebSocket) {
+        if (typeof WebSocket === 'undefined') {
           throw new AppError.connection('WebSocket not supported in this environment');
         }
         
-        this.socket = globalThis.WebSocket ? new globalThis.WebSocket(this.options.url, this.options.protocols) : null;
+        this.socket = new WebSocket(this.options.url, this.options.protocols);
         
         if (!this.socket) {
           throw new AppError.connection('Failed to create WebSocket instance');

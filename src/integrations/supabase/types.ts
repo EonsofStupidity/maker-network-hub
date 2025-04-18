@@ -1786,6 +1786,7 @@ export type Database = {
       content_status: "draft" | "review" | "published" | "archived"
       content_type: "guide" | "tutorial" | "part-desc" | "build-log" | "news"
       part_status: "draft" | "published" | "archived"
+      tenant_tier: "free" | "starter" | "pro" | "enterprise"
       theme_context: "site" | "admin" | "chat" | "app" | "training"
       theme_status: "draft" | "published" | "archived"
       user_role:
@@ -1936,6 +1937,7 @@ export const Constants = {
       content_status: ["draft", "review", "published", "archived"],
       content_type: ["guide", "tutorial", "part-desc", "build-log", "news"],
       part_status: ["draft", "published", "archived"],
+      tenant_tier: ["free", "starter", "pro", "enterprise"],
       theme_context: ["site", "admin", "chat", "app", "training"],
       theme_status: ["draft", "published", "archived"],
       user_role: [
