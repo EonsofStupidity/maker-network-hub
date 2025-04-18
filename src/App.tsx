@@ -29,13 +29,12 @@ function App() {
         <ThemeProvider defaultTheme="dark">
           <TooltipProvider>
             <AuthProvider>
-              <AppBootstrap>
-                <BrowserRouter>
-                  <Toaster />
-                  <Sonner />
-                  <Routes />
-                </BrowserRouter>
-              </AppBootstrap>
+              <BrowserRouter>
+                <AppBootstrap />
+                <Toaster />
+                <Sonner />
+                <Routes />
+              </BrowserRouter>
             </AuthProvider>
           </TooltipProvider>
         </ThemeProvider>

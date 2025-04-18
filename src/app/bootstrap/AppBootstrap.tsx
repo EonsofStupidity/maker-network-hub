@@ -1,56 +1,43 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
-import { LogCategory, LogLevel, LogDetails } from '@/shared/types/shared.types';
-import { logger } from '@/logging/logger.service';
+import { LogCategory, LogLevel } from '@/shared/types/core/logging.types';
+import { logBridge } from '@/bridges/logging/bridge';
+import { authBridge } from '@/bridges/auth/bridge';
+import { rbacBridge } from '@/bridges/rbac/bridge';
 
-/**
- * AppBootstrap Component
- * 
- * Handles initialization of core app services like auth
- * Designed to run only once when the app mounts
- */
 export function AppBootstrap() {
   const { initialize, initialized } = useAuthStore();
   const initAttemptRef = useRef(false);
-  
-  // Handle initialization of auth on mount
+
   useEffect(() => {
-    // Prevent multiple initialization attempts
     if (initAttemptRef.current || initialized) {
       return;
     }
-    
-    // Mark as attempted immediately
+
     initAttemptRef.current = true;
-    
-    console.info('Bootstrapping application services');
-    
-    const initApp = async () => {
+
+    const initializeApp = async () => {
       try {
-        console.info('Initializing auth service');
+        logBridge.info(LogCategory.SYSTEM, '🚀 Starting app initialization');
+        
+        // Initialize core bridges
+        await authBridge.initialize();
+        await rbacBridge.initialize();
+        
+        // Initialize auth store last
         await initialize();
-        console.info('Auth service initialized successfully');
+        
+        logBridge.info(LogCategory.SYSTEM, '✅ App initialization complete');
       } catch (error) {
-        const details: LogDetails = { 
-          error: error instanceof Error ? error.message : String(error),
-          source: 'AppBootstrap' 
-        };
-        
-        console.error('Auth initialization failed', details);
-        
-        // Log through the logger service
-        logger.log(LogLevel.ERROR, LogCategory.APP, 'Auth initialization failed', details);
+        logBridge.error(LogCategory.SYSTEM, 'Failed to initialize app', {
+          error: error instanceof Error ? error.message : String(error)
+        });
       }
     };
-    
-    initApp();
-    
-    return () => {
-      // Clean up any resources if needed
-    };
+
+    initializeApp();
   }, [initialize, initialized]);
-  
-  // This is a utility component that doesn't render anything
+
   return null;
 }

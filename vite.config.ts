@@ -20,6 +20,10 @@ export default defineConfig(({ mode }) => ({
       protocol: mode === 'production' ? 'wss' : 'ws',
       timeout: 5000,
       reconnect: true,
+    },
+    websocket: {
+      heartbeat: 30000,
+      reconnect: true,
     }
   },
   plugins: [
