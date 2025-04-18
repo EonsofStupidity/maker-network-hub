@@ -1,4 +1,3 @@
-
 import { CircuitBreaker } from './CircuitBreaker';
 import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
@@ -85,9 +84,17 @@ export class WebSocketManager {
       try {
         logBridge.info(LogCategory.SYSTEM, `WebSocket connecting to ${this.options.url}`);
         
-        // Fix: Create WebSocket without 'new' keyword since it's a function call in the Promise
-        this.socket = new globalThis.WebSocket(this.options.url, this.options.protocols);
+        // Create WebSocket with proper constructor type
+        if (!globalThis.WebSocket) {
+          throw new AppError.connection('WebSocket not supported in this environment');
+        }
         
+        this.socket = globalThis.WebSocket ? new globalThis.WebSocket(this.options.url, this.options.protocols) : null;
+        
+        if (!this.socket) {
+          throw new AppError.connection('Failed to create WebSocket instance');
+        }
+
         const onOpen = (event: Event) => {
           this.handleOpen(event);
           resolve(true);
