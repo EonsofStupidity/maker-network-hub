@@ -13,21 +13,27 @@ interface AppBootstrapProps {
   children: React.ReactNode;
 }
 
+const INITIALIZATION_PHASES: LoadPhase[] = [
+  { id: 'auth', status: 'idle', name: 'Authentication' },
+  { id: 'theme', status: 'idle', name: 'Theme' },
+  { id: 'content', status: 'idle', name: 'Content' }
+];
+
 export function AppBootstrap({ children }: AppBootstrapProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [phases, setPhases] = useState<LoadPhase[]>([
-    { id: 'auth', status: 'loading', name: 'Authentication' },
-    { id: 'theme', status: 'loading', name: 'Theme' },
-    { id: 'content', status: 'loading', name: 'Content' }
-  ]);
+  const [phases, setPhases] = useState<LoadPhase[]>(INITIALIZATION_PHASES);
   
-  const updatePhase = (id: string, status: LoadPhase['status']) => {
+  const updatePhase = (id: string, status: LoadPhase['status'], detail?: string) => {
     setPhases(current => 
       current.map(phase => 
-        phase.id === id ? { ...phase, status } : phase
+        phase.id === id ? { ...phase, status, detail } : phase
       )
     );
+    
+    if (status === 'error') {
+      logBridge.error(LogCategory.SYSTEM, `Phase ${id} failed`, { detail });
+    }
   };
 
   useEffect(() => {
@@ -37,17 +43,17 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
         updatePhase('auth', 'loading');
         await authBridge.initialize();
         updatePhase('auth', 'success');
-
+        
         // Initialize theme
         updatePhase('theme', 'loading');
         await themeBridge.initialize();
         updatePhase('theme', 'success');
-
+        
         // Initialize content
         updatePhase('content', 'loading');
         await contentBridge.initialize();
         updatePhase('content', 'success');
-
+        
         setIsLoading(false);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to initialize app';
@@ -72,7 +78,7 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
           <p className="mt-2 text-gray-600">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-primary text-white rounded"
+            className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
           >
             Retry
           </button>
@@ -87,5 +93,3 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
 
   return <>{children}</>;
 }
-
-export default AppBootstrap;
