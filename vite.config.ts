@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react-swc"
 import path from "path"
@@ -21,21 +20,25 @@ export default defineConfig(({ mode }) => ({
       interval: 100,
     },
     hmr: {
-      // Use standard hmr in development to avoid WebSocket issues
       overlay: true,
-      // Only use wss for production
       clientPort: mode === 'production' ? 443 : undefined,
       protocol: mode === 'production' ? 'wss' : 'ws',
-      // Add more robust reconnection settings
       timeout: 5000,
       reconnect: true,
     },
     headers: {
-      // Add permissive CORS headers for development
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Accept, Origin",
       "Access-Control-Allow-Credentials": "true"
+    },
+    proxy: {
+      '/api': {
+        target: process.env.SUPABASE_URL,
+        changeOrigin: true,
+        secure: false,
+        ws: true
+      }
     }
   },
   plugins: [
@@ -55,28 +58,6 @@ export default defineConfig(({ mode }) => ({
             "useSuspenseQuery",
             "useSuspenseInfiniteQuery",
             "useSuspenseQueries",
-          ],
-          "@/auth/store/auth.store": [
-            "useAuthStore",
-            "selectUser",
-            "selectIsAuthenticated",
-            "selectUserRoles",
-            "selectStatus",
-            "selectError",
-            "selectIsLoading",
-          ],
-          "@/shared/stores/ui/store": [
-            "useUIStore",
-            "selectThemeMode",
-            "selectAccentColor",
-            "selectLayout",
-            "selectPreferences",
-          ],
-          "@/shared/stores/theme/store": [
-            "useThemeStore",
-            "selectCurrentTheme",
-            "selectThemeTokens",
-            "selectThemeComponents",
           ],
           "@/shared/hooks/use-toast": ["useToast", "toast"],
           "lucide-react": [
@@ -118,7 +99,6 @@ export default defineConfig(({ mode }) => ({
         },
       ],
       dirs: [
-        // Feature-based structure - most specific to least specific
         "./src/features/**/components/tabs/**/sections/**",
         "./src/features/**/components/tabs/**",
         "./src/features/**/components/**",
@@ -127,7 +107,6 @@ export default defineConfig(({ mode }) => ({
         "./src/features/**/utils",
         "./src/features/**/constants",
         
-        // Global components and utilities
         "./src/components/**",
         "./src/hooks",
         "./src/stores",
@@ -140,15 +119,10 @@ export default defineConfig(({ mode }) => ({
       eslintrc: {
         enabled: true,
         filepath: "./.eslintrc-auto-import.json",
-        globalsPropValue: true,  // This ensures var is used instead of const in the generated types
+        globalsPropValue: true,
       },
       defaultExportByFilename: true,
-      include: [
-        /\.[tj]sx?$/,
-        /\.vue$/,
-        /\.vue\?vue/,
-        /\.md$/,
-      ],
+      include: [/\.[tj]sx?$/, /\.vue$/, /\.vue\?vue/, /\.md$/],
     }),
   ].filter(Boolean),
   resolve: {
@@ -189,7 +163,6 @@ export default defineConfig(({ mode }) => ({
     exclude: [],
   },
   define: {
-    // Provide a replacement for __dirname
     __dirname: JSON.stringify(process.cwd())
   }
 }))

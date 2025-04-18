@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSupabaseStatus } from '@/hooks/use-supabase-status';
-import { AlertCircle, Wifi, WifiOff, CornerRightDown } from 'lucide-react';
+import { AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
 import { themeBridge } from '@/bridges/theme/bridge';
@@ -12,14 +12,13 @@ export function Header() {
     isConnected, 
     hasInitiallyChecked, 
     retryCount,
-    lastCheckedAt 
+    lastChecked 
   } = useSupabaseStatus(true, 10000, 5);
   
   // Get theme mode
   const isDarkMode = themeBridge.isDarkMode();
   const toggleTheme = () => {
     themeBridge.toggleDarkMode();
-    // Force re-render by using a state update
     window.document.documentElement.classList.toggle('dark');
   };
 
@@ -53,7 +52,7 @@ export function Header() {
                 <TooltipContent>
                   <p>
                     {isConnected
-                      ? `Connected to database (last checked: ${new Date(lastCheckedAt).toLocaleTimeString()})`
+                      ? `Connected to database (last checked: ${lastChecked?.toLocaleTimeString() || 'Never'})`
                       : `No database connection (retry: ${retryCount})`}
                   </p>
                 </TooltipContent>
