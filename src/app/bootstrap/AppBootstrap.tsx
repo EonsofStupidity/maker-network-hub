@@ -1,53 +1,74 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
-import { LogCategory, LogLevel } from '@/shared/types/core/logging.types';
 import { logBridge } from '@/bridges/logging/bridge';
-import { authBridge } from '@/bridges/auth/bridge';
-import { rbacBridge } from '@/bridges/rbac/bridge';
-import { PlatformLoader } from '@/shared/components/platform/PlatformLoader'; 
-import { usePlatformBootstrap } from '@/hooks/use-platform-bootstrap';
+import { LogCategory } from '@/shared/types/core/logging.types';
+import { PlatformLoader } from '@/shared/components/platform/PlatformLoader';
+import { LoadPhase } from '@/shared/types/core/app.types';
+import { themeBridge } from '@/bridges/theme/bridge';
+import { contentBridge } from '@/bridges/content/bridge';
 
-export function AppBootstrap() {
-  const { initialize, initialized } = useAuthStore();
-  const initAttemptRef = useRef(false);
-  const { phases, bootstrap } = usePlatformBootstrap();
+export function AppBootstrap({ children }: { children: React.ReactNode }) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [phases, setPhases] = useState<LoadPhase[]>([
+    { id: 'auth', status: 'loading', name: 'Authentication' },
+    { id: 'theme', status: 'loading', name: 'Theme' },
+    { id: 'content', status: 'loading', name: 'Content' }
+  ]);
+  
+  const updatePhase = (id: string, status: 'loading' | 'success' | 'error') => {
+    setPhases(current => 
+      current.map(phase => 
+        phase.id === id ? { ...phase, status } : phase
+      )
+    );
+  };
 
   useEffect(() => {
-    if (initAttemptRef.current || initialized) {
-      return;
-    }
-
-    initAttemptRef.current = true;
-
     const initializeApp = async () => {
       try {
-        logBridge.info(LogCategory.SYSTEM, '🚀 Starting app initialization');
-        
-        // Execute the bootstrap sequence
-        await bootstrap();
-        
-        // Initialize auth store last (after all bridges are initialized)
-        await initialize();
-        
-        logBridge.info(LogCategory.SYSTEM, '✅ App initialization complete');
-      } catch (error) {
-        logBridge.error(LogCategory.SYSTEM, 'Failed to initialize app', {
-          error: error instanceof Error ? error.message : String(error)
-        });
+        // Initialize theme
+        updatePhase('theme', 'loading');
+        await themeBridge.initialize();
+        updatePhase('theme', 'success');
+
+        // Initialize content
+        updatePhase('content', 'loading');
+        await contentBridge.initialize();
+        updatePhase('content', 'success');
+
+        setIsLoading(false);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to initialize app';
+        setError(message);
+        logBridge.error(LogCategory.SYSTEM, 'App initialization failed', { error: message });
       }
     };
 
     initializeApp();
-  }, [initialize, initialized, bootstrap]);
+  }, []);
 
-  // If we're not yet initialized, show the platform loader
-  if (!initialized) {
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-500">Failed to load application</h1>
+          <p className="mt-2 text-gray-600">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-primary text-white rounded"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
     return <PlatformLoader phases={phases} />;
   }
 
-  // Once initialized, no need to render anything
-  return null;
+  return <>{children}</>;
 }
-
-export default AppBootstrap;
