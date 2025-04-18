@@ -37,12 +37,10 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Initialize auth first
         updatePhase('auth', 'loading');
         await initAuth();
         updatePhase('auth', 'success');
         
-        // Initialize theme
         updatePhase('theme', 'loading');
         await themeBridge.initialize();
         updatePhase('theme', 'success');

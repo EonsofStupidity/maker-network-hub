@@ -22,96 +22,30 @@ const validatedConfig = SupabaseConfigSchema.safeParse({
 });
 
 // Initialize the Supabase client with proper error handling
-let supabase: ReturnType<typeof createClient<Database>>;
-
-if (validatedConfig.success) {
-  try {
-    supabase = createClient<Database>(
-      validatedConfig.data.supabaseUrl,
-      validatedConfig.data.supabaseKey,
-      {
-        auth: {
-          autoRefreshToken: true,
-          persistSession: true,
-          detectSessionInUrl: true
-        },
-        global: {
-          headers: {
-            'x-application-name': 'makers-impulse',
-          },
-        },
-        realtime: {
-          params: {
-            eventsPerSecond: 10,
-          },
-        },
-      }
-    );
-    
-    console.info('Supabase client initialized successfully');
-  } catch (error) {
-    console.error('Failed to initialize Supabase client:', error);
-    // Create a mock client that logs errors when methods are called
-    supabase = createMockClient();
+export const supabase = createClient<Database>(
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    }
   }
-} else {
-  console.error('Invalid Supabase configuration:', validatedConfig.error.format());
-  // Create a mock client as fallback
-  supabase = createMockClient();
-}
+);
 
-// Exportable function to initialize and test Supabase connection
+// Pre-initialize connection
 export const initializeSupabase = async (): Promise<void> => {
   try {
-    // Test the connection by making a simple query
     const { error } = await supabase.from('profiles').select('id').limit(1);
-    
-    if (error) {
-      throw new Error(`Supabase connection test failed: ${error.message}`);
-    }
-    
+    if (error) throw error;
     console.info('Supabase connection established successfully');
   } catch (error) {
     console.error('Supabase initialization error:', error);
-    // We don't throw here to allow the app to continue functioning
-    // The error will be handled by the connection status hook
   }
 };
 
-// Create a mock client for fallback when Supabase is unavailable
-function createMockClient() {
-  const errorHandler = () => {
-    return {
-      data: null,
-      error: { message: 'Supabase client not properly initialized' },
-    };
-  };
-  
-  return {
-    from: () => ({
-      select: () => errorHandler(),
-      insert: () => errorHandler(),
-      update: () => errorHandler(),
-      delete: () => errorHandler(),
-    }),
-    auth: {
-      getSession: async () => errorHandler(),
-      getUser: async () => errorHandler(),
-      signOut: async () => errorHandler(),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-    },
-    storage: {
-      from: () => ({
-        upload: async () => errorHandler(),
-        getPublicUrl: () => errorHandler(),
-      }),
-    },
-    rpc: () => errorHandler(),
-  } as unknown as ReturnType<typeof createClient<Database>>;
-}
-
-// Pre-initialize connection
+// Initialize connection
 initializeSupabase().catch(console.error);
 
-export { supabase };
-export default supabase;
+export { supabase as default };
