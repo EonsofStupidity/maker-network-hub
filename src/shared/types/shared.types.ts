@@ -31,3 +31,7 @@ export type {
   ComponentTokens,
   ThemeStoreActions
 } from './core/theme.types';
+
+// Export layout types
+export type { Layout, LayoutSkeleton } from './core/layout.types';
+

@@ -90,8 +90,8 @@ export class WebSocketManager {
           throw new AppError.connection('WebSocket not supported in this environment');
         }
         
-        const WebSocketConstructor: typeof WebSocket = window.WebSocket;
-        this.socket = new WebSocketConstructor(this.options.url, this.options.protocols);
+        // Directly use WebSocket without intermediate constructor variable
+        this.socket = new WebSocket(this.options.url, this.options.protocols);
         
         if (!this.socket) {
           throw new AppError.connection('Failed to create WebSocket instance');
@@ -243,3 +243,4 @@ export class WebSocketManager {
     this.messageListeners = this.messageListeners.filter(l => l !== listener);
   }
 }
+
