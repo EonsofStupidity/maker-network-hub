@@ -3,10 +3,10 @@ import { useEffect, useState, useRef } from 'react';
 import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
 import { initializeSupabase } from '@/integrations/supabase/client';
-import { useAuthBridge } from '@/bridges/auth/bridge';
-import { useRBACBridge } from '@/bridges/rbac/bridge';
-import { useThemeBridge } from '@/bridges/theme/bridge';
-import { useContentBridge } from '@/bridges/content/bridge';
+import { authBridge } from '@/bridges/auth/bridge';
+import { rbacBridge } from '@/bridges/rbac/bridge';
+import { themeBridge } from '@/bridges/theme/bridge';
+import { contentBridge } from '@/bridges/content/bridge';
 import { useToast } from '@/shared/ui/use-toast';
 
 interface AppBootstrapProps {
@@ -23,12 +23,6 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
   const { toast } = useToast();
   const initStartTime = useRef(Date.now());
 
-  // Access bridge methods
-  const { initialize: initializeAuth } = useAuthBridge();
-  const { initialize: initializeRBAC } = useRBACBridge();
-  const { initialize: initializeTheme } = useThemeBridge();
-  const { initialize: initializeContent } = useContentBridge();
-
   useEffect(() => {
     async function bootstrap() {
       try {
@@ -43,10 +37,11 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
         setInitStatus(prev => ({ ...prev, phase: 'bridges' }));
 
         await Promise.all([
-          initializeAuth(),
-          initializeRBAC(),
-          initializeTheme(),
-          initializeContent(),
+          authBridge.initialize(),
+          rbacBridge.initialize(),
+          themeBridge.initialize(),
+          contentBridge.initialize(),
+          logBridge.initialize(),
         ]);
 
         // ---- Bootstrap Complete ----
@@ -71,7 +66,7 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
     if (!initStatus.completed && !initStatus.error) {
       bootstrap();
     }
-  }, [initStatus.completed, initStatus.error, initStatus.phase, initializeAuth, initializeRBAC, initializeTheme, initializeContent, toast]);
+  }, [initStatus.completed, initStatus.error, initStatus.phase, toast]);
 
   // ---- UI during bootstrap phases ----
   if (!initStatus.completed) {

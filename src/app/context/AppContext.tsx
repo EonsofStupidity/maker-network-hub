@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useSupabaseStatus } from '@/hooks/use-supabase-status';
-import { useAuthBridge } from '@/bridges/auth/bridge';
+import { authBridge } from '@/bridges/auth/bridge';
 import { z } from 'zod';
 import { useToast } from '@/shared/ui/use-toast';
 import { logBridge } from '@/bridges/logging/bridge';
@@ -24,7 +24,6 @@ const AppContext = createContext<AppContextType | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { getUser } = useAuthBridge();
   
   // Use the enhanced Supabase status hook
   const { 
@@ -42,7 +41,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const currentUser = await getUser();
+        const currentUser = authBridge.getUser();
         setUser(currentUser);
         setIsAuthenticated(!!currentUser);
       } catch (error) {
@@ -55,7 +54,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     fetchUser();
-  }, [getUser]);
+  }, []);
 
   // Function to refresh app state
   const refreshApp = () => {
@@ -65,9 +64,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     checkConnection()
       .then(() => {
         // Re-fetch user information
-        return getUser();
-      })
-      .then((currentUser) => {
+        const currentUser = authBridge.getUser();
         setUser(currentUser);
         setIsAuthenticated(!!currentUser);
       })

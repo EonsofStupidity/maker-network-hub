@@ -1,146 +1,151 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
-import { useToast } from '@/shared/ui/use-toast';
-import { SupabaseResponseSchema } from '@/shared/types/core/supabase.types';
 import { z } from 'zod';
 
-// Enhanced schema for connection status
-export const ConnectionStatusSchema = z.object({
+interface SupabaseStatusOptions {
+  autoCheck?: boolean;
+  checkInterval?: number;
+  maxRetries?: number;
+}
+
+// Define Zod schema for the hook's return value
+const SupabaseStatusReturnSchema = z.object({
   isConnected: z.boolean(),
-  lastChecked: z.number().nullable(),
+  checkConnection: z.function().returns(z.promise(z.boolean())),
+  lastChecked: z.instanceof(Date).nullable(),
   hasInitiallyChecked: z.boolean(),
   retryCount: z.number(),
-  maxRetries: z.number().optional(),
-  checkConnection: z.function().args().returns(z.promise(z.boolean())),
+  retryLimit: z.number(),
+  error: z.union([z.custom<Error>(), z.null()]),
 });
 
-export type ConnectionStatus = z.infer<typeof ConnectionStatusSchema>;
+type SupabaseStatusReturn = z.infer<typeof SupabaseStatusReturnSchema>;
 
+/**
+ * Hook to check Supabase connection status
+ * 
+ * @param autoCheck Start checking automatically on mount
+ * @param checkInterval Interval in ms to check connection (if autoCheck is true)
+ * @param maxRetries Maximum number of retries if connection fails
+ * @returns Connection status and control functions
+ */
 export function useSupabaseStatus(
-  checkImmediately: boolean = true,
-  checkInterval: number = 30000,
-  maxRetries: number = 5
-) {
+  autoCheck = false,
+  checkInterval = 30000,
+  maxRetries = 3
+): SupabaseStatusReturn {
   const [isConnected, setIsConnected] = useState<boolean>(true);
-  const [lastChecked, setLastChecked] = useState<number | null>(null);
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [hasInitiallyChecked, setHasInitiallyChecked] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
-  const retryTimerRef = useRef<number | null>(null);
-  const { toast } = useToast();
-
-  // Clear existing retry timer when component unmounts or parameters change
-  useEffect(() => {
-    return () => {
-      if (retryTimerRef.current !== null) {
-        clearTimeout(retryTimerRef.current);
-      }
-    };
-  }, [checkInterval, maxRetries]);
-
-  const checkConnection = async (): Promise<boolean> => {
+  const [timerId, setTimerId] = useState<number | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  
+  // Check the connection to Supabase
+  const checkConnection = useCallback(async (): Promise<boolean> => {
     try {
-      const response = await supabase.from('profiles').select('id').limit(1);
-      const validationResult = SupabaseResponseSchema.safeParse(response);
+      // Try a simple query to test connection
+      const { error } = await supabase.from('profiles').select('id').limit(1);
       
-      const now = Date.now();
-      setLastChecked(now);
+      // If there's an error, connection failed
+      const connected = !error;
+      
+      // Update state
+      setIsConnected(connected);
+      setLastChecked(new Date());
       setHasInitiallyChecked(true);
       
-      if (!validationResult.success || validationResult.data.error) {
-        const error = validationResult.success ? validationResult.data.error : new Error('Invalid response structure');
-        
-        if (isConnected) {
-          logBridge.error(LogCategory.SYSTEM, 'Supabase connection lost', {
-            details: validationResult.success ? validationResult.data.error : 'Validation failed',
-            retryCount
+      // Log result
+      if (connected) {
+        if (retryCount > 0) {
+          logBridge.info(LogCategory.SYSTEM, 'Supabase connection restored', {
+            retriesNeeded: retryCount,
           });
-          
-          setIsConnected(false);
-          
-          // Only show toast on initial disconnection or after reconnection
-          toast({
-            variant: "destructive",
-            title: "Connection lost",
-            description: "Lost connection to database. Some features may be limited."
-          });
-          
-          // Schedule retry
-          if (retryCount < maxRetries) {
-            const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 30000); // Exponential backoff with cap at 30s
-            
-            retryTimerRef.current = window.setTimeout(() => {
-              setRetryCount(prev => prev + 1);
-              checkConnection();
-            }, backoffDelay);
-            
-            logBridge.info(LogCategory.SYSTEM, `Scheduling reconnection attempt ${retryCount + 1}/${maxRetries}`, {
-              details: { delay: backoffDelay }
-            });
-          }
+        } else {
+          logBridge.debug(LogCategory.SYSTEM, 'Supabase connection check passed');
         }
-        return false;
-      }
-      
-      if (!isConnected) {
-        setIsConnected(true);
         setRetryCount(0);
-        
-        toast({
-          title: "Connection restored",
-          description: "Connection to database has been restored."
-        });
-        
-        logBridge.info(LogCategory.SYSTEM, 'Supabase connection restored', {
-          details: { downtime: lastChecked ? now - lastChecked : 'unknown' }
+      } else {
+        setRetryCount(prev => prev + 1);
+        logBridge.warn(LogCategory.SYSTEM, 'Supabase connection check failed', {
+          reason: error?.message || 'Unknown error',
+          retryCount: retryCount + 1,
         });
       }
       
-      return true;
-    } catch (error) {
+      return connected;
+    } catch (err) {
       setIsConnected(false);
+      setLastChecked(new Date());
       setHasInitiallyChecked(true);
+      setRetryCount(prev => prev + 1);
       
-      logBridge.error(LogCategory.SYSTEM, 'Supabase connection check failed', {
-        details: { error: error instanceof Error ? error.message : String(error) }
+      const thrownError = err as Error;
+      setError(thrownError);
+      
+      logBridge.error(LogCategory.SYSTEM, 'Supabase connection check error', {
+        error: thrownError.message,
+        retryCount: retryCount + 1,
       });
       
       return false;
     }
-  };
+  }, [retryCount]);
 
-  // Initial check and interval setup
+  // Setup interval checking and initial check
   useEffect(() => {
-    if (checkImmediately) {
+    // Do initial check if requested
+    if (autoCheck && !hasInitiallyChecked) {
       checkConnection();
     }
     
-    if (checkInterval > 0) {
-      const interval = setInterval(checkConnection, checkInterval);
-      return () => clearInterval(interval);
+    // Setup interval checking if requested
+    if (autoCheck && checkInterval > 0) {
+      const id = window.setInterval(() => {
+        // Skip if we've reached retry limit
+        if (retryCount >= maxRetries) {
+          clearInterval(id);
+          return;
+        }
+        
+        checkConnection();
+      }, checkInterval) as unknown as number;
+      
+      setTimerId(id);
     }
-  }, [checkInterval, checkImmediately]);
+    
+    // Cleanup
+    return () => {
+      if (timerId !== null) {
+        clearInterval(timerId);
+      }
+    };
+  }, [autoCheck, checkInterval, checkConnection, hasInitiallyChecked, maxRetries, retryCount, timerId]);
 
-  // Validate the return value against our schema
-  const returnValue = {
+  // Prep result object
+  const result: SupabaseStatusReturn = {
     isConnected,
+    checkConnection,
     lastChecked,
     hasInitiallyChecked,
     retryCount,
-    maxRetries,
-    checkConnection,
+    retryLimit: maxRetries,
+    error,
   };
 
-  // Perform runtime type validation in development
+  // Validate in dev mode
   if (process.env.NODE_ENV === 'development') {
     try {
-      ConnectionStatusSchema.parse(returnValue);
-    } catch (error) {
-      console.error('useSupabaseStatus hook return value type mismatch:', error);
+      SupabaseStatusReturnSchema.parse(result);
+    } catch (validationError) {
+      console.error('SupabaseStatus hook return value validation error:', validationError);
     }
   }
 
-  return returnValue;
+  return result;
 }
+
+export default useSupabaseStatus;
