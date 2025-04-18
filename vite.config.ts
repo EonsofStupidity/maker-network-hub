@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react-swc"
 import path from "path"
@@ -81,6 +80,10 @@ export default defineConfig(({ mode }) => ({
       "@utils": path.resolve(__dirname, "./src/utils"),
       "@features": path.resolve(__dirname, "./src/features"),
     }
+  },
+  define: {
+    // Fix for Node.js __dirname not being available in browser
+    '__dirname': '"/"',
   },
   build: {
     target: "esnext",

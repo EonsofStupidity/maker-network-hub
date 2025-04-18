@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useMemo } from 'react';
 import { LoadPhase } from '@/shared/components/platform/PlatformLoader';
 import { logBridge } from '@/bridges/logging/bridge';
@@ -9,6 +8,7 @@ import { rbacBridge } from '@/bridges/rbac/bridge';
 import { themeBridge } from '@/bridges/theme/bridge';
 import { contentBridge } from '@/bridges/content/bridge';
 import { CircuitBreaker } from '@/utils/CircuitBreaker';
+import { supabase, initializeSupabase as initSupabase } from '@/integrations/supabase/client';
 
 // Create circuit breakers for critical services
 const authCircuitBreaker = new CircuitBreaker('auth', { 
@@ -85,24 +85,27 @@ export function usePlatformBootstrap() {
     });
   }, []);
 
-  // Initialize Supabase connection
+  // Initialize Supabase connection with the real client
   const initializeSupabase = useCallback(async () => {
     try {
-      updatePhaseStatus('supabase', 'loading');
+      updatePhaseStatus('supabase', 'loading', 'Connecting to Supabase');
       
-      // We would typically check connection to Supabase here
-      // For now simulate this with a dummy successful check
-      const isConnected = true; // This would be a real check in production
+      // Use the actual Supabase initialization function
+      await initSupabase();
       
-      if (isConnected) {
-        updatePhaseStatus('supabase', 'success', 'Connected to database');
-        return true;
-      } else {
-        updatePhaseStatus('supabase', 'error', 'Failed to connect to database');
+      // Verify connection by making a simple query
+      const { error } = await supabase.from('profiles').select('id').limit(1);
+      
+      if (error) {
+        updatePhaseStatus('supabase', 'error', `Database connection error: ${error.message}`);
         return false;
+      } else {
+        updatePhaseStatus('supabase', 'success', 'Connected to Supabase database');
+        return true;
       }
     } catch (error) {
-      updatePhaseStatus('supabase', 'error', error instanceof Error ? error.message : 'Unknown error');
+      const errorMsg = error instanceof Error ? error.message : 'Unknown database connection error';
+      updatePhaseStatus('supabase', 'error', errorMsg);
       return false;
     }
   }, [updatePhaseStatus]);

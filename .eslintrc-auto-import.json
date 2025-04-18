@@ -541,6 +541,25 @@
     "useLogger": true,
     "useMobile": true,
     "useThemeEffects": true,
-    "useThemeVariables": true
+    "useThemeVariables": true,
+    "AUTH_ERROR_CODES": true,
+    "AppError": true,
+    "AuthError": true,
+    "CircuitBreakerOptions": true,
+    "FloatingChat": true,
+    "Header": true,
+    "OfflineAwareOptions": true,
+    "OfflineAwareResult": true,
+    "ToastActionElement": true,
+    "ToastProps": true,
+    "ToastVariant": true,
+    "getErrorMessage": true,
+    "useOfflineAware": true,
+    "usePlatformBootstrap": true,
+    "useRbac": true,
+    "useRbacStore": true,
+    "useSupabaseStatus": true,
+    "useThemeFallback": true,
+    "useThemeLoader": true
   }
 }

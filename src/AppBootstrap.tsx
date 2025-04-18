@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { logBridge } from '@/bridges/logging/bridge';
@@ -6,12 +5,14 @@ import { LogCategory } from '@/shared/types/core/logging.types';
 import { LoadPhase } from '@/shared/types/core/app.types';
 import { PlatformLoader } from '@/shared/components/platform/PlatformLoader';
 import { themeBridge } from '@/bridges/theme/bridge';
+import { initializeSupabase } from '@/integrations/supabase/client';
 
 interface AppBootstrapProps {
   children: React.ReactNode;
 }
 
 const INITIALIZATION_PHASES: LoadPhase[] = [
+  { id: 'supabase', status: 'idle', name: 'Database Connection' },
   { id: 'auth', status: 'idle', name: 'Authentication' },
   { id: 'theme', status: 'idle', name: 'Theme' }
 ];
@@ -37,10 +38,17 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
   useEffect(() => {
     const initializeApp = async () => {
       try {
+        // Initialize Supabase first
+        updatePhase('supabase', 'loading', 'Connecting to database');
+        await initializeSupabase();
+        updatePhase('supabase', 'success', 'Database connected');
+        
+        // Initialize Auth
         updatePhase('auth', 'loading');
         await initAuth();
         updatePhase('auth', 'success');
         
+        // Initialize Theme
         updatePhase('theme', 'loading');
         await themeBridge.initialize();
         updatePhase('theme', 'success');
