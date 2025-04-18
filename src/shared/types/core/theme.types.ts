@@ -1,3 +1,4 @@
+
 /**
  * Base theme effect type
  */
@@ -77,16 +78,19 @@ export interface ComponentTokens {
 export interface Theme {
   id: string;
   name: string;
-  active: boolean;
-  dark: boolean;
+  active?: boolean;
+  dark?: boolean;
   isDark?: boolean;
   label?: string;
   description?: string;
   status?: string;
   context?: string;
+  primaryColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
   colors: Record<string, string>;
-  effects: ThemeEffect[];
-  tokens: ThemeToken[];
+  effects?: ThemeEffect[];
+  tokens?: ThemeToken[];
   variables?: Record<string, string>;
   designTokens?: DesignTokens;
   componentTokens?: ComponentTokens;

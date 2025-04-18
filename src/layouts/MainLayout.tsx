@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Header } from '@/components/Header/index';
-import { Footer } from '@/components/Footer/index';
+import { Header } from '../components/Header/index';
+import { Footer } from '../components/Footer/index';
 
 export interface MainLayoutProps {
   children?: React.ReactNode;
