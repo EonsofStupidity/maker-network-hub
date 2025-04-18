@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from 'react';
 import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
@@ -8,10 +7,15 @@ import { rbacBridge } from '@/bridges/rbac/bridge';
 import { themeBridge } from '@/bridges/theme/bridge';
 import { contentBridge } from '@/bridges/content/bridge';
 import { useToast } from '@/shared/ui/use-toast';
+import { CircuitBreaker } from '@/utils/CircuitBreaker';
 
 interface AppBootstrapProps {
   children: React.ReactNode;
 }
+
+// Create circuit breakers for critical services
+const supabaseCircuitBreaker = new CircuitBreaker('supabase', { maxFailures: 3, resetTimeout: 10000 });
+const authCircuitBreaker = new CircuitBreaker('auth', { maxFailures: 2, resetTimeout: 5000 });
 
 export function AppBootstrap({ children }: AppBootstrapProps) {
   const [initStatus, setInitStatus] = useState({
@@ -22,23 +26,46 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
 
   const { toast } = useToast();
   const initStartTime = useRef(Date.now());
+  const initAttempt = useRef(0);
 
   useEffect(() => {
     async function bootstrap() {
       try {
-        logBridge.info(LogCategory.SYSTEM, '🚀 Starting App Bootstrap');
+        // Increment attempt counter
+        initAttempt.current += 1;
+        logBridge.info(LogCategory.SYSTEM, `🚀 Starting App Bootstrap (attempt ${initAttempt.current})`);
 
         // ---- Phase 1: Supabase Init ----
         setInitStatus(prev => ({ ...prev, phase: 'supabase' }));
-        await initializeSupabase();
+        await supabaseCircuitBreaker.execute(
+          async () => await initializeSupabase(),
+          () => {
+            logBridge.warn(LogCategory.SYSTEM, 'Supabase initialization failed, using fallback');
+            // Continue execution with fallback/offline mode
+          }
+        );
         logBridge.info(LogCategory.SYSTEM, 'Supabase initialized');
 
-        // ---- Phase 2: Parallel Bridge Init ----
-        setInitStatus(prev => ({ ...prev, phase: 'bridges' }));
+        // ---- Phase 2: Sequential Bridge Init ----
+        // Auth must be initialized first
+        setInitStatus(prev => ({ ...prev, phase: 'auth' }));
+        await authCircuitBreaker.execute(
+          async () => await authBridge.initialize(),
+          () => {
+            logBridge.warn(LogCategory.SYSTEM, 'Auth bridge initialization failed, continuing as guest');
+            // Continue as guest
+          }
+        );
+        logBridge.info(LogCategory.SYSTEM, 'Auth bridge initialized');
 
+        // RBAC depends on Auth
+        setInitStatus(prev => ({ ...prev, phase: 'rbac' }));
+        await rbacBridge.initialize();
+        logBridge.info(LogCategory.SYSTEM, 'RBAC bridge initialized');
+
+        // Other bridges can initialize in parallel as they don't depend on each other
+        setInitStatus(prev => ({ ...prev, phase: 'remaining_bridges' }));
         await Promise.all([
-          authBridge.initialize(),
-          rbacBridge.initialize(),
           themeBridge.initialize(),
           contentBridge.initialize(),
           logBridge.initialize(),
@@ -46,12 +73,19 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
 
         // ---- Bootstrap Complete ----
         const elapsedTime = Date.now() - initStartTime.current;
-        logBridge.info(LogCategory.SYSTEM, '✅ App Bootstrap Complete', { elapsedTimeMs: elapsedTime });
+        logBridge.info(LogCategory.SYSTEM, '✅ App Bootstrap Complete', { 
+          elapsedTimeMs: elapsedTime,
+          attempt: initAttempt.current
+        });
 
         setInitStatus({ phase: 'complete', completed: true, error: null });
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Unknown bootstrap error');
-        logBridge.error(LogCategory.SYSTEM, '❌ Bootstrap Error', { error: error.message, phase: initStatus.phase });
+        logBridge.error(LogCategory.SYSTEM, '❌ Bootstrap Error', { 
+          error: error.message, 
+          phase: initStatus.phase,
+          attempt: initAttempt.current
+        });
 
         setInitStatus(prev => ({ ...prev, error }));
 
