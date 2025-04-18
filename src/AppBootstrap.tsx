@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from 'react';
 import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';

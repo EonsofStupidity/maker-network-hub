@@ -3,10 +3,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSupabaseStatus } from '@/hooks/use-supabase-status';
 import { AlertCircle } from 'lucide-react';
-import { Alert } from '@/shared/ui/alert';
+import { Alert, AlertDescription } from '@/shared/ui/alert';
 
 export function Header() {
-  const { isConnected } = useSupabaseStatus(true, 10000); // Check every 10s
+  const { isConnected, hasInitiallyChecked, retryCount } = useSupabaseStatus(true, 10000, 5);
 
   return (
     <header className="bg-background border-b">
@@ -22,10 +22,13 @@ export function Header() {
           </nav>
         </div>
       </div>
-      {!isConnected && (
+      
+      {hasInitiallyChecked && !isConnected && (
         <Alert variant="destructive" className="rounded-none">
           <AlertCircle className="h-4 w-4" />
-          <span>Connection to database lost. Retrying...</span>
+          <AlertDescription>
+            Connection to database lost. {retryCount > 0 ? `Retrying (${retryCount})...` : 'Retrying...'}
+          </AlertDescription>
         </Alert>
       )}
     </header>
