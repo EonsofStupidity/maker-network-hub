@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/auth.store';
 import { AUTH_STATUS, UserProfile, AuthStatus } from '@/shared/types';
@@ -15,7 +14,7 @@ export const useAuthState = () => {
     isAuthenticated,
     status,
     error,
-    initialized,
+    isInitialized,
     initialize,
     login,
     logout,
@@ -24,19 +23,19 @@ export const useAuthState = () => {
 
   useEffect(() => {
     // Initialize auth if not already initialized
-    if (!initialized) {
+    if (!isInitialized) {
       initialize().finally(() => {
         setIsInitializing(false);
       });
     } else {
       setIsInitializing(false);
     }
-  }, [initialize, initialized]);
+  }, [initialize, isInitialized]);
 
   return {
     user,
     isAuthenticated,
-    isAuthReady: initialized && !isInitializing,
+    isAuthReady: isInitialized && !isInitializing,
     isLoading: status === AUTH_STATUS.LOADING || isInitializing,
     error,
     login,

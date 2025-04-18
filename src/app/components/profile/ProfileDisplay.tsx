@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UserProfile } from '@/shared/types/shared.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
@@ -16,10 +15,10 @@ export function ProfileDisplay({ profile, onEditClick, canEdit = true }: Profile
   const {
     name = '',
     email = '',
-    avatar_url,
+    avatarUrl,
     bio = '',
-    created_at,
-    last_sign_in_at,
+    createdAt,
+    lastSignIn,
   } = profile;
 
   // Format date for display
@@ -56,8 +55,8 @@ export function ProfileDisplay({ profile, onEditClick, canEdit = true }: Profile
       <CardContent className="space-y-6">
         <div className="flex flex-col md:flex-row gap-6 items-center">
           <Avatar className="h-24 w-24">
-            {avatar_url ? (
-              <AvatarImage src={avatar_url} alt={name || 'User'} />
+            {avatarUrl ? (
+              <AvatarImage src={avatarUrl} alt={name || 'User'} />
             ) : (
               <AvatarFallback className="text-xl">{getInitials(name || '')}</AvatarFallback>
             )}
@@ -83,11 +82,11 @@ export function ProfileDisplay({ profile, onEditClick, canEdit = true }: Profile
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h4 className="font-medium text-sm text-muted-foreground mb-1">Member since</h4>
-              <p>{formatDate(created_at)}</p>
+              <p>{formatDate(createdAt)}</p>
             </div>
             <div>
               <h4 className="font-medium text-sm text-muted-foreground mb-1">Last login</h4>
-              <p>{formatDate(last_sign_in_at)}</p>
+              <p>{formatDate(lastSignIn)}</p>
             </div>
           </div>
         </div>

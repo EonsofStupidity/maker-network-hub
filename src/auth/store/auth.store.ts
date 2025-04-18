@@ -1,23 +1,10 @@
-
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
-import { UserProfile, AUTH_STATUS, AuthStatus } from '@/shared/types/core/auth.types';
-
-interface AuthState {
-  isInitialized: boolean;
-  isAuthenticated: boolean;
-  user: UserProfile | null;
-  status: AuthStatus;
-  error: Error | null;
-  initialize: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  signup: (email: string, password: string) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  updateProfile: (profile: Partial<UserProfile>) => Promise<void>;
-}
+import { AUTH_STATUS, AuthStatus, UserProfile } from '@/shared/types/core/auth.types';
+import { AuthState } from '@/auth/auth-types/authTypes';
+import { mapUserToProfile } from '@/auth/utils/userMapper';
 
 export const useAuthStore = create<AuthState>((set) => ({
   isInitialized: false,
@@ -34,7 +21,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (session?.user) {
         set({ 
           isAuthenticated: true, 
-          user: session.user,
+          user: mapUserToProfile(session.user),
           status: AUTH_STATUS.AUTHENTICATED,
           isInitialized: true 
         });
@@ -72,7 +59,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       set({
         isAuthenticated: true,
-        user: data.user,
+        user: mapUserToProfile(data.user),
         status: AUTH_STATUS.AUTHENTICATED,
         error: null
       });
@@ -116,12 +103,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       if (error) throw error;
 
-      set({
-        isAuthenticated: true,
-        user: data.user,
-        status: AUTH_STATUS.AUTHENTICATED,
-        error: null
-      });
+      if (data.user) {
+        set({
+          isAuthenticated: true,
+          user: mapUserToProfile(data.user),
+          status: AUTH_STATUS.AUTHENTICATED,
+          error: null
+        });
+      }
     } catch (error) {
       set({ 
         status: AUTH_STATUS.ERROR,
@@ -150,13 +139,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       set({ status: AUTH_STATUS.LOADING });
       const { data, error } = await supabase.auth.updateUser({
-        data: profile
+        data: profile.userMetadata
       });
 
       if (error) throw error;
 
+      const currentUser = useAuthStore.getState().user;
+      const updatedUser = currentUser 
+        ? { ...currentUser, ...profile }
+        : data.user ? mapUserToProfile(data.user) : null;
+
       set({
-        user: { ...data.user, ...profile },
+        user: updatedUser,
         status: AUTH_STATUS.AUTHENTICATED,
         error: null
       });

@@ -1,4 +1,3 @@
-
 export const AUTH_STATUS = {
   IDLE: 'IDLE',
   LOADING: 'LOADING',
@@ -18,6 +17,7 @@ export interface UserProfile {
   createdAt: string;
   updatedAt?: string;
   lastSignIn?: string;
+  bio?: string;
   userMetadata?: Record<string, any>;
   appMetadata?: Record<string, any>;
   roles?: string[];

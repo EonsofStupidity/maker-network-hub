@@ -1,4 +1,3 @@
-
 import { UserProfile } from '@/shared/types/core/auth.types';
 import { User } from '@supabase/supabase-js';
 import { ROLES, UserRole } from '@/shared/types/core/rbac.types';
@@ -28,7 +27,7 @@ export function mapUserToProfile(user: User): UserProfile {
     avatarUrl: user.user_metadata?.avatar_url,
     createdAt: user.created_at,
     updatedAt: user.updated_at,
-    lastSignInAt: user.last_sign_in_at,
+    lastSignIn: user.last_sign_in_at,
     bio: user.user_metadata?.bio,
     name: user.user_metadata?.full_name,
     userMetadata: user.user_metadata,
