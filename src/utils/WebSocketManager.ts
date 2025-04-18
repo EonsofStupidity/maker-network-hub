@@ -1,4 +1,3 @@
-
 import { CircuitBreaker } from './CircuitBreaker';
 import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
@@ -16,7 +15,6 @@ export class WebSocketManager {
   private readonly circuitBreaker: CircuitBreaker;
 
   constructor(private readonly options: WebSocketOptions) {
-    // Create managers with explicit type parameters
     this.heartbeatManager = new HeartbeatManager(
       options.pingInterval ?? 30000,
       options.pingTimeout ?? 5000,
@@ -86,12 +84,10 @@ export class WebSocketManager {
       try {
         logBridge.info(LogCategory.SYSTEM, `WebSocket connecting to ${this.options.url}`);
         
-        // Check if we're in a browser environment with WebSocket support
         if (typeof window === 'undefined' || !('WebSocket' in window)) {
           throw new AppError.connection('WebSocket not supported in this environment');
         }
         
-        // Directly use WebSocket without intermediate constructor variable
         this.socket = new WebSocket(this.options.url, this.options.protocols);
         
         if (!this.socket) {
