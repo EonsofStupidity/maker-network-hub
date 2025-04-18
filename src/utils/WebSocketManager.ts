@@ -6,6 +6,15 @@ import { HeartbeatManager } from './websocket/HeartbeatManager';
 import { ReconnectionManager } from './websocket/ReconnectionManager';
 import { WebSocketOptions } from './websocket/types';
 
+declare const WebSocket: {
+  prototype: WebSocket;
+  new(url: string, protocols?: string | string[]): WebSocket;
+  readonly CLOSED: number;
+  readonly CLOSING: number;
+  readonly CONNECTING: number;
+  readonly OPEN: number;
+};
+
 export class WebSocketManager {
   private socket: WebSocket | null = null;
   private isConnecting: boolean = false;
@@ -88,7 +97,8 @@ export class WebSocketManager {
           throw new AppError.connection('WebSocket not supported in this environment');
         }
         
-        this.socket = new WebSocket(this.options.url, this.options.protocols);
+        const ws = new (window as any).WebSocket(this.options.url, this.options.protocols);
+        this.socket = ws;
         
         if (!this.socket) {
           throw new AppError.connection('Failed to create WebSocket instance');
@@ -103,12 +113,12 @@ export class WebSocketManager {
           reject(new AppError.connection('WebSocket connection failed'));
         };
         
-        this.socket.addEventListener('open', onOpen, { once: true });
-        this.socket.addEventListener('error', onError, { once: true });
+        ws.addEventListener('open', onOpen, { once: true });
+        ws.addEventListener('error', onError, { once: true });
         
-        this.socket.addEventListener('close', this.handleClose.bind(this));
-        this.socket.addEventListener('error', this.handleError.bind(this));
-        this.socket.addEventListener('message', this.handleMessage.bind(this));
+        ws.addEventListener('close', this.handleClose.bind(this));
+        ws.addEventListener('error', this.handleError.bind(this));
+        ws.addEventListener('message', this.handleMessage.bind(this));
       } catch (err) {
         reject(AppError.fromUnknown(err, 'websocket'));
       }
