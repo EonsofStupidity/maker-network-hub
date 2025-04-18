@@ -93,9 +93,9 @@ export class WebSocketManager {
           throw new AppError.connection('WebSocket not supported in this browser');
         }
 
-        // Create WebSocket with proper type handling
-        const ws = new window.WebSocket(this.options.url, this.options.protocols);
-        this.socket = ws;
+        // Create WebSocket instance
+        this.socket = new WebSocket(this.options.url, this.options.protocols);
+        const ws = this.socket;
 
         const onOpen = (event: Event) => {
           this.handleOpen(event);
