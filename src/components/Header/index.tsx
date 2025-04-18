@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSupabaseStatus } from '@/hooks/use-supabase-status';
-import { AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import { Info, Home, Settings, Menu } from 'lucide-react';
 import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
 import { themeBridge } from '@/bridges/theme/bridge';
@@ -15,7 +15,6 @@ export function Header() {
     lastChecked 
   } = useSupabaseStatus(true, 10000, 5);
   
-  // Get theme mode
   const isDarkMode = themeBridge.isDarkMode();
   const toggleTheme = () => {
     themeBridge.toggleDarkMode();
@@ -26,27 +25,34 @@ export function Header() {
     <header className="bg-background border-b">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          <Link to="/" className="font-bold text-xl">MakersIMPULSE</Link>
+          <Link to="/" className="flex items-center gap-2">
+            <Home className="h-5 w-5" />
+            <span className="font-bold text-xl">MakersIMPULSE</span>
+          </Link>
           
           <div className="flex items-center gap-4">
             <nav>
               <ul className="flex space-x-4">
-                <li><Link to="/" className="hover:text-primary">Home</Link></li>
-                <li><Link to="/app" className="hover:text-primary">App</Link></li>
-                <li><Link to="/admin" className="hover:text-primary">Admin</Link></li>
+                <li>
+                  <Link to="/app" className="flex items-center gap-1 hover:text-primary">
+                    <Menu className="h-4 w-4" />
+                    <span>App</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/admin" className="flex items-center gap-1 hover:text-primary">
+                    <Settings className="h-4 w-4" />
+                    <span>Admin</span>
+                  </Link>
+                </li>
               </ul>
             </nav>
             
-            {/* Connection status indicator */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center">
-                    {isConnected ? (
-                      <Wifi size={18} className="text-green-500" />
-                    ) : (
-                      <WifiOff size={18} className="text-destructive" />
-                    )}
+                    <Info className={`h-5 w-5 ${isConnected ? 'text-green-500' : 'text-destructive'}`} />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -59,7 +65,6 @@ export function Header() {
               </Tooltip>
             </TooltipProvider>
             
-            {/* Theme toggle button */}
             <button 
               onClick={toggleTheme}
               className="p-2 rounded-md hover:bg-accent"
@@ -73,7 +78,7 @@ export function Header() {
       
       {hasInitiallyChecked && !isConnected && (
         <Alert variant="destructive" className="rounded-none">
-          <AlertCircle className="h-4 w-4" />
+          <Info className="h-4 w-4" />
           <AlertDescription>
             Connection to database lost. {retryCount > 0 ? `Retrying (${retryCount})...` : 'Retrying...'}
           </AlertDescription>

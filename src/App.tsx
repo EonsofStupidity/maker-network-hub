@@ -1,15 +1,15 @@
 
-import React, { Suspense } from "react";
+import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "./shared/ui/toaster";
 import { TooltipProvider } from "./shared/ui/tooltip";
 import { Toaster as Sonner } from "./shared/ui/sonner";
 import { AuthProvider } from "./auth/context/AuthContext";
-import Routes from "./router/Routes";
+import { Routes } from "./router/Routes";
 import { GlobalErrorBoundary } from "./shared/components/GlobalErrorBoundary";
-import { AppProvider } from "./app/context/AppContext";
-import AppBootstrap from "./AppBootstrap";
+import { AppBootstrap } from "./app/bootstrap/AppBootstrap";
+import { ThemeProvider } from "./shared/ui/theme-provider";
 
 // Configure Query Client with simpler settings focused on reliability
 const queryClient = new QueryClient({
@@ -18,7 +18,6 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       retry: 1,
       staleTime: 10000,
-      gcTime: 5 * 60 * 1000,
     },
   },
 });
@@ -27,19 +26,19 @@ function App() {
   return (
     <GlobalErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <AuthProvider>
-            <AppProvider>
-              <Toaster />
-              <Sonner />
+        <ThemeProvider defaultTheme="dark">
+          <TooltipProvider>
+            <AuthProvider>
               <AppBootstrap>
                 <BrowserRouter>
+                  <Toaster />
+                  <Sonner />
                   <Routes />
                 </BrowserRouter>
               </AppBootstrap>
-            </AppProvider>
-          </AuthProvider>
-        </TooltipProvider>
+            </AuthProvider>
+          </TooltipProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </GlobalErrorBoundary>
   );
