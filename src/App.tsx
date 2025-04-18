@@ -6,7 +6,7 @@ import { Toaster } from "./shared/ui/toaster";
 import { TooltipProvider } from "./shared/ui/tooltip";
 import { Toaster as Sonner } from "./shared/ui/sonner";
 import { ThemeProvider } from "./shared/ui/theme-provider";
-import { AppBootstrap } from "./app/bootstrap/AppBootstrap";
+import { AppBootstrap } from "./AppBootstrap";
 import { Routes } from "./router/Routes";
 import { GlobalErrorBoundary } from "./shared/components/GlobalErrorBoundary";
 

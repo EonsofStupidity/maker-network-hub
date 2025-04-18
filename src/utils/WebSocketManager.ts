@@ -1,3 +1,4 @@
+
 import { CircuitBreaker } from './CircuitBreaker';
 import { logBridge } from '@/bridges/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
@@ -88,13 +89,13 @@ export class WebSocketManager {
           throw new AppError.connection('WebSocket not supported in this environment');
         }
 
-        // Ensure WebSocket is available in this environment
+        // Ensure WebSocket is available
         if (!('WebSocket' in window)) {
           throw new AppError.connection('WebSocket not supported in this browser');
         }
 
-        // Create WebSocket instance
-        this.socket = new WebSocket(this.options.url, this.options.protocols);
+        // Create WebSocket instance with proper typing
+        this.socket = new window.WebSocket(this.options.url, this.options.protocols);
         const ws = this.socket;
 
         const onOpen = (event: Event) => {

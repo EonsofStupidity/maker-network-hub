@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
-import { FloatingChat } from '@/components/FloatingChat';
+import { FloatingChat } from '@/chat/components/FloatingChat';
 import { themeBridge } from '@/bridges/theme/bridge';
 
 export function MainLayout({ children }: { children?: React.ReactNode }) {

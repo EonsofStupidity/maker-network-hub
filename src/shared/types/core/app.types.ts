@@ -1,4 +1,3 @@
-
 /**
  * Core app types definition
  */
@@ -39,4 +38,13 @@ export interface NetworkState {
   isOnline: boolean;
   lastConnectedAt: number | null;
   lastDisconnectedAt: number | null;
+}
+
+// Loading phase type for bootstrap
+export interface LoadPhase {
+  id: string;
+  name: string;
+  status: 'idle' | 'loading' | 'success' | 'error';
+  detail?: string;
+  retry?: () => Promise<void>;
 }
