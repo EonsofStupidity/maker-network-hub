@@ -1,5 +1,5 @@
-
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
 
 // Define content page schema
 export const ContentPageSchema = z.object({
@@ -52,56 +52,164 @@ class ContentBridgeClass implements IContentBridge {
   async initialize(): Promise<void> {
     this._isLoading = true;
     try {
-      // This would typically fetch content from an API
-      console.log('Content bridge initializing...');
+      // Fetch content pages from Supabase
+      console.log('Content bridge initializing - fetching from Supabase...');
       
-      // Mock data
-      this._pages = [
-        {
-          id: '1',
-          slug: 'home',
-          title: 'Home Page',
-          content: '# Welcome to MakersIMPULSE\n\nThis is the home page content.',
-          published: true,
-          updatedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          slug: 'about',
-          title: 'About Us',
-          content: '# About MakersIMPULSE\n\nLearn more about our platform.',
-          published: true,
-          updatedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      const { data, error } = await supabase
+        .from('content_pages')
+        .select('*')
+        .eq('published', true)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        throw new Error(`Failed to fetch content: ${error.message}`);
+      }
       
-      console.log('Content bridge initialized');
+      if (!data || data.length === 0) {
+        console.warn('No content pages found in database');
+        // If no content is found, we'll still return an empty array
+        this._pages = [];
+      } else {
+        // Transform the data to match our ContentPage type
+        this._pages = data.map(page => ({
+          id: page.id,
+          slug: page.slug,
+          title: page.title,
+          content: page.content,
+          published: page.published,
+          updatedAt: page.updated_at,
+          createdAt: page.created_at
+        }));
+        
+        console.log(`Loaded ${this._pages.length} content pages from Supabase`);
+      }
+      
+      console.log('Content bridge initialized successfully');
     } catch (error) {
       this._error = error as Error;
       console.error('Content bridge initialization error:', error);
+      // Fallback to empty content when there's an error
+      this._pages = [];
     } finally {
       this._isLoading = false;
     }
   }
   
   async getPage(slug: string): Promise<ContentPage | null> {
-    const page = this._pages.find(p => p.slug === slug) || null;
-    return page;
+    try {
+      // First check local cache
+      const cachedPage = this._pages.find(p => p.slug === slug);
+      if (cachedPage) return cachedPage;
+      
+      // If not in cache, fetch directly from Supabase
+      const { data, error } = await supabase
+        .from('content_pages')
+        .select('*')
+        .eq('slug', slug)
+        .eq('published', true)
+        .single();
+        
+      if (error) {
+        console.error(`Error fetching page with slug ${slug}:`, error);
+        return null;
+      }
+      
+      if (!data) return null;
+      
+      // Transform to our ContentPage type
+      const page: ContentPage = {
+        id: data.id,
+        slug: data.slug,
+        title: data.title,
+        content: data.content,
+        published: data.published,
+        updatedAt: data.updated_at,
+        createdAt: data.created_at
+      };
+      
+      // Add to cache
+      const existingIndex = this._pages.findIndex(p => p.id === page.id);
+      if (existingIndex >= 0) {
+        this._pages[existingIndex] = page;
+      } else {
+        this._pages.push(page);
+      }
+      
+      return page;
+    } catch (error) {
+      console.error(`Failed to get page ${slug}:`, error);
+      return null;
+    }
   }
   
   async getAllPages(): Promise<ContentPage[]> {
-    return [...this._pages];
+    // If we already have pages cached, return them
+    if (this._pages.length > 0) {
+      return [...this._pages];
+    }
+    
+    // Otherwise fetch from Supabase
+    try {
+      const { data, error } = await supabase
+        .from('content_pages')
+        .select('*')
+        .eq('published', true)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        throw new Error(`Failed to fetch all pages: ${error.message}`);
+      }
+      
+      if (!data || data.length === 0) {
+        return [];
+      }
+      
+      // Transform and cache the results
+      this._pages = data.map(page => ({
+        id: page.id,
+        slug: page.slug,
+        title: page.title,
+        content: page.content,
+        published: page.published,
+        updatedAt: page.updated_at,
+        createdAt: page.created_at
+      }));
+      
+      return [...this._pages];
+    } catch (error) {
+      console.error('Error fetching all pages:', error);
+      return [];
+    }
   }
   
   async refreshContent(): Promise<void> {
     this._isLoading = true;
     try {
-      // This would typically re-fetch content from API
-      console.log('Refreshing content...');
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Clear cache and re-fetch from Supabase
+      this._pages = [];
+      
+      const { data, error } = await supabase
+        .from('content_pages')
+        .select('*')
+        .eq('published', true)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        throw new Error(`Failed to refresh content: ${error.message}`);
+      }
+      
+      // Transform and update cache
+      this._pages = data.map(page => ({
+        id: page.id,
+        slug: page.slug,
+        title: page.title,
+        content: page.content,
+        published: page.published,
+        updatedAt: page.updated_at,
+        createdAt: page.created_at
+      }));
+      
+      console.log(`Refreshed ${this._pages.length} content pages`);
     } catch (error) {
       this._error = error as Error;
       console.error('Content refresh error:', error);
