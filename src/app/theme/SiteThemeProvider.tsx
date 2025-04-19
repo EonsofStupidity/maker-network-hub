@@ -1,133 +1,104 @@
-import React, { createContext, useContext, useMemo, useEffect, useState } from "react";
-import { Theme } from "@/shared/types/shared.types";
-import { logger } from "@/logging/logger.service";
-import { LogCategory, LogLevel } from "@/shared/types/shared.types";
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState, useRef } from 'react';
+import { useLogger } from '@/logging/hooks/use-logger';
+import { LogCategory } from '@/shared/types/shared.types';
+import { Loader } from 'lucide-react';
+import { useThemeStore } from '@/shared/store/theme/store';
 
-export interface SiteThemeContextType {
-  theme: Theme | null;
-  isLoaded: boolean;
-  componentStyles: Record<string, Record<string, string>> | null;
-  animations: Record<string, string> | null;
-  variables: Record<string, string> | null;
-  themeError: Error | null;
+interface ImpulsivityInitProps {
+  autoApply?: boolean;
+  children?: React.ReactNode;
+  showLoader?: boolean;
 }
 
-// Create the context
-export const SiteThemeContext = createContext<SiteThemeContextType | null>(null);
-
-interface SiteThemeProviderProps {
-  children: React.ReactNode;
-  defaultTheme?: string;
-}
-
-export function SiteThemeProvider({ children, defaultTheme = "impulsivity" }: SiteThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [themeError, setThemeError] = useState<Error | null>(null);
-  const [componentStyles, setComponentStyles] = useState<Record<string, Record<string, string>> | null>(null);
-  const [animations, setAnimations] = useState<Record<string, string> | null>(null);
-  const [cssVariables, setCssVariables] = useState<Record<string, string> | null>(null);
-
-  // Load theme data from Supabase
+export function ImpulsivityInit({ autoApply = true, children, showLoader = false }: ImpulsivityInitProps) {
+  const themeStore = useThemeStore();
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const logger = useLogger('ImpulsivityInit', LogCategory.UI);
+  const initAttempted = useRef(false);
+  
   useEffect(() => {
-    const loadThemeData = async () => {
-      try {
-        // Fetch active theme
-        const { data: themeData, error: themeError } = await supabase
-          .from('themes')
-          .select('*')
-          .eq('id', defaultTheme)
-          .single();
-          
-        if (themeError) {
-          throw new Error(`Failed to load theme: ${themeError.message}`);
-        }
-        
-        if (!themeData) {
-          throw new Error(`Theme not found: ${defaultTheme}`);
-        }
-        
-        // Fetch component styles for this theme
-        const { data: stylesData, error: stylesError } = await supabase
-          .from('theme_component_styles')
-          .select('*')
-          .eq('theme_id', themeData.id);
-          
-        if (stylesError) {
-          throw new Error(`Failed to load component styles: ${stylesError.message}`);
-        }
-        
-        // Fetch animations for this theme
-        const { data: animationsData, error: animationsError } = await supabase
-          .from('theme_animations')
-          .select('*')
-          .eq('theme_id', themeData.id);
-          
-        if (animationsError) {
-          throw new Error(`Failed to load animations: ${animationsError.message}`);
-        }
-        
-        // Transform the data into the expected format
-        setTheme(themeData as Theme);
-        
-        // Transform component styles
-        const stylesByComponent: Record<string, Record<string, string>> = {};
-        stylesData?.forEach(style => {
-          if (!stylesByComponent[style.component_name]) {
-            stylesByComponent[style.component_name] = {};
-          }
-          stylesByComponent[style.component_name][style.style_key] = style.style_value;
-        });
-        setComponentStyles(stylesByComponent);
-        
-        // Transform animations
-        const animationMap: Record<string, string> = {};
-        animationsData?.forEach(anim => {
-          animationMap[anim.name] = anim.value;
-        });
-        setAnimations(animationMap);
-        
-        // Set CSS variables from theme data
-        setCssVariables(themeData.variables || {});
-        
-        setIsLoaded(true);
-        logger.log(LogLevel.INFO, LogCategory.UI, 'Theme loaded successfully', { themeId: themeData.id });
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        setThemeError(error);
-        logger.log(LogLevel.ERROR, LogCategory.UI, 'Theme loading failed', { error: error.message });
-        
-        // Set isLoaded to true even on error to avoid perpetual loading state
-        setIsLoaded(true);
-      }
+    // Apply immediate styles to ensure something is visible
+    const applyImmediateStyles = () => {
+      // Set essential CSS variables directly for fast visual feedback
+      const rootElement = document.documentElement;
+      rootElement.style.setProperty('--site-primary', '186 100% 50%'); // #00F0FF in HSL  
+      rootElement.style.setProperty('--site-secondary', '334 100% 59%'); // #FF2D6E in HSL
+      rootElement.style.setProperty('--site-effect-color', '#00F0FF');
+      rootElement.style.setProperty('--site-effect-secondary', '#FF2D6E');
+      rootElement.style.setProperty('--site-background', '#080F1E');
+      rootElement.style.setProperty('--site-foreground', '#F9FAFB');
     };
     
-    loadThemeData();
-  }, [defaultTheme]);
-
-  // Prepare context value
-  const contextValue = useMemo<SiteThemeContextType>(() => ({
-    theme,
-    isLoaded,
-    componentStyles,
-    animations,
-    variables: cssVariables,
-    themeError,
-  }), [theme, isLoaded, componentStyles, animations, cssVariables, themeError]);
-
-  return (
-    <SiteThemeContext.Provider value={contextValue}>
-      {children}
-    </SiteThemeContext.Provider>
-  );
-}
-
-// Hook to use the theme context
-export function useSiteTheme() {
-  const context = useContext(SiteThemeContext);
-  if (!context) {
-    throw new Error("useSiteTheme must be used within a SiteThemeProvider");
+    // Apply immediate styles regardless of theme system state
+    applyImmediateStyles();
+    
+    // Only initialize once to prevent infinite loops
+    if (autoApply && !isInitialized && !themeStore.isLoading && !initAttempted.current) {
+      const initTheme = async () => {
+        try {
+          initAttempted.current = true;
+          logger.info('Initializing Impulsivity theme');
+          setIsError(false);
+          
+          // Use available store methods to initialize the theme
+          if (typeof themeStore.setThemes === 'function') {
+            await themeStore.setThemes([]);
+          }
+          
+          if (typeof themeStore.setActiveTheme === 'function') {
+            themeStore.setActiveTheme('cyberpunk');
+          }
+          
+          setIsInitialized(true);
+          logger.info('Impulsivity theme initialized successfully');
+        } catch (error) {
+          setIsError(true);
+          const errorMessage = error instanceof Error 
+            ? error.message 
+            : 'Unknown error initializing theme';
+          
+          logger.error('Failed to initialize Impulsivity theme', {
+            error: errorMessage
+          });
+          
+          // Still mark as initialized to avoid blocking the app
+          setIsInitialized(true);
+        }
+      };
+      
+      initTheme();
+    }
+    
+    // Force initialization timeout after 3 seconds (reduced from 5 to make app more responsive)
+    const timeout = setTimeout(() => {
+      if (!isInitialized) {
+        logger.warn('Impulsivity theme initialization timed out, continuing anyway');
+        setIsInitialized(true);
+        
+        // Reapply immediate styles as fallback
+        applyImmediateStyles();
+      }
+    }, 3000);
+    
+    return () => clearTimeout(timeout);
+  }, [autoApply, themeStore, isInitialized, logger]);
+  
+  // If showing loader and still initializing, render a loading indicator
+  if (showLoader && themeStore.isLoading && !isInitialized) {
+    return (
+      <div className="fixed inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="bg-card p-6 rounded-lg shadow-lg border border-border flex flex-col items-center">
+          <Loader className="animate-spin h-8 w-8 text-primary mb-4" />
+          <p className="text-foreground font-medium">Initializing Impulsivity Theme...</p>
+        </div>
+      </div>
+    );
   }
-  return context;
+  
+  return <>{children}</>;
 }
+
+// Export the ImpulsivityInit as SiteThemeProvider to ensure compatibility
+export const SiteThemeProvider = ImpulsivityInit;
+export const useSiteTheme = useThemeStore;

@@ -1,7 +1,5 @@
 import { z } from 'zod';
 import { UserProfile, AUTH_STATUS } from '@/shared/types/core/auth.types';
-import { supabase } from '@/integrations/supabase/client';
-import { mapUserToProfile } from '@/auth/utils/userMapper';
 
 // Define the shape of AuthBridge using Zod schema
 export const AuthBridgeSchema = z.object({
@@ -21,6 +19,19 @@ export const AuthBridgeSchema = z.object({
 
 // Export the type of AuthBridge
 export type IAuthBridge = z.infer<typeof AuthBridgeSchema>;
+
+// Mock user for local development
+const MOCK_USER: UserProfile = {
+  id: '1',
+  email: 'dev@example.com',
+  displayName: 'Dev User',
+  role: 'admin',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  metadata: {
+    lastLogin: new Date().toISOString()
+  }
+};
 
 /**
  * AuthBridge provides a clean abstraction over authentication functionality 
@@ -58,7 +69,7 @@ class AuthBridgeClass implements IAuthBridge {
     return this._error;
   }
   
-  hydrateUser(user: any): void {
+  hydrateUser(user: UserProfile): void {
     this._user = user;
     this._isAuthenticated = !!user;
     this._status = user ? AUTH_STATUS.AUTHENTICATED : AUTH_STATUS.GUEST;
@@ -75,20 +86,14 @@ class AuthBridgeClass implements IAuthBridge {
   async initialize(): Promise<void> {
     this._isLoading = true;
     try {
-      console.log('Auth bridge initializing with Supabase...');
+      console.log('Auth bridge initializing with local data...');
       
-      // Get the current session from Supabase
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (session?.user) {
-        // Map the Supabase user to our UserProfile format
-        const userProfile = mapUserToProfile(session.user);
-        this.hydrateUser(userProfile);
+      // Auto-login in development with mock user
+      if (process.env.NODE_ENV === 'development') {
+        // Automatically log in as mock user
+        this.hydrateUser(MOCK_USER);
       } else {
+        // In production would check local storage or cookies
         this.setGuest();
       }
       
@@ -103,25 +108,18 @@ class AuthBridgeClass implements IAuthBridge {
     }
   }
   
-  async login(email: string, password: string): Promise<any> {
+  async login(email: string, password: string): Promise<UserProfile> {
     this._isLoading = true;
     try {
-      // Use actual Supabase auth
       console.log(`Logging in with ${email}...`);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (error) throw error;
-      
-      if (data.user) {
-        const userProfile = mapUserToProfile(data.user);
+      // Mock login - in real app would call auth provider
+      if (email === 'dev@example.com' && password === 'password') {
+        const userProfile = MOCK_USER;
         this.hydrateUser(userProfile);
         return userProfile;
       } else {
-        throw new Error('Login failed - no user returned');
+        throw new Error('Invalid credentials');
       }
     } catch (error) {
       this._error = error as Error;
@@ -135,10 +133,8 @@ class AuthBridgeClass implements IAuthBridge {
   async logout(): Promise<void> {
     this._isLoading = true;
     try {
-      // Use actual Supabase signOut
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
+      // Mock logout - in real app would call auth provider
+      console.log('Logging out...');
       this.setGuest();
     } catch (error) {
       this._error = error as Error;
@@ -152,8 +148,14 @@ class AuthBridgeClass implements IAuthBridge {
   async resetPassword(email: string): Promise<void> {
     this._isLoading = true;
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
+      // Mock password reset - in real app would call auth provider
+      console.log(`Password reset requested for ${email}`);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // In development, just log the request
+      console.log(`Reset password email would be sent to ${email}`);
     } catch (error) {
       this._error = error as Error;
       throw error;

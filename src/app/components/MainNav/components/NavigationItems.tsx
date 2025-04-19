@@ -3,8 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useSiteTheme } from "@/app/theme/SiteThemeProvider";
 import { motion } from "framer-motion";
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from "@/shared/ui/use-toast";
 
 interface NavItem {
   id: string;
@@ -16,12 +14,12 @@ interface NavItem {
 
 export const NavigationItems = () => {
   const { pathname } = useLocation();
-  const { componentStyles } = useSiteTheme();
+  const themeStore = useSiteTheme();
   const [navItems, setNavItems] = useState<NavItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   
-  const styles = componentStyles?.MainNav || {
+  // Default styles if none are provided by theme
+  const styles = {
     nav: 'flex items-center gap-1 md:gap-2',
     navItem: 'px-3 py-2 text-sm font-medium text-foreground/80 hover:text-primary transition-colors relative group',
     navItemActive: 'text-primary',
@@ -29,51 +27,18 @@ export const NavigationItems = () => {
   };
   
   useEffect(() => {
-    const loadNavItems = async () => {
-      setIsLoading(true);
-      try {
-        const { data: layoutData, error: layoutError } = await supabase
-          .from('layout_skeletons')
-          .select('layout_json')
-          .eq('type', 'navigation')
-          .eq('scope', 'site')
-          .eq('is_active', true)
-          .single();
-        
-        if (layoutError) {
-          throw layoutError;
-        }
-        
-        if (layoutData?.layout_json?.navigation) {
-          setNavItems(layoutData.layout_json.navigation);
-        } else {
-          // Fallback navigation
-          setNavItems([
-            { id: "1", name: "Home", href: "/" },
-            { id: "2", name: "About", href: "/about" },
-            { id: "3", name: "Contact", href: "/contact" },
-          ]);
-        }
-      } catch (error) {
-        toast({
-          title: "Error loading navigation",
-          description: "Using fallback navigation items",
-          variant: "destructive"
-        });
-        // Set fallback navigation
-        setNavItems([
-          { id: "1", name: "Home", href: "/" },
-          { id: "2", name: "About", href: "/about" },
-          { id: "3", name: "Contact", href: "/contact" },
-        ]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // Set hardcoded navigation items instead of loading from Supabase
+    const hardcodedNavItems: NavItem[] = [
+      { id: "1", name: "Home", href: "/" },
+      { id: "2", name: "About", href: "/about" },
+      { id: "3", name: "Contact", href: "/contact" },
+      { id: "4", name: "Projects", href: "/projects" },
+    ];
     
-    loadNavItems();
-  }, [toast]);
-
+    setNavItems(hardcodedNavItems);
+    setIsLoading(false);
+  }, []);
+  
   // Show simple skeleton during loading
   if (isLoading) {
     return (
@@ -85,16 +50,10 @@ export const NavigationItems = () => {
     );
   }
   
-  // Fallback to default items if no items found in database
-  const displayItems = navItems.length > 0 ? navItems : [
-    { id: "1", name: "Home", href: "/" },
-    { id: "2", name: "About", href: "/about" },
-    { id: "3", name: "Contact", href: "/contact" },
-  ];
-  
+  // Display navigation items
   return (
     <nav className={cn("hidden md:flex", styles.nav)}>
-      {displayItems.map((item) => {
+      {navItems.map((item) => {
         const isActive = pathname === item.href;
         
         return (
