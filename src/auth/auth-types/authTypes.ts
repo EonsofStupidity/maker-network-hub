@@ -9,6 +9,7 @@ export interface AuthState {
   error: Error | null;
   roles: UserRole[];
   isLoading: boolean;
+  isInitialized: boolean;
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;

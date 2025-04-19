@@ -5,18 +5,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { logBridge } from '@/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
 import { mapUserToProfile } from '@/auth/utils/userMapper';
+import { AUTH_STATUS } from '@/shared/types/core/auth.types';
 
-const initialState: AuthState = {
+const initialState: Partial<AuthState> = {
   user: null,
   isAuthenticated: false,
-  status: 'GUEST',
+  status: AUTH_STATUS.IDLE,
   error: null,
   roles: [],
-  isLoading: false
+  isLoading: false,
+  isInitialized: false
 };
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  ...initialState,
+  ...initialState as AuthState,
 
   initialize: async () => {
     set({ isLoading: true });
@@ -30,18 +32,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({
           user: userProfile,
           isAuthenticated: true,
-          status: 'AUTHENTICATED'
+          status: AUTH_STATUS.AUTHENTICATED,
+          isInitialized: true
         });
       } else {
         set({
           user: null,
           isAuthenticated: false,
-          status: 'GUEST'
+          status: AUTH_STATUS.GUEST,
+          isInitialized: true
         });
       }
     } catch (error) {
       logBridge.error(LogCategory.AUTH, 'Failed to initialize auth', { error });
-      set({ error: error as Error, status: 'ERROR' });
+      set({ error: error as Error, status: AUTH_STATUS.ERROR, isInitialized: true });
     } finally {
       set({ isLoading: false });
     }
@@ -57,7 +61,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         user: userProfile,
         isAuthenticated: true,
-        status: 'AUTHENTICATED',
+        status: AUTH_STATUS.AUTHENTICATED,
         error: null
       });
     } catch (error) {
@@ -65,7 +69,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         user: null,
         isAuthenticated: false,
-        status: 'ERROR',
+        status: AUTH_STATUS.ERROR,
         error: error instanceof Error ? error : new Error('Login failed')
       });
     } finally {
@@ -82,13 +86,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         user: null,
         isAuthenticated: false,
-        status: 'GUEST',
+        status: AUTH_STATUS.GUEST,
         error: null
       });
     } catch (error) {
       logBridge.error(LogCategory.AUTH, 'Logout failed', { error });
       set({
-        status: 'ERROR',
+        status: AUTH_STATUS.ERROR,
         error: error instanceof Error ? error : new Error('Logout failed')
       });
     } finally {
@@ -106,7 +110,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         user: userProfile,
         isAuthenticated: true,
-        status: 'AUTHENTICATED',
+        status: AUTH_STATUS.AUTHENTICATED,
         error: null
       });
     } catch (error) {
@@ -114,7 +118,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         user: null,
         isAuthenticated: false,
-        status: 'ERROR',
+        status: AUTH_STATUS.ERROR,
         error: error instanceof Error ? error : new Error('Signup failed')
       });
     } finally {

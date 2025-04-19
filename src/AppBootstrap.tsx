@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/auth/store/auth.store';
 import { logBridge } from '@/bridges/logging/bridge';
@@ -6,6 +7,7 @@ import { LoadPhase } from '@/shared/types/core/app.types';
 import { PlatformLoader } from '@/shared/components/platform/PlatformLoader';
 import { themeBridge } from '@/bridges/theme/bridge';
 import { initializeSupabase } from '@/integrations/supabase/client';
+import BasicPage from '@/pages/BasicPage';
 
 interface AppBootstrapProps {
   children: React.ReactNode;
@@ -38,20 +40,38 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Initialize Supabase first
+        // Try to initialize Supabase first
         updatePhase('supabase', 'loading', 'Connecting to database');
-        await initializeSupabase();
-        updatePhase('supabase', 'success', 'Database connected');
+        try {
+          await initializeSupabase();
+          updatePhase('supabase', 'success', 'Database connected');
+        } catch (err) {
+          // Continue even if Supabase fails
+          updatePhase('supabase', 'error', 'Database connection failed - continuing');
+          console.warn('Supabase initialization failed, continuing with limited functionality');
+        }
         
         // Initialize Auth
         updatePhase('auth', 'loading');
-        await initAuth();
-        updatePhase('auth', 'success');
+        try {
+          await initAuth();
+          updatePhase('auth', 'success');
+        } catch (authErr) {
+          // Continue with guest mode if auth fails
+          updatePhase('auth', 'error', 'Authentication failed - continuing as guest');
+          console.warn('Auth initialization failed, continuing as guest');
+        }
         
         // Initialize Theme
         updatePhase('theme', 'loading');
-        await themeBridge.initialize();
-        updatePhase('theme', 'success');
+        try {
+          await themeBridge.initialize();
+          updatePhase('theme', 'success');
+        } catch (themeErr) {
+          // Continue with default theme if theme fails
+          updatePhase('theme', 'error', 'Theme initialization failed - using default');
+          console.warn('Theme initialization failed, using default theme');
+        }
         
         setIsLoading(false);
       } catch (err) {
@@ -65,20 +85,7 @@ export function AppBootstrap({ children }: AppBootstrapProps) {
   }, [initAuth]);
 
   if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-500">Failed to load application</h1>
-          <p className="mt-2 text-gray-600">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
+    return <BasicPage />;
   }
 
   if (isLoading) {

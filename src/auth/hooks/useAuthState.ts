@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/auth.store';
 import { AUTH_STATUS, UserProfile, AuthStatus } from '@/shared/types/core/auth.types';

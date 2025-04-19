@@ -18,7 +18,8 @@ export const AUTH_STATUS = {
   AUTHENTICATED: 'AUTHENTICATED',
   GUEST: 'GUEST',
   ERROR: 'ERROR',
-  LOADING: 'LOADING'
+  LOADING: 'LOADING',
+  IDLE: 'IDLE'
 } as const;
 
 export type AuthStatus = typeof AUTH_STATUS[keyof typeof AUTH_STATUS];

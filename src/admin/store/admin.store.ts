@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { LogCategory, LogLevel } from '@/shared/types/shared.types';
+import { LogCategory, LogLevel } from '@/shared/types/core/logging.types';
 import { logger } from '@/logging/logger.service';
 
 interface AdminState {
@@ -8,11 +8,13 @@ interface AdminState {
   sidebarOpen: boolean;
   currentSection: string;
   editMode: boolean;
+  showDebugOverlay: boolean;
   
   // Actions
   toggleSidebar: () => void;
   setCurrentSection: (section: string) => void;
   toggleEditMode: () => void;
+  toggleDebugOverlay: () => void;
 }
 
 export const useAdminStore = create<AdminState>((set, get) => ({
@@ -20,6 +22,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   sidebarOpen: true,
   currentSection: 'dashboard',
   editMode: false,
+  showDebugOverlay: false,
   
   // Actions
   toggleSidebar: () => {
@@ -53,6 +56,18 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       LogLevel.INFO, 
       LogCategory.ADMIN, 
       `Edit mode ${get().editMode ? 'enabled' : 'disabled'}`
+    );
+  },
+
+  toggleDebugOverlay: () => {
+    set(state => ({
+      showDebugOverlay: !state.showDebugOverlay
+    }));
+    
+    logger.log(
+      LogLevel.INFO,
+      LogCategory.ADMIN,
+      `Debug overlay ${get().showDebugOverlay ? 'enabled' : 'disabled'}`
     );
   }
 }));

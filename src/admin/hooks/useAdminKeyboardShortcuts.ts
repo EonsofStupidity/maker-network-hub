@@ -7,7 +7,7 @@ import { useRbac } from '@/hooks/use-rbac';
 
 export function useAdminKeyboardShortcuts() {
   const { hasAdminAccess, isSuperAdmin } = useRbac();
-  const { toggleSidebar, toggleEditMode } = useAdminStore();
+  const { toggleSidebar, toggleEditMode, toggleDebugOverlay } = useAdminStore();
   const logger = useLogger('AdminKeyboardShortcuts', LogCategory.ADMIN);
 
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
@@ -17,7 +17,7 @@ export function useAdminKeyboardShortcuts() {
     // Ctrl + Shift + D - Toggle admin debug overlay
     if (event.ctrlKey && event.shiftKey && event.code === 'KeyD' && isSuperAdmin()) {
       logger.info('Admin debug overlay toggled via keyboard shortcut');
-      useAdminStore.setState(state => ({ showDebugOverlay: !state.showDebugOverlay }));
+      toggleDebugOverlay();
     }
 
     // Ctrl + Shift + E - Toggle edit mode (admin only)
@@ -31,7 +31,7 @@ export function useAdminKeyboardShortcuts() {
       logger.info('Sidebar toggled via keyboard shortcut');
       toggleSidebar();
     }
-  }, [hasAdminAccess, isSuperAdmin, toggleSidebar, toggleEditMode, logger]);
+  }, [hasAdminAccess, isSuperAdmin, toggleSidebar, toggleEditMode, toggleDebugOverlay, logger]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyPress);
