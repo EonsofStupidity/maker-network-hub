@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { AuthState } from '@/auth/auth-types/authTypes';
 import { supabase } from '@/integrations/supabase/client';
@@ -5,14 +6,13 @@ import { logBridge } from '@/logging/bridge';
 import { LogCategory } from '@/shared/types/core/logging.types';
 import { mapUserToProfile } from '@/auth/utils/userMapper';
 
-const initialState: Partial<AuthState> = {
+const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
   status: 'GUEST',
   error: null,
   roles: [],
-  isLoading: false,
-  initialized: false
+  isLoading: false
 };
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -30,20 +30,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({
           user: userProfile,
           isAuthenticated: true,
-          status: 'AUTHENTICATED',
-          initialized: true
+          status: 'AUTHENTICATED'
         });
       } else {
         set({
           user: null,
           isAuthenticated: false,
-          status: 'GUEST',
-          initialized: true
+          status: 'GUEST'
         });
       }
     } catch (error) {
       logBridge.error(LogCategory.AUTH, 'Failed to initialize auth', { error });
-      set({ error: error as Error, status: 'ERROR', initialized: true });
+      set({ error: error as Error, status: 'ERROR' });
     } finally {
       set({ isLoading: false });
     }
@@ -53,9 +51,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
+      
       const userProfile = mapUserToProfile(data.user!);
       set({
         user: userProfile,
@@ -80,9 +77,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
+      
       set({
         user: null,
         isAuthenticated: false,
@@ -104,9 +100,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
+      
       const userProfile = mapUserToProfile(data.user!);
       set({
         user: userProfile,
@@ -131,10 +126,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) {
-        throw error;
-      }
-      // Password reset email sent successfully
+      if (error) throw error;
       set({ error: null });
     } catch (error) {
       logBridge.error(LogCategory.AUTH, 'Reset password failed', { error });
@@ -154,11 +146,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         .select()
         .single();
         
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
-      // Update the user profile in the store
       set((state) => ({
         user: {
           ...state.user!,
