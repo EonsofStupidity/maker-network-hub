@@ -1,7 +1,7 @@
 
 export type PhaseStatus = 'idle' | 'loading' | 'success' | 'error';
 
-// Original PlatformBootstrapPhase remains as is
+// PlatformBootstrapPhase remains for legacy compatibility but deprecated
 export interface PlatformBootstrapPhase {
   id: string;
   name: string;
@@ -10,11 +10,12 @@ export interface PlatformBootstrapPhase {
   retry?: () => Promise<void>;
 }
 
-// New type LoadPhase, aligning with existing usages and naming:
+// Unified LoadPhase type for current bootstrap phases
 export interface LoadPhase {
   id: string;
   name: string;
   status: PhaseStatus;
-  detail?: string;        // Used to show additional info in UI phases
+  detail?: string;
+  errorMessage?: string;
   retry?: () => Promise<void>;
 }
