@@ -6,6 +6,7 @@ export interface LoadPhase {
   name: string;
   status: LoadPhaseStatus;
   detail?: string;
+  retry?: () => Promise<boolean>;
 }
 
 export interface AppConfig {
