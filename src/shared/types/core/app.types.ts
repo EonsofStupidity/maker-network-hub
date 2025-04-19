@@ -1,12 +1,12 @@
 
-export type LoadPhaseStatus = 'idle' | 'loading' | 'success' | 'error';
+export type PhaseStatus = 'idle' | 'loading' | 'success' | 'error';
 
-export interface LoadPhase {
+export interface PlatformBootstrapPhase {
   id: string;
   name: string;
-  status: LoadPhaseStatus;
-  detail?: string;
-  retry?: () => Promise<boolean>;
+  status: PhaseStatus;
+  errorMessage?: string;
+  retry?: () => Promise<void>;
 }
 
 export interface AppConfig {
