@@ -1,17 +1,23 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useSiteTheme } from "@/app/theme/SiteThemeProvider";
 import { motion } from "framer-motion";
+import { supabase } from '@/integrations/supabase/client';
 
 interface NavItem {
+  id: string;
   name: string;
   href: string;
+  order?: number;
+  is_public?: boolean;
 }
 
 export const NavigationItems = () => {
   const { pathname } = useLocation();
   const { componentStyles } = useSiteTheme();
+  const [navItems, setNavItems] = useState<NavItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const styles = componentStyles?.MainNav || {
     nav: 'flex items-center gap-1 md:gap-2',
@@ -20,24 +26,61 @@ export const NavigationItems = () => {
     navItemActiveIndicator: 'absolute -bottom-1 left-0 w-full h-0.5 bg-primary origin-center'
   };
   
-  // Mock nav items - these could come from a configuration or database
-  const navItems: NavItem[] = [
-    { name: "Home", href: "/" },
-    { name: "Features", href: "/features" },
-    { name: "Pricing", href: "/pricing" },
-    { name: "About", href: "/about" },
-    { name: "Blog", href: "/blog" },
-    { name: "Contact", href: "/contact" },
+  useEffect(() => {
+    // Load navigation items from Supabase
+    const loadNavItems = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('navigation_items')
+          .select('*')
+          .eq('is_public', true)
+          .order('order');
+        
+        if (error) {
+          console.error('Error loading navigation:', error);
+          return;
+        }
+        
+        if (data) {
+          setNavItems(data);
+        }
+      } catch (err) {
+        console.error('Failed to load navigation items:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadNavItems();
+  }, []);
+  
+  // Show simple skeleton during loading
+  if (isLoading) {
+    return (
+      <nav className={cn("hidden md:flex", styles.nav)}>
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} className="h-8 w-16 bg-muted/30 animate-pulse rounded mx-2"></div>
+        ))}
+      </nav>
+    );
+  }
+  
+  // Fallback to default items if no items found in database
+  const displayItems = navItems.length > 0 ? navItems : [
+    { id: "1", name: "Home", href: "/" },
+    { id: "2", name: "About", href: "/about" },
+    { id: "3", name: "Contact", href: "/contact" },
   ];
   
   return (
     <nav className={cn("hidden md:flex", styles.nav)}>
-      {navItems.map((item) => {
+      {displayItems.map((item) => {
         const isActive = pathname === item.href;
         
         return (
           <Link
-            key={item.name}
+            key={item.id}
             to={item.href}
             className={cn(
               styles.navItem,

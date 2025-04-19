@@ -1,6 +1,7 @@
-
 import { z } from 'zod';
 import { UserProfile, AUTH_STATUS } from '@/shared/types/core/auth.types';
+import { supabase } from '@/integrations/supabase/client';
+import { mapUserToProfile } from '@/auth/utils/userMapper';
 
 // Define the shape of AuthBridge using Zod schema
 export const AuthBridgeSchema = z.object({
@@ -74,16 +75,28 @@ class AuthBridgeClass implements IAuthBridge {
   async initialize(): Promise<void> {
     this._isLoading = true;
     try {
-      // This would typically fetch the user's session
-      console.log('Auth bridge initializing...');
+      console.log('Auth bridge initializing with Supabase...');
       
-      // For now, we'll set as guest
-      this.setGuest();
+      // Get the current session from Supabase
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (session?.user) {
+        // Map the Supabase user to our UserProfile format
+        const userProfile = mapUserToProfile(session.user);
+        this.hydrateUser(userProfile);
+      } else {
+        this.setGuest();
+      }
       
       this._isInitialized = true;
     } catch (error) {
       this._error = error as Error;
       this._status = AUTH_STATUS.ERROR;
+      this.setGuest(); // Still set guest mode on error
       throw error;
     } finally {
       this._isLoading = false;
@@ -93,16 +106,23 @@ class AuthBridgeClass implements IAuthBridge {
   async login(email: string, password: string): Promise<any> {
     this._isLoading = true;
     try {
-      // Mock login - in real app this would call Supabase auth
+      // Use actual Supabase auth
       console.log(`Logging in with ${email}...`);
-      const mockUser = {
-        id: '123',
-        email,
-        displayName: 'Test User'
-      };
       
-      this.hydrateUser(mockUser);
-      return mockUser;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        const userProfile = mapUserToProfile(data.user);
+        this.hydrateUser(userProfile);
+        return userProfile;
+      } else {
+        throw new Error('Login failed - no user returned');
+      }
     } catch (error) {
       this._error = error as Error;
       this._status = AUTH_STATUS.ERROR;
@@ -115,8 +135,10 @@ class AuthBridgeClass implements IAuthBridge {
   async logout(): Promise<void> {
     this._isLoading = true;
     try {
-      // Mock logout - in real app this would call Supabase auth signOut
-      console.log('Logging out...');
+      // Use actual Supabase signOut
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       this.setGuest();
     } catch (error) {
       this._error = error as Error;
@@ -128,8 +150,16 @@ class AuthBridgeClass implements IAuthBridge {
   }
   
   async resetPassword(email: string): Promise<void> {
-    console.log(`Reset password for ${email}...`);
-    // Mock implementation - would call Supabase resetPasswordForEmail
+    this._isLoading = true;
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
+    } catch (error) {
+      this._error = error as Error;
+      throw error;
+    } finally {
+      this._isLoading = false;
+    }
   }
 }
 
