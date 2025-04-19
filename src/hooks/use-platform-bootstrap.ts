@@ -53,8 +53,15 @@ export function usePlatformBootstrap() {
 
   // Each phase initialization with retry handlers
 
+  // Helper to convert initialize functions returning Promise<boolean> to Promise<void>
+  const toVoid = (fn: () => Promise<boolean>): (() => Promise<void>) => {
+    return async () => {
+      await fn();
+    };
+  };
+
   const initializeSupabase = useCallback(async () => {
-    updatePhase('supabase', 'loading', undefined, initializeSupabase);
+    updatePhase('supabase', 'loading', undefined, toVoid(initializeSupabase));
     try {
       return await supabaseCircuitBreaker.execute(async () => {
         await initSupabase();
@@ -73,7 +80,7 @@ export function usePlatformBootstrap() {
   }, [updatePhase]);
 
   const initializeAuth = useCallback(async () => {
-    updatePhase('auth', 'loading', undefined, initializeAuth);
+    updatePhase('auth', 'loading', undefined, toVoid(initializeAuth));
     try {
       return await authCircuitBreaker.execute(async () => {
         await authBridge.initialize();
@@ -92,7 +99,7 @@ export function usePlatformBootstrap() {
   }, [updatePhase]);
 
   const initializeRBAC = useCallback(async () => {
-    updatePhase('rbac', 'loading', undefined, initializeRBAC);
+    updatePhase('rbac', 'loading', undefined, toVoid(initializeRBAC));
     try {
       return await rbacCircuitBreaker.execute(async () => {
         await rbacBridge.initialize();
@@ -112,7 +119,7 @@ export function usePlatformBootstrap() {
 
   // Placeholder WebSocket initialization with retry stub - to be implemented fully later
   const initializeWebSocket = useCallback(async () => {
-    updatePhase('websocket', 'loading', undefined, initializeWebSocket);
+    updatePhase('websocket', 'loading', undefined, toVoid(initializeWebSocket));
     try {
       return await webSocketCircuitBreaker.execute(async () => {
         // Assuming a websocketBridge with initialize() and status check exists
@@ -131,7 +138,7 @@ export function usePlatformBootstrap() {
   }, [updatePhase]);
 
   const initializeTheme = useCallback(async () => {
-    updatePhase('theme', 'loading', undefined, initializeTheme);
+    updatePhase('theme', 'loading', undefined, toVoid(initializeTheme));
     try {
       return await themeCircuitBreaker.execute(async () => {
         await themeBridge.initialize();
@@ -150,7 +157,7 @@ export function usePlatformBootstrap() {
   }, [updatePhase]);
 
   const initializeContent = useCallback(async () => {
-    updatePhase('content', 'loading', undefined, initializeContent);
+    updatePhase('content', 'loading', undefined, toVoid(initializeContent));
     try {
       return await contentCircuitBreaker.execute(async () => {
         await contentBridge.initialize();
@@ -219,7 +226,9 @@ export function usePlatformBootstrap() {
         logBridge.warn(LogCategory.SYSTEM, `No retry function available for phase ${phaseId}`);
         return false;
       }
-      return phase.retry();
+      await phase.retry();
+      return true;
     }
   };
 }
+
