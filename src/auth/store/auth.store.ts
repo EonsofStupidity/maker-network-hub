@@ -1,175 +1,176 @@
 import { create } from 'zustand';
-import { supabase } from '@/integrations/supabase/client';
-import { logBridge } from '@/bridges/logging/bridge';
-import { LogCategory } from '@/shared/types/core/logging.types';
-import { AUTH_STATUS, AuthStatus, UserProfile } from '@/shared/types/core/auth.types';
 import { AuthState } from '@/auth/auth-types/authTypes';
+import { supabase } from '@/integrations/supabase/client';
+import { logBridge } from '@/logging/bridge';
+import { LogCategory } from '@/shared/types/core/logging.types';
 import { mapUserToProfile } from '@/auth/utils/userMapper';
 
-export const useAuthStore = create<AuthState>((set) => ({
-  isInitialized: false,
-  isAuthenticated: false,
+const initialState: Partial<AuthState> = {
   user: null,
-  status: AUTH_STATUS.IDLE,
+  isAuthenticated: false,
+  status: 'GUEST',
   error: null,
+  roles: [],
+  isLoading: false,
+  initialized: false
+};
+
+export const useAuthStore = create<AuthState>((set, get) => ({
+  ...initialState,
 
   initialize: async () => {
+    set({ isLoading: true });
     try {
-      set({ status: AUTH_STATUS.LOADING });
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) throw error;
       
       if (session?.user) {
-        set({ 
-          isAuthenticated: true, 
-          user: mapUserToProfile(session.user),
-          status: AUTH_STATUS.AUTHENTICATED,
-          isInitialized: true 
+        const userProfile = mapUserToProfile(session.user);
+        set({
+          user: userProfile,
+          isAuthenticated: true,
+          status: 'AUTHENTICATED',
+          initialized: true
         });
-        logBridge.info(LogCategory.AUTH, 'Auth initialized with session');
       } else {
-        set({ 
-          isAuthenticated: false, 
+        set({
           user: null,
-          status: AUTH_STATUS.GUEST,
-          isInitialized: true 
+          isAuthenticated: false,
+          status: 'GUEST',
+          initialized: true
         });
-        logBridge.info(LogCategory.AUTH, 'Auth initialized without session');
       }
     } catch (error) {
       logBridge.error(LogCategory.AUTH, 'Failed to initialize auth', { error });
-      set({ 
-        isInitialized: true, 
-        isAuthenticated: false, 
-        user: null,
-        status: AUTH_STATUS.ERROR,
-        error: error instanceof Error ? error : new Error('Unknown error')
-      });
+      set({ error: error as Error, status: 'ERROR', initialized: true });
+    } finally {
+      set({ isLoading: false });
     }
   },
 
-  login: async (email: string, password: string) => {
+  login: async (email, password) => {
+    set({ isLoading: true, error: null });
     try {
-      set({ status: AUTH_STATUS.LOADING });
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        throw error;
+      }
+      const userProfile = mapUserToProfile(data.user!);
       set({
+        user: userProfile,
         isAuthenticated: true,
-        user: mapUserToProfile(data.user),
-        status: AUTH_STATUS.AUTHENTICATED,
+        status: 'AUTHENTICATED',
         error: null
       });
     } catch (error) {
-      set({ 
-        status: AUTH_STATUS.ERROR,
-        error: error instanceof Error ? error : new Error('Unknown error')
+      logBridge.error(LogCategory.AUTH, 'Login failed', { error });
+      set({
+        user: null,
+        isAuthenticated: false,
+        status: 'ERROR',
+        error: error instanceof Error ? error : new Error('Login failed')
       });
-      throw error;
+    } finally {
+      set({ isLoading: false });
     }
   },
 
   logout: async () => {
+    set({ isLoading: true, error: null });
     try {
-      set({ status: AUTH_STATUS.LOADING });
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
-      set({
-        isAuthenticated: false,
-        user: null,
-        status: AUTH_STATUS.GUEST,
-        error: null
-      });
-    } catch (error) {
-      set({ 
-        status: AUTH_STATUS.ERROR,
-        error: error instanceof Error ? error : new Error('Unknown error')
-      });
-      throw error;
-    }
-  },
-
-  signup: async (email: string, password: string) => {
-    try {
-      set({ status: AUTH_STATUS.LOADING });
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        set({
-          isAuthenticated: true,
-          user: mapUserToProfile(data.user),
-          status: AUTH_STATUS.AUTHENTICATED,
-          error: null
-        });
+      if (error) {
+        throw error;
       }
-    } catch (error) {
-      set({ 
-        status: AUTH_STATUS.ERROR,
-        error: error instanceof Error ? error : new Error('Unknown error')
-      });
-      throw error;
-    }
-  },
-
-  resetPassword: async (email: string) => {
-    try {
-      set({ status: AUTH_STATUS.LOADING });
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
-      set({ status: AUTH_STATUS.IDLE, error: null });
-    } catch (error) {
-      set({ 
-        status: AUTH_STATUS.ERROR,
-        error: error instanceof Error ? error : new Error('Unknown error')
-      });
-      throw error;
-    }
-  },
-
-  updateProfile: async (profile: Partial<UserProfile>) => {
-    try {
-      set({ status: AUTH_STATUS.LOADING });
-      
-      // Prepare data for Supabase - extract userMetadata or create new object
-      const userData = {
-        ...profile.userMetadata,
-        // Add fields directly to user_metadata if provided
-        ...(profile.displayName && { full_name: profile.displayName }),
-        ...(profile.bio && { bio: profile.bio }),
-        ...(profile.avatarUrl && { avatar_url: profile.avatarUrl })
-      };
-      
-      const { data, error } = await supabase.auth.updateUser({
-        data: userData
-      });
-
-      if (error) throw error;
-
-      const currentUser = useAuthStore.getState().user;
-      const updatedUser = currentUser 
-        ? { ...currentUser, ...profile }
-        : data.user ? mapUserToProfile(data.user) : null;
-
       set({
-        user: updatedUser,
-        status: AUTH_STATUS.AUTHENTICATED,
+        user: null,
+        isAuthenticated: false,
+        status: 'GUEST',
         error: null
       });
     } catch (error) {
-      set({ 
-        status: AUTH_STATUS.ERROR,
-        error: error instanceof Error ? error : new Error('Unknown error')
+      logBridge.error(LogCategory.AUTH, 'Logout failed', { error });
+      set({
+        status: 'ERROR',
+        error: error instanceof Error ? error : new Error('Logout failed')
       });
-      throw error;
+    } finally {
+      set({ isLoading: false });
     }
-  }
+  },
+
+  signup: async (email, password) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        throw error;
+      }
+      const userProfile = mapUserToProfile(data.user!);
+      set({
+        user: userProfile,
+        isAuthenticated: true,
+        status: 'AUTHENTICATED',
+        error: null
+      });
+    } catch (error) {
+      logBridge.error(LogCategory.AUTH, 'Signup failed', { error });
+      set({
+        user: null,
+        isAuthenticated: false,
+        status: 'ERROR',
+        error: error instanceof Error ? error : new Error('Signup failed')
+      });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  resetPassword: async (email) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) {
+        throw error;
+      }
+      // Password reset email sent successfully
+      set({ error: null });
+    } catch (error) {
+      logBridge.error(LogCategory.AUTH, 'Reset password failed', { error });
+      set({ error: error instanceof Error ? error : new Error('Reset password failed') });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  
+  updateProfile: async (profile) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(profile)
+        .eq('id', get().user?.id)
+        .select()
+        .single();
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Update the user profile in the store
+      set((state) => ({
+        user: {
+          ...state.user!,
+          ...profile,
+        },
+        error: null,
+      }));
+    } catch (error) {
+      logBridge.error(LogCategory.AUTH, 'Profile update failed', { error });
+      set({ error: error instanceof Error ? error : new Error('Profile update failed') });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 }));

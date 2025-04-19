@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useSiteTheme } from "@/app/theme/SiteThemeProvider";
 import { motion } from "framer-motion";
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from "@/shared/ui/use-toast";
 
 interface NavItem {
   id: string;
@@ -18,6 +19,7 @@ export const NavigationItems = () => {
   const { componentStyles } = useSiteTheme();
   const [navItems, setNavItems] = useState<NavItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
   
   const styles = componentStyles?.MainNav || {
     nav: 'flex items-center gap-1 md:gap-2',
@@ -27,34 +29,51 @@ export const NavigationItems = () => {
   };
   
   useEffect(() => {
-    // Load navigation items from Supabase
     const loadNavItems = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('navigation_items')
-          .select('*')
-          .eq('is_public', true)
-          .order('order');
+        const { data: layoutData, error: layoutError } = await supabase
+          .from('layout_skeletons')
+          .select('layout_json')
+          .eq('type', 'navigation')
+          .eq('scope', 'site')
+          .eq('is_active', true)
+          .single();
         
-        if (error) {
-          console.error('Error loading navigation:', error);
-          return;
+        if (layoutError) {
+          throw layoutError;
         }
         
-        if (data) {
-          setNavItems(data);
+        if (layoutData?.layout_json?.navigation) {
+          setNavItems(layoutData.layout_json.navigation);
+        } else {
+          // Fallback navigation
+          setNavItems([
+            { id: "1", name: "Home", href: "/" },
+            { id: "2", name: "About", href: "/about" },
+            { id: "3", name: "Contact", href: "/contact" },
+          ]);
         }
-      } catch (err) {
-        console.error('Failed to load navigation items:', err);
+      } catch (error) {
+        toast({
+          title: "Error loading navigation",
+          description: "Using fallback navigation items",
+          variant: "destructive"
+        });
+        // Set fallback navigation
+        setNavItems([
+          { id: "1", name: "Home", href: "/" },
+          { id: "2", name: "About", href: "/about" },
+          { id: "3", name: "Contact", href: "/contact" },
+        ]);
       } finally {
         setIsLoading(false);
       }
     };
     
     loadNavItems();
-  }, []);
-  
+  }, [toast]);
+
   // Show simple skeleton during loading
   if (isLoading) {
     return (

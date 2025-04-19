@@ -4,11 +4,13 @@ import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { LoginSheet } from '@/app/components/auth/LoginSheet';
 import { useAuthStore } from '@/auth/store/auth.store';
+import { LayoutBootstrap } from '@/layouts/LayoutBootstrap';
 
 export default function HomePage() {
   const { isAuthenticated } = useAuthStore();
   
-  return (
+  // Define the content that will be used as fallback if layout fails to load
+  const homeContent = (
     <div className="container mx-auto p-6 space-y-8">
       <header className="text-center">
         <h1 className="text-4xl font-bold mb-4">Welcome to MakersIMPULSE</h1>
@@ -56,5 +58,15 @@ export default function HomePage() {
         </Card>
       </div>
     </div>
+  );
+  
+  return (
+    <LayoutBootstrap 
+      type="page"
+      scope="site"
+      fallback={homeContent}
+    >
+      {homeContent}
+    </LayoutBootstrap>
   );
 }
