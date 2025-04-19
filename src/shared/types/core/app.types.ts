@@ -1,6 +1,7 @@
 
 export type PhaseStatus = 'idle' | 'loading' | 'success' | 'error';
 
+// Original PlatformBootstrapPhase remains as is
 export interface PlatformBootstrapPhase {
   id: string;
   name: string;
@@ -9,10 +10,11 @@ export interface PlatformBootstrapPhase {
   retry?: () => Promise<void>;
 }
 
-export interface AppConfig {
-  appName: string;
-  version: string;
-  debug: boolean;
-  environment: 'development' | 'staging' | 'production';
-  features: Record<string, boolean>;
+// New type LoadPhase, aligning with existing usages and naming:
+export interface LoadPhase {
+  id: string;
+  name: string;
+  status: PhaseStatus;
+  detail?: string;        // Used to show additional info in UI phases
+  retry?: () => Promise<void>;
 }
